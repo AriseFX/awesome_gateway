@@ -1,12 +1,12 @@
-package com.arise.network;
+package com.arise.server;
 
 import com.arise.config.ServerProperties;
-import com.arise.handler.ApiRouteHandler;
+import com.arise.modules.ApiRouteHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.logging.LogLevel;
@@ -25,21 +25,22 @@ import javax.annotation.Resource;
  * @Description:
  * @Modified: By：
  */
-@Component
+//@Component
 @Order(value = Ordered.LOWEST_PRECEDENCE)
 public class NettyServer implements CommandLineRunner {
 
-    @Resource
+    @Resource(name = "serverProperties")
     private ServerProperties properties;
+
 
     @Override
     public void run(String... args) {
-        EventLoopGroup bossGroup = new NioEventLoopGroup(0, new DefaultThreadFactory("boss"));
-        EventLoopGroup workerGroup = new NioEventLoopGroup(0, new DefaultThreadFactory("worker"));
+        EventLoopGroup bossGroup = new EpollEventLoopGroup(1, new DefaultThreadFactory("boss"));
+        EventLoopGroup workerGroup = new EpollEventLoopGroup(1, new DefaultThreadFactory("worker"));
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class)
+                    .channel(EpollServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.INFO))
                     .option(ChannelOption.SO_KEEPALIVE, true)
                     .childHandler(new ChannelInitializer<SocketChannel>() {

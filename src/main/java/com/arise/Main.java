@@ -1,15 +1,14 @@
 package com.arise;
 
-import com.arise.network.NettyServer;
+import com.arise.server.MasterEventLoop;
+import org.springframework.boot.Banner;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 
-import javax.annotation.Resource;
-
 /**
  * @Author: wy
- * @Description: 基于Springboot构建
+ * @Description: 基于Springboot构建，入口是{@link MasterEventLoop}
  * @Modified: By：
  */
 @SpringBootApplication
@@ -17,6 +16,7 @@ public class Main {
 
     public static void main(String[] args) {
         new SpringApplicationBuilder(Main.class)
+                .bannerMode(Banner.Mode.OFF)
                 .web(WebApplicationType.NONE)
                 .run(args);
     }
