@@ -11,9 +11,13 @@ import java.util.Map;
  */
 public class HttpServerRequest {
 
-    public Map<String, String> header;
+    public String methodName;
 
-    public String path;
+    public Map<String, Object> headers;
+
+    public String url;
+
+    public String httpVersion;
 
     public ByteBuffer content;
 

@@ -2,6 +2,7 @@ package com.arise.server;
 
 import com.arise.compiler.HackClassloader;
 import com.arise.modules.http.HttpProtocolHandler;
+import com.arise.modules.http.HttpServerRequest;
 import io.netty.channel.epoll.Native;
 import io.netty.channel.unix.FileDescriptor;
 import io.netty.handler.codec.http.HttpObjectDecoder;
@@ -81,7 +82,10 @@ public class WorkerEventLoop implements Runnable {
                 int num = fd.read(buffer, 0, buffer.limit());
                 if (num > 0) {
                     buffer.limit(num);
-                    http.parser(buffer);
+                    HttpServerRequest parser = http.parser(buffer);
+                    if (parser != null) {
+                        System.out.println(parser);
+                    }
                 }
                 if (num <= 0) {
                     break;

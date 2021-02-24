@@ -40,20 +40,28 @@ public class HttpProtocolHandler implements EventHandler {
      * REQUEST_STATUS -> REQUEST_HEADERS -> REQUEST_BODY -> REQUEST_DONE
      */
     @SneakyThrows
-    public byte[] parser(ByteBuffer buffer) {
+    public HttpServerRequest parser(ByteBuffer buffer) {
+        HttpServerRequest request = new HttpServerRequest();
         switch (currentState) {
             case REQUEST_STATUS: {
                 CharactersLine line = parseLine(buffer);
                 if (line == null) {
                     return null;
                 }
-                System.out.println("url: " + line.getNewString());
+                String[] token = line.getNewString().split(" ");
+                if (token.length != 3) {
+                    return null;
+                }
+                request.methodName = token[0];
+                request.url = token[1];
+                request.httpVersion = token[2].trim();
                 currentState = REQUEST_HEADERS;
             }
             case REQUEST_HEADERS: {
                 Map<String, Object> map = readHeader(buffer);
                 if (map != null) {
                     System.out.println("请求头: " + map);
+                    request.headers = map;
                     currentState = REQUEST_BODY;
                 } else {
                     return null;
@@ -66,9 +74,12 @@ public class HttpProtocolHandler implements EventHandler {
 
             }
         }
-        return null;
+        return request;
     }
 
+    /**
+     * 读取头部
+     */
     @SneakyThrows
     private Map<String, Object> readHeader(ByteBuffer buffer) {
         HashMap<String, Object> headers = new HashMap<>();
@@ -77,7 +88,7 @@ public class HttpProtocolHandler implements EventHandler {
             String[] token = line.getNewString().split(":");
             switch (token.length) {
                 case 2:
-                    headers.put(token[0], token[1]);
+                    headers.put(token[0], token[1].trim());
                     break;
                 case 1:
                     if (token[0].charAt(0) == CR) {
@@ -89,15 +100,17 @@ public class HttpProtocolHandler implements EventHandler {
         return null;
     }
 
+    private byte lastTimeByte = 0;
+
     /**
      * 解析
      */
     public CharactersLine parseLine(ByteBuffer buffer) {
         byte[] requestLine = new byte[buffer.remaining()];
-        for (int i = 0; buffer.remaining() > 0; i++) {
+        for (int i = 0; buffer.hasRemaining(); i++) {
             byte b = buffer.get();
             requestLine[i] = b;
-            if ((char) (b & 0xFF) == LF) {
+            if ((char) (b & 0xFF) == LF && (char) (lastTimeByte & 0xFF) == CR) {
                 //找到一行结束
                 if (old != null) {
                     //有旧的，累加
@@ -108,6 +121,7 @@ public class HttpProtocolHandler implements EventHandler {
                     return new CharactersLine(requestLine);
                 }
             }
+            lastTimeByte = b;
         }
         if (old != null) {
             old.appendCharacters(requestLine);

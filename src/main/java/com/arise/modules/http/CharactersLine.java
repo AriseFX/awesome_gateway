@@ -20,9 +20,8 @@ public class CharactersLine {
     }
 
     public CharactersLine(Charset charset, byte[] data) {
-        //产生新的数组
-        this.lineData = data.clone();
         this.charset = charset;
+        this.lineData = data.clone();
     }
 
     /**
