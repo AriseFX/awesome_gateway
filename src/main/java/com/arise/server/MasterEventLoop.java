@@ -57,9 +57,13 @@ public class MasterEventLoop implements CommandLineRunner {
                     if ((event & (EPOLLERR | EPOLLIN)) != 0) {
                         int fd = events.fd(index);
                         if (fd == socket.intValue()) {
-                            FileDescriptor msgFd = new FileDescriptor(socket.accept(acceptedAddress));
-                            eventLoops[0].pushFd(msgFd);
-                            System.out.println("accept:" + msgFd.intValue());
+                            for (; ; ) {
+                                int connFd = socket.accept(acceptedAddress);
+                                if (connFd < 0) {
+                                    break;
+                                }
+                                eventLoops[0].pushFd(new FileDescriptor(connFd));
+                            }
                         }
                     }
                 }
@@ -67,3 +71,4 @@ public class MasterEventLoop implements CommandLineRunner {
         }
     }
 }
+

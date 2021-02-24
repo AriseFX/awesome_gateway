@@ -1,7 +1,6 @@
 package com.arise.server;
 
 import com.arise.config.ServerProperties;
-import com.arise.modules.ApiRouteHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.epoll.EpollEventLoopGroup;
@@ -15,7 +14,6 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
@@ -49,7 +47,6 @@ public class NettyServer implements CommandLineRunner {
                             ChannelPipeline pipeline = ch.pipeline();
                             pipeline.addLast(new HttpServerCodec());
                             pipeline.addLast(new HttpObjectAggregator(properties.getMaxContentLength()));
-                            pipeline.addLast(new ApiRouteHandler());
                         }
                     });
             //获取系统参数
