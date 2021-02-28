@@ -46,7 +46,7 @@ public class NettyServer implements CommandLineRunner {
                         protected void initChannel(SocketChannel ch) {
                             ChannelPipeline pipeline = ch.pipeline();
                             pipeline.addLast(new HttpServerCodec());
-                            pipeline.addLast(new HttpObjectAggregator(properties.getMaxContentLength()));
+                            pipeline.addLast(new HttpObjectAggregator(1024));
                         }
                     });
             //获取系统参数

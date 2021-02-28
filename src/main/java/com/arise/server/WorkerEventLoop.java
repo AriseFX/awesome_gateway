@@ -64,9 +64,9 @@ public class WorkerEventLoop implements Runnable {
                         System.out.println("writeable");
                     }
                     if ((event & (EPOLLERR | EPOLLIN)) != 0) {
-                        FileDescriptor socket_fd = new FileDescriptor(events.fd(index));
+                        FileDescriptor conn_fd = new FileDescriptor(events.fd(index));
                         //处理epoll_in事件
-                        processReadEvent(socket_fd);
+                        processReadEvent(conn_fd);
                     }
                 }
             }
@@ -82,9 +82,9 @@ public class WorkerEventLoop implements Runnable {
                 int num = fd.read(buffer, 0, buffer.limit());
                 if (num > 0) {
                     buffer.limit(num);
-                    HttpServerRequest parser = http.parser(buffer);
-                    if (parser != null) {
-                        System.out.println(parser);
+                    HttpServerRequest request = http.parser(buffer);
+                    if (request != null) {
+                        System.out.println(request);
                     }
                 }
                 if (num <= 0) {

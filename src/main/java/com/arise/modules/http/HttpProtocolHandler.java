@@ -60,7 +60,6 @@ public class HttpProtocolHandler implements EventHandler {
             case REQUEST_HEADERS: {
                 Map<String, Object> map = readHeader(buffer);
                 if (map != null) {
-                    System.out.println("请求头: " + map);
                     request.headers = map;
                     currentState = REQUEST_BODY;
                 } else {

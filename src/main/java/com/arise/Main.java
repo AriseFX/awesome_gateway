@@ -1,6 +1,6 @@
 package com.arise;
 
-//import com.arise.server.MasterEventLoop;
+import com.arise.server.MasterEventLoop;
 import org.springframework.boot.Banner;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -8,7 +8,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 
 /**
  * @Author: wy
- * @Description: 基于Springboot构建，入口是{@link MasterEventLoop}
+ * @Description: 基于Springboot构建，服务入口是{@link MasterEventLoop}
  * @Modified: By：
  */
 @SpringBootApplication
