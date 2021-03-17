@@ -54,7 +54,7 @@ public class EpollEventArray {
     /**
      * 获取fd在内存中的位置
      * <p>
-     * java中int是int32，epoll_event中data的位置放的是int32的fd，所以直接getInt()
+     * java中int是int32，epoll_event中data的位置放的是int32的fd，所以直接getInt()获取有符号整数
      */
     public int fd(int index) {
         return memory.getInt(index * EpollEventSize + OffsetofEpollData);

@@ -1,4 +1,4 @@
-package com.arise.internal.utils;
+package com.arise.internal.util;
 
 import java.net.*;
 import java.util.*;
@@ -20,7 +20,8 @@ public class NetUtils {
             while (netInterfaces.hasMoreElements()) {
                 NetworkInterface ni = (NetworkInterface) netInterfaces.nextElement();
                 if (ni.isLoopback()) {
-                    continue;//过滤回环网卡
+                    //过滤环回网卡
+                    continue;
                 }
                 Enumeration<InetAddress> inetAddresses = ni.getInetAddresses();
                 if (inetAddresses.hasMoreElements()) {

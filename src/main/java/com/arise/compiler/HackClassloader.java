@@ -27,7 +27,7 @@ public class HackClassloader {
             Method defineClass = ClassLoader.class.getDeclaredMethod("defineClass",
                     String.class, byte[].class, int.class, int.class);
             defineClass.setAccessible(true);
-            //hack类加载器使用，必须把override
+            //hack类加载器使用，必须override
             Field overrideField = AccessibleObject.class.getDeclaredField("override");
             overrideField.setAccessible(true);
             //获取override属性的地址偏移量

@@ -1,20 +1,14 @@
 package com.arise.server;
 
-import com.arise.compiler.HackClassloader;
+import com.arise.modules.chain.HandleChain;
 import com.arise.modules.http.HttpProtocolHandler;
-import com.arise.modules.http.HttpServerRequest;
 import io.netty.channel.epoll.Native;
 import io.netty.channel.unix.FileDescriptor;
-import io.netty.handler.codec.http.HttpObjectDecoder;
-import io.netty.handler.codec.http.HttpServerCodec;
 import net.openhft.chronicle.core.OS;
 import org.jctools.queues.SpscArrayQueue;
-import sun.nio.cs.ext.GBK;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 import static com.arise.linux.NativeSupport.*;
 import static io.netty.channel.epoll.Native.*;
@@ -34,7 +28,6 @@ public class WorkerEventLoop implements Runnable {
     private int time_fd;
 
     private EpollEventArray events;
-
 
     public WorkerEventLoop() {
         events = new EpollEventArray(4096);
@@ -73,19 +66,16 @@ public class WorkerEventLoop implements Runnable {
         }
     }
 
-
     public void processReadEvent(FileDescriptor fd) {
-        HttpProtocolHandler http = new HttpProtocolHandler();
+        HandleChain chain = new HandleChain();
+        chain.addHandler(new HttpProtocolHandler());
         do {
             ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
             try {
                 int num = fd.read(buffer, 0, buffer.limit());
                 if (num > 0) {
                     buffer.limit(num);
-                    HttpServerRequest request = http.parser(buffer);
-                    if (request != null) {
-                        System.out.println(request);
-                    }
+                    chain.handleRead(buffer);
                 }
                 if (num <= 0) {
                     break;

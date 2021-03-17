@@ -1,5 +1,7 @@
 package com.arise.linux;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +43,7 @@ public class NioScheduledThreadPoolExecutor implements Executor {
     }
 
     @Override
-    public void execute(Runnable command) {
+    public void execute(@NotNull Runnable command) {
         schedule(command, 0, TimeUnit.SECONDS);
     }
 

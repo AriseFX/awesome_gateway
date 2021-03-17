@@ -1,5 +1,7 @@
 package com.arise.modules.http;
 
+import lombok.Data;
+
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -13,7 +15,7 @@ public class HttpServerRequest {
 
     public String methodName;
 
-    public Map<String, Object> headers;
+    public Map<CharSequence, String> headers;
 
     public String url;
 
@@ -22,4 +24,9 @@ public class HttpServerRequest {
     public ByteBuffer content;
 
     public int contentLength;
+
+    @Override
+    public String toString() {
+        return "MethodName:" + methodName + " url:" + url;
+    }
 }

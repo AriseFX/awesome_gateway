@@ -29,4 +29,9 @@ public class NativeSupport {
      */
     public static native int offsetofEpollData();
 
+    /**
+     * 线程亲缘
+     */
+    public static native int taskset();
+
 }

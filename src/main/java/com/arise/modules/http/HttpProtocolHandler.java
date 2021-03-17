@@ -1,13 +1,17 @@
 package com.arise.modules.http;
 
-import com.arise.modules.EventHandler;
+import com.arise.modules.ProtocolHandler;
+import com.arise.modules.chain.ChainContext;
 import lombok.SneakyThrows;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
-import static com.arise.modules.http.HttpProtocolHandler.CurrentState.*;
+import static com.arise.modules.http.HttpProtocolHandler.BodyState.FIX_SIZE_BODY;
+import static com.arise.modules.http.HttpProtocolHandler.State.*;
 
 /**
  * @Author: wy
@@ -15,9 +19,15 @@ import static com.arise.modules.http.HttpProtocolHandler.CurrentState.*;
  * @Description: 解析http协议
  * @Modified: By：
  */
-public class HttpProtocolHandler implements EventHandler {
+public class HttpProtocolHandler implements ProtocolHandler {
 
-    private CurrentState currentState = REQUEST_STATUS;
+    private State currentState = REQUEST_STATUS;
+
+    private int chunkSize;
+
+    private BodyState bodyState = null;
+
+    private List<ByteBuffer> body = new LinkedList<>();
 
     private CharactersLine old;
 
@@ -25,7 +35,7 @@ public class HttpProtocolHandler implements EventHandler {
 
     private final char LF = '\n';
 
-    enum CurrentState {
+    enum State {
         //请求状态
         REQUEST_STATUS,
         //请求头
@@ -36,21 +46,23 @@ public class HttpProtocolHandler implements EventHandler {
         REQUEST_DONE
     }
 
-    /**
-     * REQUEST_STATUS -> REQUEST_HEADERS -> REQUEST_BODY -> REQUEST_DONE
-     */
+    enum BodyState {
+        //固定大小的body
+        FIX_SIZE_BODY
+    }
+
     @SneakyThrows
-    public HttpServerRequest parser(ByteBuffer buffer) {
+    public void handleRequest(ChainContext ctx, ByteBuffer buffer) {
         HttpServerRequest request = new HttpServerRequest();
         switch (currentState) {
             case REQUEST_STATUS: {
                 CharactersLine line = parseLine(buffer);
                 if (line == null) {
-                    return null;
+                    return;
                 }
                 String[] token = line.getNewString().split(" ");
                 if (token.length != 3) {
-                    return null;
+                    return;
                 }
                 request.methodName = token[0];
                 request.url = token[1];
@@ -58,30 +70,61 @@ public class HttpProtocolHandler implements EventHandler {
                 currentState = REQUEST_HEADERS;
             }
             case REQUEST_HEADERS: {
-                Map<String, Object> map = readHeader(buffer);
+                Map<CharSequence, String> map = readHeader(buffer);
                 if (map != null) {
                     request.headers = map;
+                    //获取下一个状态
+                    String length = map.get(HttpConstant.Http_Content_Length);
+                    if (length != null) {
+                        int l = Integer.parseInt(length);
+                        if (l > 0) {
+                            request.contentLength = l;
+                            this.chunkSize = l;
+                            this.bodyState = FIX_SIZE_BODY;
+                        }
+                    }
                     currentState = REQUEST_BODY;
                 } else {
-                    return null;
+                    return;
                 }
             }
             case REQUEST_BODY: {
-
+                //TODO 要支持chunk类型消息体
+                if (bodyState == FIX_SIZE_BODY) {
+                    int toRead = buffer.remaining();
+                    if (toRead > chunkSize) {
+                        toRead = chunkSize;
+                    }
+                    if (toRead == 0) {
+                        return;
+                    }
+                    //获取body的切片，后续将切片组合
+                    buffer.limit(buffer.position() + toRead);
+                    ByteBuffer slice = buffer.slice();
+                    body.add(slice);
+                    chunkSize -= toRead;
+                    if (chunkSize <= 0) {
+                        currentState = REQUEST_DONE;
+                    }
+                }
             }
             case REQUEST_DONE: {
-
+                ctx.fireNextReadHandler(ctx, buffer);
             }
         }
-        return request;
+    }
+
+    @Override
+    public void handleResponse(ChainContext ctx, ByteBuffer buffer) {
+
     }
 
     /**
      * 读取头部
      */
     @SneakyThrows
-    private Map<String, Object> readHeader(ByteBuffer buffer) {
-        HashMap<String, Object> headers = new HashMap<>();
+    private Map<CharSequence, String> readHeader(ByteBuffer buffer) {
+        HashMap<CharSequence, String> headers = new HashMap<>();
         while (buffer.remaining() > 0) {
             CharactersLine line = parseLine(buffer);
             String[] token = line.getNewString().split(":");

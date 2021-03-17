@@ -1,4 +1,4 @@
-package com.arise.internal.cloud.registry.nacos;
+package com.arise.internal.cloud.registry;
 
 
 import java.net.InetSocketAddress;
@@ -25,10 +25,8 @@ public interface ServerRegistrySpi {
 
     /**
      * 订阅服务
-     *
-     * @param listener 节点变化监听器
      */
-    void subscribeServices(Consumer<Object> listener);
+    void subscribeServices(Consumer<ServiceInfo> handler);
 
     /**
      * 服务列表

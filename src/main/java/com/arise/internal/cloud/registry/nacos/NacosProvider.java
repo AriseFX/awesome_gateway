@@ -1,11 +1,13 @@
-package com.arise.internal.cloud;
+package com.arise.internal.cloud.registry.nacos;
 
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.NamingFactory;
 import com.alibaba.nacos.api.naming.NamingService;
+import com.alibaba.nacos.api.naming.listener.NamingEvent;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.alibaba.nacos.api.naming.pojo.ListView;
-import com.arise.internal.cloud.registry.nacos.ServerRegistrySpi;
+import com.arise.internal.cloud.registry.ServiceInfo;
+import com.arise.internal.cloud.registry.ServerRegistrySpi;
 import com.arise.internal.exception.ServiceRegistryException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -54,21 +56,37 @@ public class NacosProvider implements ServerRegistrySpi {
 
     @SneakyThrows
     @Override
-    public void subscribeServices(Consumer<Object> listener) {
+    public void subscribeServices(Consumer<ServiceInfo> handler) {
         int i = 1;
+        Thread.sleep(10000);
         while (true) {
-            ListView<String> services = naming.getServicesOfServer(i++, 50);
-            if (services.getCount() == 0) {
+            try {
+                ListView<String> services = naming.getServicesOfServer(i++, 10);
+                if (services.getData().size() == 0) {
+                    break;
+                }
+                services.getData().forEach(svr -> {
+                    try {
+                        naming.subscribe(svr, event -> {
+                            if (event instanceof NamingEvent) {
+                                NamingEvent namingEvent = (NamingEvent) event;
+                                String serviceName = namingEvent.getServiceName();
+                                List<ServiceInfo.InstanceInfo> instances = namingEvent.getInstances()
+                                        .stream().map(e ->
+                                                new ServiceInfo.InstanceInfo(e.getIp(), e.getPort(), e.getWeight(),
+                                                        e.isHealthy(), e.getMetadata())
+                                        ).collect(Collectors.toList());
+                                handler.accept(new ServiceInfo(serviceName, instances));
+                            }
+                        });
+                    } catch (NacosException e) {
+                        log.error(e.getErrMsg());
+                        throw new ServiceRegistryException();
+                    }
+                });
+            } catch (NacosException ignore) {
                 break;
             }
-            services.getData().forEach(svr -> {
-                try {
-                    naming.subscribe(svr, listener::accept);
-                } catch (NacosException e) {
-                    log.error(e.getErrMsg());
-                    throw new ServiceRegistryException();
-                }
-            });
         }
     }
 

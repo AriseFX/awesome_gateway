@@ -35,6 +35,7 @@ public class MasterEventLoop implements CommandLineRunner {
         //必须打印，KERNEL_VERSION加载时<clinit>会去链接动态库
         log.info("\n  >>>  \n              LINUX KERNEL VERSION: {}" +
                 "\n  <<<", KERNEL_VERSION);
+        WorkerEventLoop eventLoopLB = eventLoops[0];
         int cap = 4096;
         Socket socket = Socket.newSocketStream();
         socket.bind(new InetSocketAddress(8080));
@@ -62,7 +63,7 @@ public class MasterEventLoop implements CommandLineRunner {
                                 if (connFd < 0) {
                                     break;
                                 }
-                                eventLoops[0].pushFd(new FileDescriptor(connFd));
+                                eventLoopLB.pushFd(new FileDescriptor(connFd));
                             }
                         }
                     }

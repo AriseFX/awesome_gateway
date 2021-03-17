@@ -1,16 +1,15 @@
 package com.arise.internal.cloud.registry;
 
 import com.arise.config.ServerProperties;
-import com.arise.internal.cloud.registry.nacos.ServerRegistrySpi;
 import com.arise.internal.exception.ServiceRegistryException;
-import com.arise.internal.utils.NetUtils;
+import com.arise.internal.util.NetUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import javax.annotation.concurrent.ThreadSafe;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Modified: By：
  */
 @Component
+@ThreadSafe
 public class ServiceManager {
 
     @Resource(name = "nacosProvider")
@@ -33,8 +33,8 @@ public class ServiceManager {
     private Map<String, Object> nodeContainer = new ConcurrentHashMap<>();
 
     @PostConstruct
-    private void init() {
-        //推断当前注册中心类型
+    private  void init() {
+        //TODO 推断当前注册中心类型
         ServerProperties.RegistryDefinition definition = serverProperties.getRegistry().get("nacos");
         if (definition == null) {
             throw new ServiceRegistryException();
@@ -49,12 +49,14 @@ public class ServiceManager {
         //以下为钩子方法
         registrySpi.init(definition.getNamespace(), definition.getServerAddr());
         registrySpi.registerInstance(definition.getServiceName(), ip, serverProperties.getPort());
-        registrySpi.subscribeServices(event -> {
-
+        registrySpi.subscribeServices(e -> {
+            String a = e.getServiceName();
+            nodeContainer.put(e.getServiceName(), e.getInstances());
         });
     }
 
-    public List<InetSocketAddress> serviceList(String name) {
+    public List<InetSocketAddress> serviceList(String name, boolean subscribe) {
         return registrySpi.serviceList(name);
     }
+
 }
