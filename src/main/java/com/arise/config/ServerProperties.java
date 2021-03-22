@@ -29,7 +29,10 @@ public class ServerProperties {
      * 地址
      */
     private String address;
-
+    /**
+     * 开启keepalive后，gateway会连接复用
+     */
+    private boolean keepalive;
     /**
      * 注册中心相关
      */

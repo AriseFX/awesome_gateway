@@ -1,7 +1,7 @@
 package com.arise.modules.http;
 
+import com.arise.internal.chain.ChainContext;
 import com.arise.modules.ProtocolHandler;
-import com.arise.modules.chain.ChainContext;
 import lombok.SneakyThrows;
 
 import java.nio.ByteBuffer;
@@ -104,6 +104,7 @@ public class HttpProtocolHandler implements ProtocolHandler {
                     body.add(slice);
                     chunkSize -= toRead;
                     if (chunkSize <= 0) {
+                        request.content = body;
                         currentState = REQUEST_DONE;
                     }
                 }

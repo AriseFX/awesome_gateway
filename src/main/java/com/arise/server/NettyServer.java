@@ -1,6 +1,7 @@
 package com.arise.server;
 
 import com.arise.config.ServerProperties;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.epoll.EpollEventLoopGroup;
@@ -49,6 +50,9 @@ public class NettyServer implements CommandLineRunner {
                             pipeline.addLast(new HttpObjectAggregator(1024));
                         }
                     });
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.connect();
+
             //获取系统参数
             ChannelFuture channelFuture = serverBootstrap.bind(
                     properties.getAddress(),

@@ -1,4 +1,4 @@
-package com.arise.modules.chain;
+package com.arise.internal.chain;
 
 import com.arise.modules.ProtocolHandler;
 import lombok.AllArgsConstructor;
@@ -54,7 +54,7 @@ public class HandleChain {
 
     @Data
     @AllArgsConstructor
-    static class Node {
+    public static class Node {
         public ProtocolHandler handler;
         public Node next;
         public Node prev;
