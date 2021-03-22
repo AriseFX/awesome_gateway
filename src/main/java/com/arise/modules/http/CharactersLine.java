@@ -13,7 +13,6 @@ public class CharactersLine {
 
     private byte[] lineData;
 
-
     private Charset charset;
 
     public CharactersLine(byte[] data) {
