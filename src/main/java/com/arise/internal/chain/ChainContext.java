@@ -1,4 +1,4 @@
-package com.arise.modules.chain;
+package com.arise.internal.chain;
 
 import lombok.AllArgsConstructor;
 
@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 @AllArgsConstructor
 public class ChainContext {
 
-    private HandleChain.Node node;
+    public HandleChain.Node node;
 
     /**
      * 执行下个读处理器

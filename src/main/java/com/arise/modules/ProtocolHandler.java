@@ -1,7 +1,6 @@
 package com.arise.modules;
 
-import com.arise.modules.chain.ChainContext;
-
+import com.arise.internal.chain.ChainContext;
 import java.nio.ByteBuffer;
 
 /**

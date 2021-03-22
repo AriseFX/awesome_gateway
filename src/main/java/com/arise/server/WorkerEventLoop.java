@@ -1,6 +1,6 @@
 package com.arise.server;
 
-import com.arise.modules.chain.HandleChain;
+import com.arise.internal.chain.HandleChain;
 import com.arise.modules.http.HttpProtocolHandler;
 import io.netty.channel.epoll.Native;
 import io.netty.channel.unix.FileDescriptor;

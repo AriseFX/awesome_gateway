@@ -1,8 +1,7 @@
 package com.arise.modules.http;
 
-import lombok.Data;
-
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,8 +19,7 @@ public class HttpServerRequest {
     public String url;
 
     public String httpVersion;
-
-    public ByteBuffer content;
+    public List<ByteBuffer> content;
 
     public int contentLength;
 
