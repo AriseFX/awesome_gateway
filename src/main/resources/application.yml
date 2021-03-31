@@ -9,4 +9,4 @@ gateway:
       namespace: bb6e6bb3-5c6a-455f-aac0-de061ec38faf
       ip: 172.16.110.63
       serviceName: AsGateway
-      networkInterface: eno1
+      networkInterface: eth0

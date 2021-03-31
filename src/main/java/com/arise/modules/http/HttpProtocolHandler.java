@@ -27,6 +27,8 @@ public class HttpProtocolHandler implements ProtocolHandler {
 
     private BodyState bodyState = null;
 
+    private HashMap<CharSequence, String> headers = new HashMap<>(5);
+
     private List<ByteBuffer> body = new LinkedList<>();
 
     private CharactersLine old;
@@ -125,19 +127,20 @@ public class HttpProtocolHandler implements ProtocolHandler {
      */
     @SneakyThrows
     private Map<CharSequence, String> readHeader(ByteBuffer buffer) {
-        HashMap<CharSequence, String> headers = new HashMap<>();
         while (buffer.remaining() > 0) {
             CharactersLine line = parseLine(buffer);
-            String[] token = line.getNewString().split(":");
-            switch (token.length) {
-                case 2:
-                    headers.put(token[0], token[1].trim());
-                    break;
-                case 1:
-                    if (token[0].charAt(0) == CR) {
-                        return headers;
-                    }
-                    return null;
+            if (line != null) {
+                String[] token = line.getNewString().split(":");
+                switch (token.length) {
+                    case 2:
+                        headers.put(token[0], token[1].trim());
+                        break;
+                    case 1:
+                        if (token[0].charAt(0) == CR && token[0].charAt(1) == LF) {
+                            return headers;
+                        }
+                        return null;
+                }
             }
         }
         return null;
@@ -149,7 +152,8 @@ public class HttpProtocolHandler implements ProtocolHandler {
      * 解析
      */
     public CharactersLine parseLine(ByteBuffer buffer) {
-        byte[] requestLine = new byte[buffer.remaining()];
+        int remaining = buffer.remaining();
+        byte[] requestLine = new byte[remaining];
         for (int i = 0; buffer.hasRemaining(); i++) {
             byte b = buffer.get();
             requestLine[i] = b;
@@ -157,19 +161,20 @@ public class HttpProtocolHandler implements ProtocolHandler {
                 //找到一行结束
                 if (old != null) {
                     //有旧的，累加
-                    CharactersLine line = old.appendCharacters(requestLine);
+                    CharactersLine line = old.appendCharacters(requestLine, i + 1);
                     old = null;
                     return line;
                 } else {
-                    return new CharactersLine(requestLine);
+                    return new CharactersLine(requestLine, i + 1);
                 }
             }
             lastTimeByte = b;
         }
+        //遍历完都没找到一行
         if (old != null) {
-            old.appendCharacters(requestLine);
+            old.appendCharacters(requestLine, remaining);
         } else {
-            old = new CharactersLine(requestLine);
+            old = new CharactersLine(requestLine, remaining);
         }
         return null;
     }

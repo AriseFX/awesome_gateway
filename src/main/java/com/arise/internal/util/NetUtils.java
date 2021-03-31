@@ -49,6 +49,9 @@ public class NetUtils {
      */
     public static String getAddress(String interfaceName) {
         InetAddress address = netList.get(interfaceName);
+        if (address == null) {
+            throw new RuntimeException("无指定网卡！");
+        }
         return address.getHostAddress();
     }
 }
