@@ -27,9 +27,11 @@ public class HttpProtocolHandler implements ProtocolHandler {
 
     private BodyState bodyState = null;
 
-    private HashMap<CharSequence, String> headers = new HashMap<>(5);
+    private final HashMap<CharSequence, String> headers = new HashMap<>(5);
 
-    private List<ByteBuffer> body = new LinkedList<>();
+    private final HttpServerRequest request = new HttpServerRequest();
+
+    private final List<ByteBuffer> body = new LinkedList<>();
 
     private CharactersLine old;
 
@@ -54,8 +56,8 @@ public class HttpProtocolHandler implements ProtocolHandler {
     }
 
     @SneakyThrows
-    public void handleRequest(ChainContext ctx, ByteBuffer buffer) {
-        HttpServerRequest request = new HttpServerRequest();
+    public void handleRequest(ChainContext ctx, Object msg) {
+        ByteBuffer buffer = (ByteBuffer) msg;
         switch (currentState) {
             case REQUEST_STATUS: {
                 CharactersLine line = parseLine(buffer);
@@ -108,17 +110,19 @@ public class HttpProtocolHandler implements ProtocolHandler {
                     if (chunkSize <= 0) {
                         request.content = body;
                         currentState = REQUEST_DONE;
+                    } else {
+                        return;
                     }
                 }
             }
             case REQUEST_DONE: {
-                ctx.fireNextReadHandler(ctx, buffer);
+                ctx.fireNextReadHandler(ctx, request);
             }
         }
     }
 
     @Override
-    public void handleResponse(ChainContext ctx, ByteBuffer buffer) {
+    public void handleResponse(ChainContext ctx, Object msg) {
 
     }
 

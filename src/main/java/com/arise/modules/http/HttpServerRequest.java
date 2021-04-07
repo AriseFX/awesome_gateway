@@ -19,6 +19,7 @@ public class HttpServerRequest {
     public String url;
 
     public String httpVersion;
+
     public List<ByteBuffer> content;
 
     public int contentLength;

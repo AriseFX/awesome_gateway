@@ -12,22 +12,22 @@ public class ChainContext {
     /**
      * 执行下个读处理器
      */
-    public void fireNextReadHandler(ChainContext ctx, ByteBuffer buffer) {
+    public void fireNextReadHandler(ChainContext ctx, Object msg) {
         node = node.next;
         if (node == null || node.handler == null) {
             return;
         }
-        node.handler.handleRequest(ctx, buffer);
+        node.handler.handleRequest(ctx, msg);
     }
 
     /**
      * 执行下个写处理器
      */
-    public void fireNextWriteHandler(ChainContext ctx, ByteBuffer buffer) {
+    public void fireNextWriteHandler(ChainContext ctx, Object msg) {
         if (node == null || node.handler == null) {
             return;
         }
-        node.handler.handleResponse(ctx, buffer);
+        node.handler.handleResponse(ctx, msg);
         node = node.prev;
     }
 

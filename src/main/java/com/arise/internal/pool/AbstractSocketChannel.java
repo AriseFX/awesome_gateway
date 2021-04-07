@@ -3,6 +3,7 @@ package com.arise.internal.pool;
 import io.netty.channel.unix.Socket;
 import net.openhft.chronicle.core.OS;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -13,7 +14,7 @@ import java.nio.ByteBuffer;
  * @Description:
  * @Modified: By：
  */
-public abstract class AbstractSocketChannel implements SocketChannel {
+public class AbstractSocketChannel implements SocketChannel {
 
     private Socket socket;
 
@@ -23,7 +24,7 @@ public abstract class AbstractSocketChannel implements SocketChannel {
 
     private boolean active;
 
-    protected AbstractSocketChannel(InetSocketAddress remoteAddress, InetSocketAddress localAddress) {
+    public AbstractSocketChannel(InetSocketAddress remoteAddress, @Nullable InetSocketAddress localAddress) {
         this.socket = Socket.newSocketStream();
         this.remote = remoteAddress;
         this.local = localAddress;

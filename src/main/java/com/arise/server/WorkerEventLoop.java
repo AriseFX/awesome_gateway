@@ -2,6 +2,7 @@ package com.arise.server;
 
 import com.arise.internal.chain.HandleChain;
 import com.arise.modules.http.HttpProtocolHandler;
+import com.arise.modules.route.HttpRouteHandler;
 import io.netty.channel.epoll.Native;
 import io.netty.channel.unix.FileDescriptor;
 import net.openhft.chronicle.core.OS;
@@ -69,6 +70,7 @@ public class WorkerEventLoop implements Runnable {
     public void processReadEvent(FileDescriptor fd) {
         HandleChain chain = new HandleChain();
         chain.addHandler(new HttpProtocolHandler());
+        chain.addHandler(new HttpRouteHandler());
         do {
             ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
             try {

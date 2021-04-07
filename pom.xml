@@ -50,6 +50,11 @@
             <artifactId>chronicle-core</artifactId>
             <version>2.21ea13</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+            <version>2.9.0</version>
+        </dependency>
         <!--  <dependency>
               <groupId>io.netty</groupId>
               <artifactId>netty-common</artifactId>
