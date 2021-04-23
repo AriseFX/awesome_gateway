@@ -1,26 +1,28 @@
 package com.arise.server;
 
-import com.arise.internal.chain.HandleChain;
-import com.arise.modules.http.HttpProtocolHandler;
-import com.arise.modules.route.HttpRouteHandler;
+import com.arise.modules.ReadEventProcessor;
 import io.netty.channel.epoll.Native;
 import io.netty.channel.unix.FileDescriptor;
+import io.netty.util.collection.IntObjectHashMap;
+import io.netty.util.collection.IntObjectMap;
+import lombok.SneakyThrows;
 import net.openhft.chronicle.core.OS;
 import org.jctools.queues.SpscArrayQueue;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.arise.linux.NativeSupport.*;
 import static io.netty.channel.epoll.Native.*;
 
 /**
  * @Author: wy
- * @Date: Created in 9:36 2021-02-04
- * @Description: 事件循环，用于分离文件描述符事件
+ * @Date: Created in 15:43 2021-04-15
+ * @Description: 轮询事件
  * @Modified: By：
  */
-public class WorkerEventLoop implements Runnable {
+public class AwesomeEventLoop implements Runnable {
+
+    private static final AtomicInteger counter = new AtomicInteger();
 
     private SpscArrayQueue<FdEvent> threadNoticeQueue;
 
@@ -28,21 +30,29 @@ public class WorkerEventLoop implements Runnable {
 
     private int time_fd;
 
+    public Thread loopThread;
+
     private EpollEventArray events;
 
-    public WorkerEventLoop() {
-        events = new EpollEventArray(4096);
-        ep_fd = epollCreate();
-        threadNoticeQueue = new SpscArrayQueue<>(20);
+    //拒绝java的包装类型
+    private final IntObjectMap<ReadEventProcessor> fpMapping = new IntObjectHashMap<>();
+
+    public AwesomeEventLoop(int eventQueueSize) {
+        this.events = new EpollEventArray(4096);
+        this.ep_fd = epollCreate();
+        this.threadNoticeQueue = new SpscArrayQueue<>(eventQueueSize);
+        this.loopThread = new Thread(this, "awesome-gateway-worker-thread_" + counter.getAndIncrement());
         //实现final关键字的语义（避免storeStore重排序）
         OS.memory().storeFence();
-        new Thread(this).start();
+        loopThread.start();
     }
 
-    public void pushFd(FileDescriptor fd) {
+    public void pushFd(FileDescriptor fd, ReadEventProcessor processor) {
         threadNoticeQueue.offer(new FdEvent(fd));
+        fpMapping.put(fd.intValue(), processor);
     }
 
+    @SneakyThrows
     @Override
     public void run() {
         for (; ; ) {
@@ -60,32 +70,13 @@ public class WorkerEventLoop implements Runnable {
                     if ((event & (EPOLLERR | EPOLLIN)) != 0) {
                         FileDescriptor conn_fd = new FileDescriptor(events.fd(index));
                         //处理epoll_in事件
-                        processReadEvent(conn_fd);
+                        ReadEventProcessor processor = fpMapping.get(conn_fd.intValue());
+                        if (processor != null) {
+                            processor.doProcess(conn_fd, this);
+                        }
                     }
                 }
             }
         }
     }
-
-    public void processReadEvent(FileDescriptor fd) {
-        HandleChain chain = new HandleChain();
-        chain.addHandler(new HttpProtocolHandler());
-        chain.addHandler(new HttpRouteHandler());
-        do {
-            ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
-            try {
-                int num = fd.read(buffer, 0, buffer.limit());
-                if (num > 0) {
-                    buffer.limit(num);
-                    chain.handleRead(buffer);
-                }
-                if (num <= 0) {
-                    break;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } while (true);
-    }
-
 }

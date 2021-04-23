@@ -26,7 +26,7 @@ import javax.annotation.Resource;
  */
 //@Component
 @Order(value = Ordered.LOWEST_PRECEDENCE)
-public class NettyServer implements CommandLineRunner {
+public class _ implements CommandLineRunner {
 
     @Resource(name = "serverProperties")
     private ServerProperties properties;

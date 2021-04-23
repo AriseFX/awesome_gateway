@@ -1,6 +1,8 @@
 package com.arise.internal.chain;
 
 import com.arise.modules.ProtocolHandler;
+import com.arise.server.AwesomeEventLoop;
+import io.netty.channel.unix.FileDescriptor;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.openhft.chronicle.core.OS;
@@ -44,11 +46,11 @@ public class HandleChain {
         cursor = cursor.next = new Node(handler, null, cursor);
     }
 
-    public void handleRead(ByteBuffer buffer) {
+    public void handleRead(AwesomeEventLoop eventLoop, FileDescriptor currentFd) {
         Node next = first.next;
         if (next != null) {
             //头节点的handler执行，生成新的执行上下文，后续执行走向由各个handler自己控制
-            next.handler.handleRequest(new ChainContext(next), buffer);
+            next.handler.handleRequest(new ChainContext(next, eventLoop, currentFd), null);
         }
     }
 

@@ -1,4 +1,4 @@
-package com.arise.internal.cloud.event;
+package com.arise.cloud.event;
 
 /**
  * @Author: wy

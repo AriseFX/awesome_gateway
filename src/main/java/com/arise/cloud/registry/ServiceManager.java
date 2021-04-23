@@ -1,4 +1,4 @@
-package com.arise.internal.cloud.registry;
+package com.arise.cloud.registry;
 
 import com.arise.config.ServerProperties;
 import com.arise.internal.exception.ServiceRegistryException;

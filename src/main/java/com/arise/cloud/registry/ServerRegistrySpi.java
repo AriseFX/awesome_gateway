@@ -1,4 +1,4 @@
-package com.arise.internal.cloud.registry;
+package com.arise.cloud.registry;
 
 
 import java.net.InetSocketAddress;

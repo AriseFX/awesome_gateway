@@ -2,16 +2,18 @@ package com.arise.modules.http;
 
 import com.arise.internal.chain.ChainContext;
 import com.arise.modules.ProtocolHandler;
+import io.netty.channel.unix.FileDescriptor;
 import lombok.SneakyThrows;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static com.arise.modules.http.HttpProtocolHandler.BodyState.FIX_SIZE_BODY;
-import static com.arise.modules.http.HttpProtocolHandler.State.*;
+import static com.arise.modules.http.HttpV1_1_ProtocolHandler.BodyState.FIX_SIZE_BODY;
+import static com.arise.modules.http.HttpV1_1_ProtocolHandler.State.*;
 
 /**
  * @Author: wy
@@ -19,7 +21,7 @@ import static com.arise.modules.http.HttpProtocolHandler.State.*;
  * @Description: 解析http协议
  * @Modified: By：
  */
-public class HttpProtocolHandler implements ProtocolHandler {
+public class HttpV1_1_ProtocolHandler implements ProtocolHandler {
 
     private State currentState = REQUEST_STATUS;
 
@@ -27,9 +29,9 @@ public class HttpProtocolHandler implements ProtocolHandler {
 
     private BodyState bodyState = null;
 
-    private final HashMap<CharSequence, String> headers = new HashMap<>(5);
+    private final HashMap<String, String> headers = new HashMap<>(5);
 
-    private final HttpServerRequest request = new HttpServerRequest();
+    private final HttpServerRequest request = HttpServerRequest.builder().build();
 
     private final List<ByteBuffer> body = new LinkedList<>();
 
@@ -55,9 +57,35 @@ public class HttpProtocolHandler implements ProtocolHandler {
         FIX_SIZE_BODY
     }
 
-    @SneakyThrows
+    @Override
     public void handleRequest(ChainContext ctx, Object msg) {
-        ByteBuffer buffer = (ByteBuffer) msg;
+        FileDescriptor fd = ctx.getCurrentFd();
+        do {
+            //读完header使用splice
+            ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
+            try {
+                int num = fd.read(buffer, 0, buffer.limit());
+                if (num > 0) {
+                    buffer.limit(num);
+                    //内部协议处理
+                    innerHandleRequest(buffer);
+                    if (currentState == REQUEST_DONE) {
+                        request.partContent = buffer;
+                        break;
+                    }
+                }
+                if (num <= 0) {
+                    return;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } while (true);
+        ctx.fireNextReadHandler(ctx, request);
+    }
+
+    @SneakyThrows
+    public void innerHandleRequest(ByteBuffer buffer) {
         switch (currentState) {
             case REQUEST_STATUS: {
                 CharactersLine line = parseLine(buffer);
@@ -74,7 +102,7 @@ public class HttpProtocolHandler implements ProtocolHandler {
                 currentState = REQUEST_HEADERS;
             }
             case REQUEST_HEADERS: {
-                Map<CharSequence, String> map = readHeader(buffer);
+                Map<String, String> map = readHeader(buffer);
                 if (map != null) {
                     request.headers = map;
                     //获取下一个状态
@@ -94,7 +122,10 @@ public class HttpProtocolHandler implements ProtocolHandler {
             }
             case REQUEST_BODY: {
                 //TODO 要支持chunk类型消息体
-                if (bodyState == FIX_SIZE_BODY) {
+                //如果当前内核支持就直接让splice接管body
+                //TODO  多版本内核支持
+                currentState = REQUEST_DONE;
+                /*if (bodyState == FIX_SIZE_BODY) {
                     int toRead = buffer.remaining();
                     if (toRead > chunkSize) {
                         toRead = chunkSize;
@@ -113,10 +144,7 @@ public class HttpProtocolHandler implements ProtocolHandler {
                     } else {
                         return;
                     }
-                }
-            }
-            case REQUEST_DONE: {
-                ctx.fireNextReadHandler(ctx, request);
+                }*/
             }
         }
     }
@@ -130,7 +158,7 @@ public class HttpProtocolHandler implements ProtocolHandler {
      * 读取头部
      */
     @SneakyThrows
-    private Map<CharSequence, String> readHeader(ByteBuffer buffer) {
+    private Map<String, String> readHeader(ByteBuffer buffer) {
         while (buffer.remaining() > 0) {
             CharactersLine line = parseLine(buffer);
             if (line != null) {

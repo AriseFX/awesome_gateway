@@ -1,4 +1,4 @@
-package com.arise.internal.cloud.registry.nacos;
+package com.arise.cloud.registry.nacos;
 
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.NamingFactory;
@@ -6,8 +6,8 @@ import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.listener.NamingEvent;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.alibaba.nacos.api.naming.pojo.ListView;
-import com.arise.internal.cloud.registry.ServiceInfo;
-import com.arise.internal.cloud.registry.ServerRegistrySpi;
+import com.arise.cloud.registry.ServiceInfo;
+import com.arise.cloud.registry.ServerRegistrySpi;
 import com.arise.internal.exception.ServiceRegistryException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

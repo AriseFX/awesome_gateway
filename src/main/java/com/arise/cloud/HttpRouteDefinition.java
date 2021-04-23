@@ -1,4 +1,4 @@
-package com.arise.internal.cloud;
+package com.arise.cloud;
 
 /**
  * @Author: wy

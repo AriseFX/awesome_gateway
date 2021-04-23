@@ -1,5 +1,6 @@
 package com.arise.server;
 
+import com.arise.modules.http.HttpReadEventProcessor;
 import io.netty.channel.epoll.Native;
 import io.netty.channel.unix.FileDescriptor;
 import io.netty.channel.unix.Socket;
@@ -18,24 +19,24 @@ import static io.netty.channel.epoll.Native.*;
 /**
  * @Author: wy
  * @Date: Created in 18:33 2021/1/21
- * @Description: 仅仅用于accept
+ * @Description: 服务端启动类
  * @Modified: By：
  */
 @Slf4j
 @Component
 @Order(value = Ordered.LOWEST_PRECEDENCE)
-public class MasterEventLoop implements CommandLineRunner {
+public class ServerRunner implements CommandLineRunner {
 
     private static final byte[] acceptedAddress = new byte[26];
 
-    private WorkerEventLoop[] eventLoops = new WorkerEventLoop[]{new WorkerEventLoop()};
+    private final AwesomeEventLoop[] eventLoops = new AwesomeEventLoop[]{new AwesomeEventLoop(10)};
 
     @Override
     public void run(String... args) throws Exception {
         //必须打印，KERNEL_VERSION加载时<clinit>会去链接动态库
         log.info("\n  >>>  \n              LINUX KERNEL VERSION: {}" +
                 "\n  <<<", KERNEL_VERSION);
-        WorkerEventLoop eventLoopLB = eventLoops[0];
+        AwesomeEventLoop eventLoopLB = eventLoops[0];
         int cap = 4096;
         Socket socket = Socket.newSocketStream();
         socket.bind(new InetSocketAddress(8080));
@@ -63,7 +64,8 @@ public class MasterEventLoop implements CommandLineRunner {
                                 if (connFd < 0) {
                                     break;
                                 }
-                                eventLoopLB.pushFd(new FileDescriptor(connFd));
+                                eventLoopLB.pushFd(new FileDescriptor(connFd),
+                                        new HttpReadEventProcessor());
                             }
                         }
                     }

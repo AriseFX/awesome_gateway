@@ -1,13 +1,32 @@
 package com.arise.internal.chain;
 
+import com.arise.server.AwesomeEventLoop;
+import io.netty.channel.unix.FileDescriptor;
 import lombok.AllArgsConstructor;
-
-import java.nio.ByteBuffer;
 
 @AllArgsConstructor
 public class ChainContext {
 
     public HandleChain.Node node;
+
+    private final AwesomeEventLoop eventLoop;
+
+    private final FileDescriptor currentFd;
+
+    /**
+     * 当前线程是否和当前eventLoop所属线程一致
+     */
+    public boolean inEventLoop() {
+        return eventLoop.loopThread == Thread.currentThread();
+    }
+
+    public AwesomeEventLoop getEventLoop() {
+        return this.eventLoop;
+    }
+
+    public FileDescriptor getCurrentFd() {
+        return this.currentFd;
+    }
 
     /**
      * 执行下个读处理器

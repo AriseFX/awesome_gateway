@@ -3,7 +3,6 @@ package com.arise.internal.pool;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.springframework.stereotype.Component;
 
 /**
  * @Author: wy
@@ -16,7 +15,7 @@ public class ProxyChannelFactory implements PooledObjectFactory<SocketChannel> {
 
     @Override
     public PooledObject<SocketChannel> makeObject() {
-        return new DefaultPooledObject<>(new AbstractSocketChannel(null, null));
+        return new DefaultPooledObject<>(new SocketChannel(null, null));
     }
 
     @Override
