@@ -25,6 +25,7 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
             HttpServerRequest request = (HttpServerRequest) msg;
             SocketChannel channel = new SocketChannel(
                     new InetSocketAddress("172.16.110.77", 8099), null);
+            //TODO 连接复用
             channel.connect();
             if (ctx.inEventLoop()) {
                 FileDescriptor currentFd = ctx.getCurrentFd();
@@ -44,6 +45,7 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
                             //[0] = read end, [1] = write end
                             FileDescriptor[] respPipe = pipe();
                             //转发给客户端
+                            //TODO 连接复用的情况下len如何考虑？
                             Native.splice(callback_fd.intValue(), -1, respPipe[1].intValue(), -1, 1 << 30);
                             Native.splice(respPipe[0].intValue(), -1, ctx.getCurrentFd().intValue(), -1, 1 << 30);
                         });
