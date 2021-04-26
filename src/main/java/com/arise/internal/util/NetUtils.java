@@ -24,7 +24,7 @@ public class NetUtils {
                     continue;
                 }
                 Enumeration<InetAddress> inetAddresses = ni.getInetAddresses();
-                if (inetAddresses.hasMoreElements()) {
+                while (inetAddresses.hasMoreElements()) {
                     InetAddress address = inetAddresses.nextElement();
                     if (!address.isLoopbackAddress()) {
                         if (address.getHostAddress().equalsIgnoreCase("127.0.0.1")) {

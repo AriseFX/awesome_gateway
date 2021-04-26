@@ -9,6 +9,8 @@ import lombok.SneakyThrows;
 import net.openhft.chronicle.core.OS;
 import org.jctools.queues.SpscArrayQueue;
 
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.arise.linux.NativeSupport.*;
@@ -24,7 +26,12 @@ public class AwesomeEventLoop implements Runnable {
 
     private static final AtomicInteger counter = new AtomicInteger();
 
-    private SpscArrayQueue<FdEvent> threadNoticeQueue;
+    /**
+     * 线程通信无锁队列
+     */
+    private Queue<FdEvent> threadNoticeQueue;
+
+    private Queue<FdEvent> scheduledQueue;
 
     private int ep_fd;
 
@@ -41,6 +48,7 @@ public class AwesomeEventLoop implements Runnable {
         this.events = new EpollEventArray(4096);
         this.ep_fd = epollCreate();
         this.threadNoticeQueue = new SpscArrayQueue<>(eventQueueSize);
+        this.scheduledQueue = new PriorityQueue<>();
         this.loopThread = new Thread(this, "awesome-gateway-worker-thread_" + counter.getAndIncrement());
         //实现final关键字的语义（避免storeStore重排序）
         OS.memory().storeFence();

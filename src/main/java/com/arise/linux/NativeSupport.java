@@ -10,7 +10,7 @@ public class NativeSupport {
 
     static {
         //默认打包路径
-        System.load("/usr/lib/com_arise_linux_NativeSupport.so");
+        System.load("/mnt/d/work/project/OpenHft/awesome_gateway/docker/com_arise_linux_NativeSupport.so");
     }
 
     /**

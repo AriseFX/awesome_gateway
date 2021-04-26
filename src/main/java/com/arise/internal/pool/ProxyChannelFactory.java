@@ -11,30 +11,30 @@ import org.apache.commons.pool2.impl.DefaultPooledObject;
  * @Modified: By：
  */
 //@Component
-public class ProxyChannelFactory implements PooledObjectFactory<SocketChannel> {
+public class ProxyChannelFactory implements PooledObjectFactory<AwesomeSocketChannel> {
 
     @Override
-    public PooledObject<SocketChannel> makeObject() {
-        return new DefaultPooledObject<>(new SocketChannel(null, null));
+    public PooledObject<AwesomeSocketChannel> makeObject() {
+        return new DefaultPooledObject<>(new AwesomeSocketChannel(null));
     }
 
     @Override
-    public void destroyObject(PooledObject<SocketChannel> p) {
+    public void destroyObject(PooledObject<AwesomeSocketChannel> p) {
 
     }
 
     @Override
-    public boolean validateObject(PooledObject<SocketChannel> p) {
+    public boolean validateObject(PooledObject<AwesomeSocketChannel> p) {
         return false;
     }
 
     @Override
-    public void activateObject(PooledObject<SocketChannel> p) {
+    public void activateObject(PooledObject<AwesomeSocketChannel> p) {
 
     }
 
     @Override
-    public void passivateObject(PooledObject<SocketChannel> p) {
+    public void passivateObject(PooledObject<AwesomeSocketChannel> p) {
 
     }
 }

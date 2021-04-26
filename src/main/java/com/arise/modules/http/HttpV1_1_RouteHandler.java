@@ -1,7 +1,7 @@
 package com.arise.modules.http;
 
 import com.arise.internal.chain.ChainContext;
-import com.arise.internal.pool.SocketChannel;
+import com.arise.internal.pool.AwesomeSocketChannel;
 import com.arise.modules.ProtocolHandler;
 import io.netty.channel.epoll.Native;
 import io.netty.channel.unix.FileDescriptor;
@@ -23,9 +23,9 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
     public void handleRequest(ChainContext ctx, Object msg) {
         try {
             HttpServerRequest request = (HttpServerRequest) msg;
-            SocketChannel channel = new SocketChannel(
-                    new InetSocketAddress("172.16.110.77", 8099), null);
-            //TODO 连接复用
+            AwesomeSocketChannel channel = new AwesomeSocketChannel(
+                    new InetSocketAddress("192.168.150.102", 8099));
+            //TODO 连接复用 超时处理
             channel.connect();
             if (ctx.inEventLoop()) {
                 FileDescriptor currentFd = ctx.getCurrentFd();

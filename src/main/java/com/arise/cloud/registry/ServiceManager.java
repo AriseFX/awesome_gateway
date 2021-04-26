@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Description: 主要用于管理服务节点
  * @Modified: By：
  */
-@Component
+//@Component
 @ThreadSafe
 public class ServiceManager {
 

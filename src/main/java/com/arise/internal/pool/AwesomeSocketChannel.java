@@ -5,7 +5,6 @@ import io.netty.channel.unix.Socket;
 import lombok.SneakyThrows;
 import net.openhft.chronicle.core.OS;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -16,29 +15,24 @@ import java.nio.ByteBuffer;
  * @Description:
  * @Modified: By：
  */
-public class SocketChannel {
+public class AwesomeSocketChannel {
 
     public Socket socket;
 
     private InetSocketAddress remote;
 
-    private InetSocketAddress local;
-
     private boolean active;
 
-    public SocketChannel(InetSocketAddress remoteAddress, @Nullable InetSocketAddress localAddress) {
+    public AwesomeSocketChannel(InetSocketAddress remoteAddress) {
+        //非阻塞状态的socket文件
         this.socket = Socket.newSocketStream();
         this.remote = remoteAddress;
-        this.local = localAddress;
         OS.memory().storeFence();
     }
 
     @SneakyThrows
     public void connect() {
         try {
-            if (this.local != null) {
-                socket.bind(local);
-            }
             boolean connected = socket.connect(remote);
             //TODO 发起一个epoll_out事件去监听连接成功事件
             //暂时先直接sleep
