@@ -1,4 +1,4 @@
-gcc -fPIC -I /usr/lib/jvm/java-8-openjdk-amd64/include -I /usr/lib/jvm/java-8-openjdk-amd64/include/linux -c com_arise_linux_NativeSupport.c
+gcc -fPIC -I /home/java/jdk1.8.0_291/include -I /home/java/jdk1.8.0_291/include/linux -c com_arise_linux_NativeSupport.c
 gcc -shared com_arise_linux_NativeSupport.o -o com_arise_linux_NativeSupport.so
 
 

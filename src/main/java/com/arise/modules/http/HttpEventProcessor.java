@@ -1,7 +1,7 @@
 package com.arise.modules.http;
 
 import com.arise.internal.chain.HandleChain;
-import com.arise.modules.ReadEventProcessor;
+import com.arise.modules.EventProcessor;
 import com.arise.server.AwesomeEventLoop;
 import io.netty.channel.unix.FileDescriptor;
 
@@ -12,7 +12,7 @@ import io.netty.channel.unix.FileDescriptor;
  * @Description:
  * @Modified: By：
  */
-public class HttpRouteReadEventProcessor implements ReadEventProcessor {
+public class HttpEventProcessor implements EventProcessor {
     @Override
     public void doProcess(FileDescriptor fd, AwesomeEventLoop eventLoop) {
         HandleChain chain = new HandleChain();

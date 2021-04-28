@@ -13,7 +13,7 @@ import java.io.IOException;
  * @Modified: By：
  */
 @FunctionalInterface
-public interface ReadEventProcessor {
+public interface EventProcessor {
 
     void doProcess(FileDescriptor fd, AwesomeEventLoop eventLoop) throws IOException;
 }

@@ -24,6 +24,12 @@ public class NativeSupport {
 
     public static native int epollCreate();
 
+    //TODO
+    public static native int eventFd();
+
+    //TODO
+    public static native void write2EventFd(int eventFd);
+
     /**
      * 获取data在epoll_event struct中的偏移量
      */

@@ -24,7 +24,7 @@ public class ServerProperties {
     /**
      * 端口
      */
-    private Integer port;
+    private int port;
     /**
      * 地址
      */
@@ -33,6 +33,8 @@ public class ServerProperties {
      * 开启keepalive后，gateway会连接复用
      */
     private boolean keepalive;
+
+    private int subReactorNum;
     /**
      * 注册中心相关
      */

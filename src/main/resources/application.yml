@@ -3,6 +3,7 @@ gateway:
   address: 0.0.0.0
   #连接复用
   keepalive: true
+  subReactorNum: 1
   registry:
     nacos:
       serverAddr: 192.168.10.224:8848
