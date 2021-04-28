@@ -70,7 +70,7 @@ public class ServerRunner implements CommandLineRunner {
         //创建epoll_event array
         EpollEventArray events = new EpollEventArray(4096);
         for (; ; ) {
-            int i = epollWait0(ep_fd, events.memoryAddress(), cap, -1);
+            int i = epollWait0(ep_fd, events.memoryAddress(), cap, -1, -1);
             if (i > 0) {
                 for (int index = 0; index < i; index++) {
                     int event = events.events(index);
@@ -101,20 +101,18 @@ public class ServerRunner implements CommandLineRunner {
      */
     private AwesomeEventLoop getAndInitSubReactor() throws IOException {
         int index;
-        if (isPowerOfTwo(subReactorNum)) {
+        int val = subReactorNum;
+        //jit会优化代码分支
+        if ((val & -val) == val) {
             //2的n次方性能最优
-            index = (int) (counter.getAndIncrement() & subReactorNum - 1);
+            index = (int) (counter.getAndIncrement() & val - 1);
         } else {
-            index = (int) Math.abs(counter.getAndIncrement() % subReactorNum);
+            index = (int) Math.abs(counter.getAndIncrement() % val);
         }
         if (subEventLoops[index] == null) {
             subEventLoops[index] = new AwesomeEventLoop(20);
         }
         return subEventLoops[index];
-    }
-
-    private static boolean isPowerOfTwo(int val) {
-        return (val & -val) == val;
     }
 }
 

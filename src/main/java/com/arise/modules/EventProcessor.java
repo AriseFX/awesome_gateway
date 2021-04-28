@@ -15,5 +15,5 @@ import java.io.IOException;
 @FunctionalInterface
 public interface EventProcessor {
 
-    void doProcess(FileDescriptor fd, AwesomeEventLoop eventLoop) throws IOException;
+    void doProcess(FileDescriptor callback_fd, AwesomeEventLoop callback_eventLoop) throws IOException;
 }

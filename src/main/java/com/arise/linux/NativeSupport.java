@@ -14,9 +14,11 @@ public class NativeSupport {
     }
 
     /**
+     * 使用timerFd来控制timeout
+     *
      * @param address ep_event（）
      */
-    public static native int epollWait0(int efd, long address, int len, int timeout);
+    public static native int epollWait0(int efd, long address, int len, int timerFd, int timeout);
 
     public static native int epollCtlAdd0(int efd, int fd, int flags);
 
@@ -26,6 +28,9 @@ public class NativeSupport {
 
     //TODO
     public static native int eventFd();
+
+    //TODO
+    public static native int timerFd();
 
     //TODO
     public static native void write2EventFd(int eventFd);

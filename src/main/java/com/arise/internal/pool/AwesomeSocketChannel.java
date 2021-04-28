@@ -1,5 +1,6 @@
 package com.arise.internal.pool;
 
+import com.arise.internal.future.Promise;
 import com.arise.modules.Bufferable;
 import io.netty.channel.unix.Socket;
 import lombok.SneakyThrows;
@@ -8,6 +9,7 @@ import net.openhft.chronicle.core.OS;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.concurrent.Future;
 
 /**
  * @Author: wy

@@ -19,7 +19,7 @@ import static io.netty.channel.epoll.Native.*;
 /**
  * @Author: wy
  * @Date: Created in 15:43 2021-04-15
- * @Description: sub Reactor
+ * @Description: Sub Reactor
  * @Modified: By：
  */
 @SuppressWarnings("all")
@@ -33,9 +33,13 @@ public class AwesomeEventLoop implements Runnable {
     //唤醒Reactor专用
     private int wakeupFd;
 
-    private PriorityQueue<ScheduledTask> scheduledQueue;
-
+    //Readctor本身
     private int ep_fd;
+
+    //定时任务专用
+    private int timerFd;
+
+    private PriorityQueue<ScheduledTask> scheduledQueue;
 
     public Thread loopThread;
 
@@ -46,24 +50,17 @@ public class AwesomeEventLoop implements Runnable {
 
     public AwesomeEventLoop(int eventQueueSize) throws IOException {
         this.events = new EpollEventArray(4096);
+        //TODO 使用pipe还是eventfd？
+        this.wakeupFd = eventFd();
         this.ep_fd = epollCreate();
         this.threadNoticeQueue = new SpscArrayQueue<>(eventQueueSize);
         this.scheduledQueue = new PriorityQueue<>(ScheduledTask::compareTo);
         this.loopThread = new Thread(this, "awesome-gateway-worker-io-thread_" + counter.getAndIncrement());
-        //TODO 使用pipe还是eventfd？
-        wakeupFd = eventFd();
+        //上epoll树
+        epollCtlAdd0(ep_fd, wakeupFd, EPOLLIN | EPOLLET);
         //避免storeStore重排序
         OS.memory().storeFence();
         loopThread.start();
-    }
-
-    public void pushFd(FileDescriptor fd, EventProcessor processor) {
-        threadNoticeQueue.offer(fd);
-        fpMapping.put(fd.intValue(), processor);
-        if (Thread.currentThread() != loopThread) {
-            //用来唤醒阻塞状态的reactor
-            write2EventFd(wakeupFd);
-        }
     }
 
     @SneakyThrows
@@ -71,16 +68,16 @@ public class AwesomeEventLoop implements Runnable {
     public void run() {
         for (; ; ) {
             FileDescriptor polledFD = threadNoticeQueue.poll();
-            //定时任务相关
             if (polledFD != null) {
                 epollCtlAdd0(ep_fd, polledFD.intValue(), EPOLLIN | EPOLLET);
             }
-            int timeout = 1;
+            int timeout = -1;
+            //定时任务相关
             ScheduledTask task = scheduledQueue.poll();
             if (task != null) {
-
+                timeout = task.getTimeout();
             }
-            int i = epollWait0(ep_fd, events.memoryAddress(), 4096, timeout);
+            int i = epollWait0(ep_fd, events.memoryAddress(), 4096, timerFd(), timeout);
             if (i > 0) {
                 for (int index = 0; index < i; index++) {
                     int event = events.events(index);
@@ -100,11 +97,24 @@ public class AwesomeEventLoop implements Runnable {
         }
     }
 
+    public void pushFd(FileDescriptor fd, EventProcessor processor) {
+        threadNoticeQueue.offer(fd);
+        fpMapping.put(fd.intValue(), processor);
+        if (Thread.currentThread() != loopThread) {
+            //用来唤醒阻塞状态的reactor
+            write2EventFd(wakeupFd);
+        }
+    }
+
     /**
      * 提交定时任务到Reactor
      */
     public void scheduled(ScheduledTask task, EventProcessor processor) {
         scheduledQueue.offer(task);
         fpMapping.put(task.getFd(), processor);
+    }
+
+    public void newAwesomeChannel() {
+
     }
 }
