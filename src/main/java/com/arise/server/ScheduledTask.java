@@ -1,6 +1,7 @@
 package com.arise.server;
 
-import org.jetbrains.annotations.NotNull;
+import com.arise.modules.EventProcessor;
+import com.arise.modules.TimerReadyProcessor;
 
 /**
  * @Author: wy
@@ -8,30 +9,28 @@ import org.jetbrains.annotations.NotNull;
  * @Description: 调度任务
  * @Modified: By：
  */
-public class ScheduledTask implements Comparable<Object> {
+public class ScheduledTask implements Comparable<ScheduledTask> {
 
-    private final int fd;
-
-    //超时(毫秒)
+    //超时(秒)
     private final int timeout;
 
-    private int compare;
+    private final TimerReadyProcessor processor;
 
-    public ScheduledTask(int fd, int timeout) {
-        this.fd = fd;
+    public ScheduledTask(int timeout, TimerReadyProcessor processor) {
         this.timeout = timeout;
-    }
-
-    @Override
-    public int compareTo(@NotNull Object o) {
-        return 0;
-    }
-
-    public int getFd() {
-        return this.fd;
+        this.processor = processor;
     }
 
     public int getTimeout() {
         return this.timeout;
+    }
+
+    public EventProcessor getProcess() {
+        return this.processor;
+    }
+
+    @Override
+    public int compareTo(ScheduledTask o) {
+        return timeout - o.getTimeout();
     }
 }

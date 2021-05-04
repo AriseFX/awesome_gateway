@@ -13,17 +13,14 @@ public class ChainContext {
 
     private final FileDescriptor currentFd;
 
-    /**
-     * 当前线程是否和当前eventLoop所属线程一致
-     */
-    public boolean inEventLoop() {
-        return eventLoop.loopThread == Thread.currentThread();
-    }
 
     public AwesomeEventLoop getEventLoop() {
         return this.eventLoop;
     }
 
+    /**
+     * 当前上下文的文件描述符
+     */
     public FileDescriptor getCurrentFd() {
         return this.currentFd;
     }
@@ -38,17 +35,5 @@ public class ChainContext {
         }
         node.handler.handleRequest(ctx, msg);
     }
-
-    /**
-     * 执行下个写处理器
-     */
-    public void fireNextWriteHandler(ChainContext ctx, Object msg) {
-        if (node == null || node.handler == null) {
-            return;
-        }
-        node.handler.handleResponse(ctx, msg);
-        node = node.prev;
-    }
-
 
 }

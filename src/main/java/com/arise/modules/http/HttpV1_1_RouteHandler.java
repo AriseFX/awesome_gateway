@@ -22,17 +22,16 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
 
     @Override
     public void handleRequest(ChainContext ctx, Object msg) {
-        try {
-            HttpServerRequest request = (HttpServerRequest) msg;
-            AwesomeEventLoop eventLoop = ctx.getEventLoop();
+        HttpServerRequest request = (HttpServerRequest) msg;
+        FileDescriptor currentFd = ctx.getCurrentFd();
+        AwesomeEventLoop eventLoop = ctx.getEventLoop();
 
-
-            AwesomeSocketChannel channel = new AwesomeSocketChannel(
-                    new InetSocketAddress("192.168.150.102", 8099));
-            //TODO 连接复用 超时处理
-            channel.connect();
-            if (ctx.inEventLoop()) {
-                FileDescriptor currentFd = ctx.getCurrentFd();
+        AwesomeSocketChannel channel = eventLoop.newAwesomeChannel(
+                new InetSocketAddress("192.168.150.102", 8099));
+        //TODO 连接复用 超时处理
+        //连接成功后执行write
+        channel.connect(10000, () -> {
+            try {
                 //创建pipe用于socket splice
                 FileDescriptor[] reqPipe = pipe();
                 //先写不完整的http
@@ -43,23 +42,19 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
                     Native.splice(currentFd.intValue(), -1, reqPipe[1].intValue(), -1, contentLength);
                     Native.splice(reqPipe[0].intValue(), -1, channel.socket.intValue(), -1, contentLength);
                 }
-                ctx.getEventLoop().pushFd(new FileDescriptor(channel.socket.intValue()),
-                        (callback_fd, callback_ep) -> {
+                eventLoop.pushFd(new FileDescriptor(channel.socket.intValue()),
+                        (i_callback_fd, i_callback_ep) -> {
                             //[0] = read end, [1] = write end
                             FileDescriptor[] respPipe = pipe();
                             //转发给客户端
                             //TODO 连接复用的情况下len如何考虑？
-                            Native.splice(callback_fd.intValue(), -1, respPipe[1].intValue(), -1, 1 << 30);
-                            Native.splice(respPipe[0].intValue(), -1, ctx.getCurrentFd().intValue(), -1, 1 << 30);
+                            Native.splice(i_callback_fd.intValue(), -1, respPipe[1].intValue(), -1, 1 << 30);
+                            Native.splice(respPipe[0].intValue(), -1, currentFd.intValue(), -1, 1 << 30);
                         });
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void handleResponse(ChainContext ctx, Object msg) {
+        });
 
     }
 

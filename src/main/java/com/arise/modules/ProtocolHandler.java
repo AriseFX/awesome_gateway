@@ -13,7 +13,4 @@ import java.io.IOException;
 public interface ProtocolHandler {
 
     void handleRequest(ChainContext ctx, Object msg);
-
-    void handleResponse(ChainContext ctx, Object msg);
-
 }

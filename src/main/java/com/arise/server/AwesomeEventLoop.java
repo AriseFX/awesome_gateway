@@ -1,5 +1,6 @@
 package com.arise.server;
 
+import com.arise.internal.pool.AwesomeSocketChannel;
 import com.arise.modules.EventProcessor;
 import io.netty.channel.unix.FileDescriptor;
 import io.netty.util.collection.IntObjectHashMap;
@@ -9,6 +10,7 @@ import net.openhft.chronicle.core.OS;
 import org.jctools.queues.SpscArrayQueue;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,7 +43,7 @@ public class AwesomeEventLoop implements Runnable {
 
     private PriorityQueue<ScheduledTask> scheduledQueue;
 
-    public Thread loopThread;
+    public Thread currentThread;
 
     private EpollEventArray events;
 
@@ -52,15 +54,16 @@ public class AwesomeEventLoop implements Runnable {
         this.events = new EpollEventArray(4096);
         //TODO 使用pipe还是eventfd？
         this.wakeupFd = eventFd();
+        this.timerFd = timerFd();
         this.ep_fd = epollCreate();
         this.threadNoticeQueue = new SpscArrayQueue<>(eventQueueSize);
-        this.scheduledQueue = new PriorityQueue<>(ScheduledTask::compareTo);
-        this.loopThread = new Thread(this, "awesome-gateway-worker-io-thread_" + counter.getAndIncrement());
+        this.scheduledQueue = new PriorityQueue<ScheduledTask>(ScheduledTask::compareTo);
+        this.currentThread = new Thread(this, "awesome-gateway-worker-io-thread_" + counter.getAndIncrement());
         //上epoll树
         epollCtlAdd0(ep_fd, wakeupFd, EPOLLIN | EPOLLET);
         //避免storeStore重排序
         OS.memory().storeFence();
-        loopThread.start();
+        currentThread.start();
     }
 
     @SneakyThrows
@@ -69,7 +72,7 @@ public class AwesomeEventLoop implements Runnable {
         for (; ; ) {
             FileDescriptor polledFD = threadNoticeQueue.poll();
             if (polledFD != null) {
-                epollCtlAdd0(ep_fd, polledFD.intValue(), EPOLLIN | EPOLLET);
+                epollCtlAdd0(ep_fd, polledFD.intValue(), EPOLLOUT | EPOLLIN | EPOLLET);
             }
             int timeout = -1;
             //定时任务相关
@@ -77,19 +80,25 @@ public class AwesomeEventLoop implements Runnable {
             if (task != null) {
                 timeout = task.getTimeout();
             }
-            int i = epollWait0(ep_fd, events.memoryAddress(), 4096, timerFd(), timeout);
+            //timeout使用timerFd对应的定时器
+            int i = epollWait0(ep_fd, events.memoryAddress(), 4096, timerFd, timeout, 0);
             if (i > 0) {
                 for (int index = 0; index < i; index++) {
                     int event = events.events(index);
-                    if ((event & (EPOLLERR | EPOLLOUT)) != 0) {
-                        System.out.println("writeable");
-                    }
-                    if ((event & (EPOLLERR | EPOLLIN)) != 0) {
-                        FileDescriptor conn_fd = new FileDescriptor(events.fd(index));
-                        //处理epoll_in事件
-                        EventProcessor processor = fpMapping.remove(conn_fd.intValue());
-                        if (processor != null) {
-                            processor.doProcess(conn_fd, this);
+                    if ((event & (EPOLLERR | EPOLLIN | EPOLLOUT)) != 0) {
+                        int fd = events.fd(index);
+                        //各种fd
+                        if (fd == timerFd) {
+                            task.getProcess().doProcess(new FileDescriptor(fd), this);
+                        } else if (fd == wakeupFd) {
+                            /*void*/
+                        } else {
+                            FileDescriptor conn_fd = new FileDescriptor(fd);
+                            //处理epoll事件
+                            EventProcessor processor = fpMapping.remove(fd);
+                            if (processor != null) {
+                                processor.doProcess(conn_fd, this);
+                            }
                         }
                     }
                 }
@@ -97,10 +106,16 @@ public class AwesomeEventLoop implements Runnable {
         }
     }
 
+    /**
+     * 提交任务到Reactor
+     *
+     * @param fd
+     * @param processor
+     */
     public void pushFd(FileDescriptor fd, EventProcessor processor) {
         threadNoticeQueue.offer(fd);
         fpMapping.put(fd.intValue(), processor);
-        if (Thread.currentThread() != loopThread) {
+        if (Thread.currentThread() != currentThread) {
             //用来唤醒阻塞状态的reactor
             write2EventFd(wakeupFd);
         }
@@ -109,12 +124,14 @@ public class AwesomeEventLoop implements Runnable {
     /**
      * 提交定时任务到Reactor
      */
-    public void scheduled(ScheduledTask task, EventProcessor processor) {
+    public void scheduled(ScheduledTask task) {
         scheduledQueue.offer(task);
-        fpMapping.put(task.getFd(), processor);
     }
 
-    public void newAwesomeChannel() {
-
+    /**
+     * 创建socket channel
+     */
+    public AwesomeSocketChannel newAwesomeChannel(InetSocketAddress remote) {
+        return new AwesomeSocketChannel(this, remote);
     }
 }

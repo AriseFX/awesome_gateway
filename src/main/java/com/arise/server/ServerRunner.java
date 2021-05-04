@@ -70,7 +70,7 @@ public class ServerRunner implements CommandLineRunner {
         //创建epoll_event array
         EpollEventArray events = new EpollEventArray(4096);
         for (; ; ) {
-            int i = epollWait0(ep_fd, events.memoryAddress(), cap, -1, -1);
+            int i = epollWait0(ep_fd, events.memoryAddress(), cap, -1, -1, -1);
             if (i > 0) {
                 for (int index = 0; index < i; index++) {
                     int event = events.events(index);

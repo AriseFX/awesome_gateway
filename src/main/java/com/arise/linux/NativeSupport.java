@@ -14,11 +14,13 @@ public class NativeSupport {
     }
 
     /**
-     * 使用timerFd来控制timeout
+     * 使用timerFd来控制timeout（高精度定时器）
      *
-     * @param address ep_event（）
+     * @param address    ep_event（）
+     * @param timeoutSec 秒
+     * @param timeoutSec 纳秒
      */
-    public static native int epollWait0(int efd, long address, int len, int timerFd, int timeout);
+    public static native int epollWait0(int efd, long address, int len, int timerFd, int timeoutSec, int timeoutNsec);
 
     public static native int epollCtlAdd0(int efd, int fd, int flags);
 

@@ -8,7 +8,7 @@ import java.util.concurrent.ThreadFactory;
  * @Description: cpu亲和的线程工厂
  * @Modified: By：
  */
-public class AffinityThreadFactory implements ThreadFactory {
+public class AwesomeThreadFactory implements ThreadFactory {
 
     @Override
     public Thread newThread(Runnable r) {

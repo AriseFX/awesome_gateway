@@ -15,7 +15,7 @@ public class ProxyChannelFactory implements PooledObjectFactory<AwesomeSocketCha
 
     @Override
     public PooledObject<AwesomeSocketChannel> makeObject() {
-        return new DefaultPooledObject<>(new AwesomeSocketChannel(null));
+        return new DefaultPooledObject<>(new AwesomeSocketChannel(null, null));
     }
 
     @Override

@@ -12,57 +12,57 @@ extern "C" {
  * Method:    epollWait0
  * Signature: (IJII)I
  */
-JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollWait0
-        (JNIEnv *env, jclass jc, jint efd, jlong address, jint len, jint timeout);
+JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollWait0(
+    JNIEnv *env, jclass jc, jint efd, jlong address, jint len, jint timerfd,
+    jint timeoutSec, jint timeoutNsec);
 
 /*
  * Class:     com_arise_linux_NativeSupport
  * Method:    epollCtlAdd0
  * Signature: (III)I
  */
-JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollCtlAdd0
-        (JNIEnv *env, jclass jc, jint efd, jint fd, jint flags);
+JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollCtlAdd0(
+    JNIEnv *env, jclass jc, jint efd, jint fd, jint flags);
 
 /*
  * Class:     com_arise_linux_NativeSupport
  * Method:    sizeofEpollEvent
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_sizeofEpollEvent
-        (JNIEnv *env, jclass jc);
+JNIEXPORT jint JNICALL
+Java_com_arise_linux_NativeSupport_sizeofEpollEvent(JNIEnv *env, jclass jc);
 
 /*
  * Class:     com_arise_linux_NativeSupport
  * Method:    epollCreate
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollCreate
-        (JNIEnv *env, jclass jc);
+JNIEXPORT jint JNICALL
+Java_com_arise_linux_NativeSupport_epollCreate(JNIEnv *env, jclass jc);
 
 /*
  * Class:     com_arise_linux_NativeSupport
  * Method:    offsetofEpollData
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_offsetofEpollData
-        (JNIEnv *env, jclass jc);
+JNIEXPORT jint JNICALL
+Java_com_arise_linux_NativeSupport_offsetofEpollData(JNIEnv *env, jclass jc);
 
 /*
  * Class:     com_arise_linux_NativeSupport
  * Method:    eventFd
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_eventFd
-    (JNIEnv *env, jclass jc);
-
+JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_eventFd(JNIEnv *env,
+                                                                  jclass jc);
 
 /*
  * Class:     com_arise_linux_NativeSupport
  * Method:    write2EventFd
  * Signature: (I)I
  */
-JNIEXPORT void JNICALL Java_com_arise_linux_NativeSupport_write2EventFd
-    (JNIEnv *env, jclass jc, jint fd);
+JNIEXPORT void JNICALL Java_com_arise_linux_NativeSupport_write2EventFd(
+    JNIEnv *env, jclass jc, jint fd);
 
 #ifdef __cplusplus
 }

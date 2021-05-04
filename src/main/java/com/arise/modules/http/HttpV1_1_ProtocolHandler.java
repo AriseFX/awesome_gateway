@@ -149,11 +149,6 @@ public class HttpV1_1_ProtocolHandler implements ProtocolHandler {
         }
     }
 
-    @Override
-    public void handleResponse(ChainContext ctx, Object msg) {
-
-    }
-
     /**
      * 读取头部
      */

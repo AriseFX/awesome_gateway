@@ -9,16 +9,26 @@
 #include <unistd.h>
 
 JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollWait0(
-    JNIEnv *env, jclass jc, jint efd, jlong address, jint len, jint timeout) {
+    JNIEnv *env, jclass jc, jint efd, jlong address, jint len, jint timerfd,
+    jint timeoutSec, jint timeoutNsec) {
+  //设置定时器相关属性
+  if (timeoutSec != -1 && timeoutNsec != -1) {
+    // TODO 确定在C栈分配？
+    struct itimerspec spec;
+    spec.it_interval.tv_sec = timeoutSec;   // Seconds
+    spec.it_interval.tv_nsec = timeoutNsec; // Nanoseconds
+    if (timerfd_settime(timerfd, 0, &spec, NULL)<0) {
+      return -1;
+    }
+  }
   // address是java里malloc的
   struct epoll_event *ev = (struct epoll_event *)(intptr_t)address;
   int result, err;
   do {
-    result = epoll_wait(efd, ev, len, timeout);
+    result = epoll_wait(efd, ev, len, -1);
     if (result >= 0) {
       return result;
     }
-    //处理被信号打断
   } while ((err = errno) == EINTR);
   return -err;
 }
