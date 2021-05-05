@@ -40,26 +40,24 @@ public class AwesomeSocketChannel {
     public void connect(int timeout, Runnable command) {
         try {
             boolean connected = socket.connect(remote);
+            Test.socket = socket.intValue();
             if (connected) {
                 command.run();
             } else {
-                eventLoop.pushFd(socket, (WriteReadyProcessor) (callback_fd, callback_eventLoop) ->
+                eventLoop.pushFd(socket.intValue(), (WriteReadyProcessor) (callback_fd, callback_eventLoop) ->
                         command.run()
                 );
                 //超时执行
-                eventLoop.scheduled(new ScheduledTask(timeout,
+                /*eventLoop.scheduled(new ScheduledTask(timeout,
                         (callback_fd, callback_eventLoop) -> {
                             //TODO epollCTL移除事件
                             log.error("连接超时!");
-                        }));
+                        }));*/
             }
-            //TODO 发起一个epoll_out事件去监听连接成功事件
-            //暂时先直接sleep
-            Thread.sleep(100);
             if (connected) {
                 active = true;
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

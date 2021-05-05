@@ -26,6 +26,14 @@ JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollCtlAdd0(
 
 /*
  * Class:     com_arise_linux_NativeSupport
+ * Method:    epollCtlModify0
+ * Signature: (III)I
+ */
+JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollCtlModify0(
+    JNIEnv *env, jclass jc, jint efd, jint fd, jint flags);
+
+/*
+ * Class:     com_arise_linux_NativeSupport
  * Method:    sizeofEpollEvent
  * Signature: ()I
  */

@@ -1,7 +1,7 @@
 package com.arise.server;
 
 import com.arise.config.ServerProperties;
-import com.arise.modules.http.HttpEventProcessor;
+import com.arise.modules.http.ReadEventProcessorChain;
 import io.netty.channel.epoll.Native;
 import io.netty.channel.unix.FileDescriptor;
 import io.netty.channel.unix.Socket;
@@ -86,8 +86,8 @@ public class ServerRunner implements CommandLineRunner {
                                 if (connFd < 0) {
                                     break;
                                 }
-                                getAndInitSubReactor().pushFd(new FileDescriptor(connFd),
-                                        new HttpEventProcessor());
+                                getAndInitSubReactor().pushFd(connFd,
+                                        new ReadEventProcessorChain());
                             }
                         }
                     }

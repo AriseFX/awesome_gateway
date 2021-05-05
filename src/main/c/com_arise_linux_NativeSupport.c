@@ -17,7 +17,7 @@ JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollWait0(
     struct itimerspec spec;
     spec.it_interval.tv_sec = timeoutSec;   // Seconds
     spec.it_interval.tv_nsec = timeoutNsec; // Nanoseconds
-    if (timerfd_settime(timerfd, 0, &spec, NULL)<0) {
+    if (timerfd_settime(timerfd, 0, &spec, NULL) < 0) {
       return -1;
     }
   }
@@ -38,6 +38,13 @@ JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollCtlAdd0(
   uint32_t events = flags;
   struct epoll_event ev = {.events = events, .data.fd = fd};
   return epoll_ctl(efd, EPOLL_CTL_ADD, fd, &ev);
+}
+
+JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollCtlModify0(
+    JNIEnv *env, jclass jc, jint efd, jint fd, jint flags) {
+  uint32_t events = flags;
+  struct epoll_event ev = {.events = events, .data.fd = fd};
+  return epoll_ctl(efd, EPOLL_CTL_MOD, fd, &ev);
 }
 
 JNIEXPORT jint JNICALL
@@ -72,6 +79,6 @@ JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_timerFd(JNIEnv *env,
 JNIEXPORT void JNICALL Java_com_arise_linux_NativeSupport_write2EventFd(
     JNIEnv *env, jclass jc, jint fd) {
   //考虑让上层传参？
-  int a = 1;
-  write(fd, &a, sizeof(uint8_t));
+  int64_t a = 1;
+  write(fd, &a, sizeof(int64_t));
 }
