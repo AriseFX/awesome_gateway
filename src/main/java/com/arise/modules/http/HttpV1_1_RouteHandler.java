@@ -48,16 +48,16 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
                 eventLoop.pushFd(channel.socket.intValue(),
                         (ReadReadyProcessor) (i_callback_fd, i_callback_ep) -> {
                             //[0] = read end, [1] = write end
-                            try {
-                                Thread.sleep(1);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
+//                            try {
+//                                Thread.sleep(1);
+//                            } catch (InterruptedException e) {
+//                                e.printStackTrace();
+//                            }
                             FileDescriptor[] respPipe = pipe();
                             //转发给客户端
                             //TODO 连接复用的情况下len如何考虑？
-                            int toPipe = Native.splice(i_callback_fd.intValue(), -1, respPipe[1].intValue(), -1, 1 << 30);
-                            int toSocket = Native.splice(respPipe[0].intValue(), -1, currentFd.intValue(), -1, 1 << 30);
+                            int toPipe = Native.splice(i_callback_fd.intValue(), -1, respPipe[1].intValue(), -1, 0x7fffffff);
+                            int toSocket = Native.splice(respPipe[0].intValue(), -1, currentFd.intValue(), -1, 0x7fffffff);
                             log.info("toPipe:{},toSocket:{}", toPipe, toSocket);
                         });
             } catch (IOException e) {

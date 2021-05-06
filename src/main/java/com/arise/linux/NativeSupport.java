@@ -26,6 +26,8 @@ public class NativeSupport {
 
     public static native int epollCtlModify0(int efd, int fd, int flags);
 
+    public static native int epollCtlDel0(int efd, int fd);
+
     public static native int sizeofEpollEvent();
 
     public static native int epollCreate();

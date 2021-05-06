@@ -89,23 +89,28 @@ public class AwesomeEventLoop implements Runnable {
             if (i > 0) {
                 for (int index = 0; index < i; index++) {
                     int event = events.events(index);
+                    int fd = events.fd(index);
+                    //正常的逻辑
                     if ((event & (EPOLLERR | EPOLLIN)) != 0) {
-                        int fd = events.fd(index);
                         if (fd == timerFd) {
                             sTask.getProcess().doProcess(new FileDescriptor(fd), this);
                             System.out.println("时间到了：" + timeout);
                         } else if (fd == wakeupFd) {
                             /*void*/
                         } else {
-                            //处理epoll事件
                             EventProcessor processor = fpMapping.remove(fd);
-                            if (processor != null && processor instanceof ReadReadyProcessor) {
+                            if (processor == null) {
+                                epollCtlDel0(ep_fd, fd);
+                            }
+                            if (processor instanceof ReadReadyProcessor) {
                                 processor.doProcess(new FileDescriptor(fd), this);
                             }
                         }
                     } else if ((event & (EPOLLERR | EPOLLOUT)) != 0) {
-                        int fd = events.fd(index);
                         EventProcessor processor = fpMapping.remove(fd);
+                        if (processor == null) {
+                            epollCtlDel0(ep_fd, fd);
+                        }
                         if (processor != null && processor instanceof WriteReadyProcessor) {
                             processor.doProcess(new FileDescriptor(fd), this);
                         }
