@@ -15,8 +15,10 @@ JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollWait0(
   if (timeoutSec != -1 && timeoutNsec != -1) {
     // TODO 确定在C栈分配？
     struct itimerspec spec;
-    spec.it_interval.tv_sec = timeoutSec;   // Seconds
-    spec.it_interval.tv_nsec = timeoutNsec; // Nanoseconds
+    spec.it_interval.tv_sec = 0;
+    spec.it_interval.tv_nsec = 0;
+    spec.it_value.tv_sec = timeoutSec;   // Seconds
+    spec.it_value.tv_nsec = timeoutNsec; // Nanoseconds
     if (timerfd_settime(timerfd, 0, &spec, NULL) < 0) {
       return -1;
     }

@@ -31,7 +31,7 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
 
         AwesomeSocketChannel channel = eventLoop.newAwesomeChannel(
                 new InetSocketAddress("192.168.150.102", 8099));
-        //TODO 连接复用 超时处理
+        //TODO 连接复用
         //连接成功后执行write
         channel.connect(3, () -> {
             try {

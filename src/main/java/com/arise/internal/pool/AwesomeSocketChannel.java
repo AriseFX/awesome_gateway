@@ -1,6 +1,7 @@
 package com.arise.internal.pool;
 
 import com.arise.modules.Bufferable;
+import com.arise.modules.TimerReadyProcessor;
 import com.arise.modules.WriteReadyProcessor;
 import com.arise.server.AwesomeEventLoop;
 import com.arise.server.ScheduledTask;
@@ -40,19 +41,23 @@ public class AwesomeSocketChannel {
     public void connect(int timeout, Runnable command) {
         try {
             boolean connected = socket.connect(remote);
-            Test.socket = socket.intValue();
             if (connected) {
                 command.run();
             } else {
-                eventLoop.pushFd(socket.intValue(), (WriteReadyProcessor) (callback_fd, callback_eventLoop) ->
-                        command.run()
+                eventLoop.pushFd(socket.intValue(),
+                        (WriteReadyProcessor) (callback_fd, callback_eventLoop) ->
+                        {
+                            active = true;
+                            command.run();
+                        }
                 );
-                //超时执行
-                /*eventLoop.scheduled(new ScheduledTask(timeout,
-                        (callback_fd, callback_eventLoop) -> {
-                            //TODO epollCTL移除事件
-                            log.error("连接超时!");
-                        }));*/
+                //处理超时
+                eventLoop.scheduled(new ScheduledTask(timeout,
+                        (TimerReadyProcessor) (callback_fd, callback_eventLoop) -> {
+                            if (!active) {
+                                log.error("连接超时!");
+                            }
+                        }));
             }
             if (connected) {
                 active = true;

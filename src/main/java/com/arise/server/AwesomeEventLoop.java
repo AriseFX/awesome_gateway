@@ -58,6 +58,7 @@ public class AwesomeEventLoop implements Runnable {
         this.currentThread = new Thread(this, "awesome-gateway-worker-io-thread_" + counter.getAndIncrement());
         //上epoll树
         epollCtlAdd0(ep_fd, wakeupFd, EPOLLIN | EPOLLET);
+        epollCtlAdd0(ep_fd, timerFd, EPOLLIN | EPOLLET);
         //避免storeStore重排序
         OS.memory().storeFence();
         currentThread.start();
@@ -83,7 +84,7 @@ public class AwesomeEventLoop implements Runnable {
                     if ((event & (EPOLLERR | EPOLLIN)) != 0) {
                         if (fd == wakeupFd) {
                             /*void*/
-                        } else if (fd == timerFd) {
+                        } else if (fd == timerFd && sTask != null) {
                             sTask.getProcess().doProcess(new FileDescriptor(fd), this);
                         } else {
                             EventProcessor processor = fpMapping.get(fd);
