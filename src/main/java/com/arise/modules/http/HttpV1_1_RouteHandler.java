@@ -47,12 +47,6 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
                 }
                 eventLoop.pushFd(channel.socket.intValue(),
                         (ReadReadyProcessor) (i_callback_fd, i_callback_ep) -> {
-                            //[0] = read end, [1] = write end
-//                            try {
-//                                Thread.sleep(1);
-//                            } catch (InterruptedException e) {
-//                                e.printStackTrace();
-//                            }
                             FileDescriptor[] respPipe = pipe();
                             //转发给客户端
                             //TODO 连接复用的情况下len如何考虑？

@@ -5,18 +5,15 @@ import com.arise.modules.EventProcessor;
 import com.arise.modules.ReadReadyProcessor;
 import com.arise.modules.TimerReadyProcessor;
 import com.arise.modules.WriteReadyProcessor;
-import com.arise.modules.http.ReadEventProcessorChain;
 import io.netty.channel.unix.FileDescriptor;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
 import lombok.SneakyThrows;
 import net.openhft.chronicle.core.OS;
-import org.jctools.queues.SpscArrayQueue;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.PriorityQueue;
-import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.arise.linux.NativeSupport.*;
@@ -32,9 +29,6 @@ import static io.netty.channel.epoll.Native.*;
 public class AwesomeEventLoop implements Runnable {
 
     private static final AtomicInteger counter = new AtomicInteger();
-
-    //线程通信无锁队列
-    private Queue<CommonTask> threadNoticeQueue;
 
     //唤醒Reactor专用
     private int wakeupFd;
@@ -60,7 +54,6 @@ public class AwesomeEventLoop implements Runnable {
         this.wakeupFd = eventFd();
         this.timerFd = timerFd();
         this.ep_fd = epollCreate();
-        this.threadNoticeQueue = new SpscArrayQueue<>(eventQueueSize);
         this.scheduledQueue = new PriorityQueue<ScheduledTask>(ScheduledTask::compareTo);
         this.currentThread = new Thread(this, "awesome-gateway-worker-io-thread_" + counter.getAndIncrement());
         //上epoll树
@@ -74,10 +67,6 @@ public class AwesomeEventLoop implements Runnable {
     @Override
     public void run() {
         for (; ; ) {
-            CommonTask cTask = threadNoticeQueue.poll();
-            if (cTask != null) {
-                epollCtlAdd0(ep_fd, cTask.getFd(), cTask.getFlag());
-            }
             int timeout = -1;
             //定时任务相关
             ScheduledTask sTask = scheduledQueue.poll();
@@ -92,13 +81,12 @@ public class AwesomeEventLoop implements Runnable {
                     int fd = events.fd(index);
                     //正常的逻辑
                     if ((event & (EPOLLERR | EPOLLIN)) != 0) {
-                        if (fd == timerFd) {
-                            sTask.getProcess().doProcess(new FileDescriptor(fd), this);
-                            System.out.println("时间到了：" + timeout);
-                        } else if (fd == wakeupFd) {
+                        if (fd == wakeupFd) {
                             /*void*/
+                        } else if (fd == timerFd) {
+                            sTask.getProcess().doProcess(new FileDescriptor(fd), this);
                         } else {
-                            EventProcessor processor = fpMapping.remove(fd);
+                            EventProcessor processor = fpMapping.get(fd);
                             if (processor == null) {
                                 epollCtlDel0(ep_fd, fd);
                             }
@@ -106,8 +94,8 @@ public class AwesomeEventLoop implements Runnable {
                                 processor.doProcess(new FileDescriptor(fd), this);
                             }
                         }
-                    } else if ((event & (EPOLLERR | EPOLLOUT)) != 0) {
-                        EventProcessor processor = fpMapping.remove(fd);
+                    } else if ((event & (EPOLLOUT)) != 0) {
+                        EventProcessor processor = fpMapping.get(fd);
                         if (processor == null) {
                             epollCtlDel0(ep_fd, fd);
                         }
@@ -131,16 +119,21 @@ public class AwesomeEventLoop implements Runnable {
         if (processor instanceof ReadReadyProcessor) {
             flag |= EPOLLIN;
         } else if (processor instanceof WriteReadyProcessor) {
-            flag |= EPOLLIN;
             flag |= EPOLLOUT;
         } else if (processor instanceof TimerReadyProcessor) {
             flag |= EPOLLIN;
-            flag |= EPOLLOUT;
         }
-        threadNoticeQueue.offer(new CommonTask(fd, flag));
-        fpMapping.put(fd, processor);
+        Runnable preCommand;
+        EventProcessor old = fpMapping.put(fd, processor);
+        if (old == null) {
+            epollCtlAdd0(ep_fd, fd, flag);
+        } else if (old == processor) {
+            //忽略重复add的情况
+        } else {
+            epollCtlModify0(ep_fd, fd, flag);
+        }
         if (Thread.currentThread() != currentThread) {
-            //用来唤醒阻塞状态的reactor
+            //用来唤醒阻塞状态的Reactor
             write2EventFd(wakeupFd);
         }
     }
