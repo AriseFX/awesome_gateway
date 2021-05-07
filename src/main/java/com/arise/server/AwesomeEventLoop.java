@@ -14,6 +14,7 @@ import net.openhft.chronicle.core.OS;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.PriorityQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.arise.linux.NativeSupport.*;
@@ -48,6 +49,9 @@ public class AwesomeEventLoop implements Runnable {
     //拒绝java的包装类型
     private final IntObjectMap<EventProcessor> fpMapping = new IntObjectHashMap<>();
 
+    //避免重复唤醒使用
+    private volatile AtomicBoolean wakeuped = new AtomicBoolean(false);
+
     public AwesomeEventLoop(int eventQueueSize) throws IOException {
         this.events = new EpollEventArray(4096);
         //TODO 使用pipe还是eventfd？
@@ -74,8 +78,10 @@ public class AwesomeEventLoop implements Runnable {
             if (sTask != null) {
                 timeout = sTask.getTimeout();
             }
+            wakeuped.compareAndSet(true, false);
             //timeout使用timerFd对应的定时器 //TODO 秒和纳秒要处理
             int i = epollWait0(ep_fd, events.memoryAddress(), 4096, timerFd, timeout, timeout);
+            wakeuped.compareAndSet(false, true);
             if (i > 0) {
                 for (int index = 0; index < i; index++) {
                     int event = events.events(index);
@@ -103,6 +109,8 @@ public class AwesomeEventLoop implements Runnable {
                         if (processor != null && processor instanceof WriteReadyProcessor) {
                             processor.doProcess(new FileDescriptor(fd), this);
                         }
+                    } else if ((event & (EPOLLRDHUP)) != 0) {
+                        System.out.println(1);
                     }
                 }
             }
@@ -133,10 +141,7 @@ public class AwesomeEventLoop implements Runnable {
         } else {
             epollCtlModify0(ep_fd, fd, flag);
         }
-        if (Thread.currentThread() != currentThread) {
-            //用来唤醒阻塞状态的Reactor
-            write2EventFd(wakeupFd);
-        }
+        wakeupReactor();
     }
 
     /**
@@ -144,6 +149,7 @@ public class AwesomeEventLoop implements Runnable {
      */
     public void scheduled(ScheduledTask task) {
         scheduledQueue.offer(task);
+        wakeupReactor();
     }
 
     /**
@@ -151,5 +157,15 @@ public class AwesomeEventLoop implements Runnable {
      */
     public AwesomeSocketChannel newAwesomeChannel(InetSocketAddress remote) {
         return new AwesomeSocketChannel(this, remote);
+    }
+
+    /**
+     * 唤醒reactor
+     */
+    public void wakeupReactor() {
+        if (Thread.currentThread() != currentThread && !wakeuped.get()) {
+            //用来唤醒阻塞状态的Reactor
+            write2EventFd(wakeupFd);
+        }
     }
 }
