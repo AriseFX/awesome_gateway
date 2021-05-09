@@ -86,6 +86,7 @@ public class ServerRunner implements CommandLineRunner {
                                 if (connFd < 0) {
                                     break;
                                 }
+                                System.out.println("connFd: " + connFd);
                                 getAndInitSubReactor().pushFd(connFd,
                                         new ReadEventProcessorChain());
                             }

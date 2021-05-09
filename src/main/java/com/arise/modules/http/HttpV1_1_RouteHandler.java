@@ -26,11 +26,12 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
     @Override
     public void handleRequest(ChainContext ctx, Object msg) {
         HttpServerRequest request = (HttpServerRequest) msg;
+        System.out.println(request);
         FileDescriptor currentFd = ctx.getCurrentFd();
         AwesomeEventLoop eventLoop = ctx.getEventLoop();
 
         AwesomeSocketChannel channel = eventLoop.newAwesomeChannel(
-                new InetSocketAddress("192.168.150.102", 8099));
+                new InetSocketAddress("localhost", 8081));
         //TODO 连接复用
         //连接成功后执行write
         channel.connect(3, () -> {

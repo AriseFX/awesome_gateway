@@ -85,33 +85,48 @@ public class AwesomeEventLoop implements Runnable {
             if (i > 0) {
                 for (int index = 0; index < i; index++) {
                     int event = events.events(index);
+                    System.out.println("-------start------");
+
                     int fd = events.fd(index);
-                    //正常的逻辑
+                    FileDescriptor wrapedFd = new FileDescriptor(fd);
+                    //EPOLLIN必须先于EPOLLRDHUP处理，不然数据读不完整
                     if ((event & (EPOLLERR | EPOLLIN)) != 0) {
+                        System.out.println("EPOLLERR:" + ((event & EPOLLERR) != 0));
+                        System.out.println("EPOLLIN:" + ((event & EPOLLIN) != 0));
                         if (fd == wakeupFd) {
+                            System.out.println("wakeupFd");
                             /*void*/
                         } else if (fd == timerFd && sTask != null) {
-                            sTask.getProcess().doProcess(new FileDescriptor(fd), this);
+                            System.out.println("timerFd");
+                            sTask.getProcess().doProcess(wrapedFd, this);
                         } else {
+                            System.out.println("connFd");
                             EventProcessor processor = fpMapping.get(fd);
                             if (processor == null) {
                                 epollCtlDel0(ep_fd, fd);
                             }
                             if (processor instanceof ReadReadyProcessor) {
-                                processor.doProcess(new FileDescriptor(fd), this);
+                                System.out.println("执行");
+                                processor.doProcess(wrapedFd, this);
                             }
                         }
-                    } else if ((event & (EPOLLOUT)) != 0) {
+                    }
+                    if ((event & (EPOLLOUT)) != 0) {
+                        System.out.println("EPOLLOUT");
                         EventProcessor processor = fpMapping.get(fd);
                         if (processor == null) {
                             epollCtlDel0(ep_fd, fd);
                         }
                         if (processor != null && processor instanceof WriteReadyProcessor) {
-                            processor.doProcess(new FileDescriptor(fd), this);
+                            processor.doProcess(wrapedFd, this);
                         }
-                    } else if ((event & (EPOLLRDHUP)) != 0) {
-                        System.out.println(1);
                     }
+                    if (((event & EPOLLRDHUP) != 0)) {
+                        System.out.println("EPOLLRDHUP");
+                        wrapedFd.close();
+                        fpMapping.remove(fd);
+                    }
+                    System.out.println("-------end------");
                 }
             }
         }
@@ -126,13 +141,12 @@ public class AwesomeEventLoop implements Runnable {
     public void pushFd(int fd, EventProcessor processor) {
         int flag = EPOLLET;
         if (processor instanceof ReadReadyProcessor) {
-            flag |= EPOLLIN;
+            flag |= EPOLLIN | EPOLLRDHUP;
         } else if (processor instanceof WriteReadyProcessor) {
-            flag |= EPOLLOUT;
+            flag |= EPOLLOUT | EPOLLRDHUP;
         } else if (processor instanceof TimerReadyProcessor) {
             flag |= EPOLLIN;
         }
-        Runnable preCommand;
         EventProcessor old = fpMapping.put(fd, processor);
         if (old == null) {
             epollCtlAdd0(ep_fd, fd, flag);
