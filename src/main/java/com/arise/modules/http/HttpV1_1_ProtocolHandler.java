@@ -2,18 +2,18 @@ package com.arise.modules.http;
 
 import com.arise.internal.chain.ChainContext;
 import com.arise.modules.ProtocolHandler;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.unix.FileDescriptor;
+import io.netty.util.AsciiString;
 import lombok.SneakyThrows;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
-import static com.arise.modules.http.HttpV1_1_ProtocolHandler.BodyState.FIX_SIZE_BODY;
 import static com.arise.modules.http.HttpV1_1_ProtocolHandler.State.*;
+import static com.arise.server.AwesomeEventLoop.Allocator;
 
 /**
  * @Author: wy
@@ -25,21 +25,17 @@ public class HttpV1_1_ProtocolHandler implements ProtocolHandler {
 
     private State currentState = REQUEST_STATUS;
 
-    private int chunkSize;
-
     private BodyState bodyState = null;
 
-    private final HashMap<String, String> headers = new HashMap<>(5);
+    private final HttpHeaders headers = new HttpHeaders();
 
-    private final HttpServerRequest request = HttpServerRequest.builder().build();
-
-    private final List<ByteBuffer> body = new LinkedList<>();
+    private final HttpServerRequest request = new HttpServerRequest();
 
     private CharactersLine old;
 
-    private final char CR = '\r';
+    private final byte CR = '\r';
 
-    private final char LF = '\n';
+    private final byte LF = '\n';
 
     enum State {
         //请求状态
@@ -62,12 +58,14 @@ public class HttpV1_1_ProtocolHandler implements ProtocolHandler {
         FileDescriptor fd = ctx.getCurrentFd();
         do {
             //读完header使用splice
-            ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
+            ByteBuf buffer = Allocator.directBuffer(256);
+            int writerIndex = buffer.writerIndex();
+            ByteBuffer nioBuffer = buffer.nioBuffer(writerIndex, buffer.writableBytes());
             try {
-                int num = fd.read(buffer, 0, buffer.limit());
+                int num = fd.read(nioBuffer, nioBuffer.position(), buffer.writableBytes());
                 if (num > 0) {
-                    buffer.limit(num);
                     //内部协议处理
+                    buffer.writerIndex(writerIndex + num);
                     innerHandleRequest(buffer);
                     if (currentState == REQUEST_DONE) {
                         request.partContent = buffer;
@@ -85,34 +83,36 @@ public class HttpV1_1_ProtocolHandler implements ProtocolHandler {
     }
 
     @SneakyThrows
-    public void innerHandleRequest(ByteBuffer buffer) {
+    public void innerHandleRequest(ByteBuf buffer) {
         switch (currentState) {
             case REQUEST_STATUS: {
                 CharactersLine line = parseLine(buffer);
                 if (line == null) {
                     return;
                 }
-                String[] token = line.getNewString().split(" ");
-                if (token.length != 3) {
+                int index1 = line.findByteIndex((byte) ' ');
+                int index2 = line.findByteIndex((byte) ' ');
+                if (index1 == -1 || index2 == -1) {
                     return;
                 }
-                request.methodName = token[0];
-                request.url = token[1];
-                request.httpVersion = token[2].trim();
+                //TODO 是否原地取字符串? 真的要我
+                byte[] innerData = line.getInnerData();
+                request.setMethod(innerData, 0, index1 - 1);
+                request.setUrl(innerData, index1, index2 - index1 - 1);
+                request.setHttpVersion(innerData, index2, innerData.length - index2 - 2);
                 currentState = REQUEST_HEADERS;
             }
             case REQUEST_HEADERS: {
-                Map<String, String> map = readHeader(buffer);
+                HttpHeaders map = readHeader(buffer);
                 if (map != null) {
                     request.headers = map;
                     //获取下一个状态
-                    String length = map.get(HttpConstant.Http_Content_Length);
-                    if (length != null) {
-                        int l = Integer.parseInt(length);
+                    AsciiString len = map.getHeader(HttpConstant.Http_Content_Length);
+                    if (len != null) {
+                        int l = len.parseInt();
                         if (l > 0) {
                             request.contentLength = l;
-                            this.chunkSize = l;
-                            this.bodyState = FIX_SIZE_BODY;
+                            this.bodyState = BodyState.FIX_SIZE_BODY;
                         }
                     }
                     currentState = REQUEST_BODY;
@@ -125,26 +125,6 @@ public class HttpV1_1_ProtocolHandler implements ProtocolHandler {
                 //如果当前内核支持就直接让splice接管body
                 //TODO  多版本内核支持
                 currentState = REQUEST_DONE;
-                /*if (bodyState == FIX_SIZE_BODY) {
-                    int toRead = buffer.remaining();
-                    if (toRead > chunkSize) {
-                        toRead = chunkSize;
-                    }
-                    if (toRead == 0) {
-                        return;
-                    }
-                    //获取body的切片，后续将切片组合
-                    buffer.limit(buffer.position() + toRead);
-                    ByteBuffer slice = buffer.slice();
-                    body.add(slice);
-                    chunkSize -= toRead;
-                    if (chunkSize <= 0) {
-                        request.content = body;
-                        currentState = REQUEST_DONE;
-                    } else {
-                        return;
-                    }
-                }*/
             }
         }
     }
@@ -153,38 +133,38 @@ public class HttpV1_1_ProtocolHandler implements ProtocolHandler {
      * 读取头部
      */
     @SneakyThrows
-    private Map<String, String> readHeader(ByteBuffer buffer) {
-        while (buffer.remaining() > 0) {
+    private HttpHeaders readHeader(ByteBuf buffer) {
+        while (buffer.readableBytes() > 0) {
             CharactersLine line = parseLine(buffer);
             if (line != null) {
-                String[] token = line.getNewString().split(":");
-                switch (token.length) {
-                    case 2:
-                        headers.put(token[0], token[1].trim());
-                        break;
-                    case 1:
-                        if (token[0].charAt(0) == CR && token[0].charAt(1) == LF) {
-                            return headers;
-                        }
-                        return null;
+                byte[] innerData = line.getInnerData();
+                int index = line.findByteIndex((byte) ':');
+                if (index == -1) {
+                    if (innerData[0] == CR && innerData[1] == LF) {
+                        return headers;
+                    }
+                    return null;
+                } else {
+                    headers.addHeader(new AsciiString(innerData, 0, index - 1, true)
+                            , new AsciiString(innerData, index + 1, innerData.length - index - 3, true));
                 }
             }
         }
         return null;
     }
 
-    private byte lastTimeByte = 0;
+    private byte lastByte = 0;
 
     /**
      * 解析
      */
-    public CharactersLine parseLine(ByteBuffer buffer) {
-        int remaining = buffer.remaining();
+    public CharactersLine parseLine(ByteBuf buffer) {
+        int remaining = buffer.readableBytes();
         byte[] requestLine = new byte[remaining];
-        for (int i = 0; buffer.hasRemaining(); i++) {
-            byte b = buffer.get();
+        for (int i = 0; buffer.isReadable(); i++) {
+            byte b = buffer.readByte();
             requestLine[i] = b;
-            if ((char) (b & 0xFF) == LF && (char) (lastTimeByte & 0xFF) == CR) {
+            if ((char) (b & 0xFF) == LF && (char) (lastByte & 0xFF) == CR) {
                 //找到一行结束
                 if (old != null) {
                     //有旧的，累加
@@ -195,7 +175,7 @@ public class HttpV1_1_ProtocolHandler implements ProtocolHandler {
                     return new CharactersLine(requestLine, i + 1);
                 }
             }
-            lastTimeByte = b;
+            lastByte = b;
         }
         //遍历完都没找到一行
         if (old != null) {

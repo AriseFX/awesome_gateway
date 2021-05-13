@@ -52,12 +52,12 @@ public class AwesomeSocketChannel {
                         }
                 );
                 //处理超时
-                /*eventLoop.scheduled(new ScheduledTask(timeout,
+                eventLoop.scheduled(new ScheduledTask(timeout,
                         (TimerReadyProcessor) (callback_fd, callback_eventLoop) -> {
                             if (!active) {
                                 log.error("连接超时!");
                             }
-                        }));*/
+                        }));
             }
             if (connected) {
                 active = true;
@@ -71,7 +71,6 @@ public class AwesomeSocketChannel {
         //TODO 修改buffer起始结尾
         ByteBuffer buffer = bufferable.toBuffer();
         if (buffer != null) {
-            buffer.flip();
             write0(buffer, 0, buffer.limit());
         }
     }

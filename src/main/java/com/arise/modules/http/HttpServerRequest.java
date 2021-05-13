@@ -1,12 +1,13 @@
 package com.arise.modules.http;
 
 import com.arise.modules.Bufferable;
-import lombok.Builder;
+import io.netty.buffer.ByteBuf;
+import io.netty.util.AsciiString;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
+
+import static com.arise.server.AwesomeEventLoop.Allocator;
 
 /**
  * @Author: wy
@@ -14,51 +15,66 @@ import java.util.Map;
  * @Description: 仅限于内部使用，不是完整的http
  * @Modified: By：
  */
-@Builder
 public class HttpServerRequest implements Bufferable {
 
-    public String methodName;
+    public AsciiString method;
 
-    public Map<String, String> headers;
+    public AsciiString url;
 
-    public String url;
+    public AsciiString httpVersion;
 
-    public String httpVersion;
+    public HttpHeaders headers;
 
-    public List<ByteBuffer> content;
-
-    public ByteBuffer partContent;
+    public ByteBuf partContent;
 
     public int contentLength;
 
+    public void setMethod(byte[] v, int start, int len) {
+        this.method = new AsciiString(v, start, len, true);
+    }
+
+    public void setUrl(byte[] v, int start, int len) {
+        this.url = new AsciiString(v, start, len, true);
+    }
+
+    public void setHttpVersion(byte[] v, int start, int len) {
+        this.httpVersion = new AsciiString(v, start, len, true);
+    }
+
+
     @Override
     public String toString() {
-        return "methodName:" + methodName + " url:" + url;
+        return "methodName:" + method + " url:" + url;
     }
 
     @Override
     public ByteBuffer toBuffer() {
         //TODO 需要动态生成一个url
-        ByteBuffer buffer = ByteBuffer.allocateDirect(20480);
-        buffer.put(methodName.getBytes(StandardCharsets.UTF_8));
-        buffer.put((byte) ' ');
-        buffer.put(url.getBytes(StandardCharsets.UTF_8));
-        buffer.put((byte) ' ');
-        buffer.put(httpVersion.getBytes(StandardCharsets.UTF_8));
-        buffer.put((byte)'\r');
-        buffer.put((byte)'\n');
-        headers.forEach((k, v) -> {
-            buffer.put(k.getBytes(StandardCharsets.UTF_8));
-            buffer.put((byte)':');
-            buffer.put(v.getBytes(StandardCharsets.UTF_8));
-            buffer.put((byte)'\r');
-            buffer.put((byte)'\n');
-        });
-        buffer.put((byte)'\r');
-        buffer.put((byte)'\n');
-        if (contentLength != 0) {
-            buffer.put(partContent);
+        int len = method.length() + url.length() + httpVersion.length() + headers.getMsgLen() + 6;
+        if (partContent != null) {
+            len += partContent.readableBytes();
         }
-        return buffer;
+        ByteBuf buffer = Allocator.directBuffer(len);
+        buffer.writeBytes(method.array());
+        buffer.writeByte(' ');
+        buffer.writeBytes(url.array());
+        buffer.writeByte(' ');
+        buffer.writeBytes(httpVersion.array());
+        buffer.writeByte('\r');
+        buffer.writeByte('\n');
+        headers.forEach((k, v) -> {
+            buffer.writeBytes(k.array());
+            buffer.writeByte(':');
+            buffer.writeBytes(v.array());
+            buffer.writeByte('\r');
+            buffer.writeByte('\n');
+        });
+        buffer.writeByte('\r');
+        buffer.writeByte('\n');
+        if (partContent != null) {
+            buffer.writeBytes(partContent);
+        }
+        ByteBuffer nioBuffer = buffer.nioBuffer(0, buffer.writerIndex());
+        return nioBuffer;
     }
 }

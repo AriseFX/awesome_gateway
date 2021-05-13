@@ -5,13 +5,13 @@ import com.arise.internal.pool.AwesomeSocketChannel;
 import com.arise.modules.ProtocolHandler;
 import com.arise.modules.ReadReadyProcessor;
 import com.arise.server.AwesomeEventLoop;
-import io.netty.channel.epoll.Native;
 import io.netty.channel.unix.FileDescriptor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
+import static io.netty.channel.epoll.Native.splice;
 import static io.netty.channel.unix.FileDescriptor.pipe;
 
 /**
@@ -26,7 +26,6 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
     @Override
     public void handleRequest(ChainContext ctx, Object msg) {
         HttpServerRequest request = (HttpServerRequest) msg;
-        System.out.println(request);
         FileDescriptor currentFd = ctx.getCurrentFd();
         AwesomeEventLoop eventLoop = ctx.getEventLoop();
 
@@ -43,17 +42,21 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
                 if (contentLength > 0) {
                     //创建pipe用于socket splice
                     FileDescriptor[] reqPipe = pipe();
-                    Native.splice(currentFd.intValue(), -1, reqPipe[1].intValue(), -1, contentLength);
-                    Native.splice(reqPipe[0].intValue(), -1, channel.socket.intValue(), -1, contentLength);
+                    splice(currentFd.intValue(), -1, reqPipe[1].intValue(), -1, contentLength);
+                    splice(reqPipe[0].intValue(), -1, channel.socket.intValue(), -1, contentLength);
                 }
                 eventLoop.pushFd(channel.socket.intValue(),
                         (ReadReadyProcessor) (i_callback_fd, i_callback_ep) -> {
                             FileDescriptor[] respPipe = pipe();
                             //转发给客户端
-                            //TODO 连接复用的情况下len如何考虑？
-                            int toPipe = Native.splice(i_callback_fd.intValue(), -1, respPipe[1].intValue(), -1, 0x7fffffff);
-                            int toSocket = Native.splice(respPipe[0].intValue(), -1, currentFd.intValue(), -1, 0x7fffffff);
-                            log.info("toPipe:{},toSocket:{}", toPipe, toSocket);
+                            try {
+                                //TODO 连接复用的情况下len如何考虑？
+                                int toPipe = splice(i_callback_fd.intValue(), -1, respPipe[1].intValue(), -1, 0x7fffffff);
+                                int toSocket = splice(respPipe[0].intValue(), -1, currentFd.intValue(), -1, 0x7fffffff);
+                                log.info("toPipe:{},toSocket:{}", toPipe, toSocket);
+                            } catch (Exception ignored) {
+                                //TODO 异常要处理
+                            }
                         });
             } catch (IOException e) {
                 e.printStackTrace();

@@ -1,5 +1,6 @@
 package com.arise.modules.http;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -9,11 +10,14 @@ import java.nio.charset.StandardCharsets;
  * @Description: http解析后留下的字符行消
  * @Modified: By：
  */
+@NotThreadSafe
 public class CharactersLine {
 
     private byte[] lineData;
 
     private Charset charset;
+
+    private int cursor = 0;
 
     public CharactersLine(byte[] data, int len) {
         this(StandardCharsets.UTF_8, data, len);
@@ -23,6 +27,10 @@ public class CharactersLine {
         this.charset = charset;
         this.lineData = new byte[len];
         System.arraycopy(data, 0, lineData, 0, len);
+    }
+
+    public byte[] getInnerData() {
+        return this.lineData;
     }
 
     /**
@@ -40,4 +48,20 @@ public class CharactersLine {
         return new String(lineData, charset);
     }
 
+    /**
+     * 基于游标寻找字符
+     */
+    public int findByteIndex(byte b) {
+        for (; cursor < lineData.length; cursor++) {
+            if (b == lineData[cursor]) {
+                cursor++;
+                return cursor;
+            }
+        }
+        return -1;
+    }
+
+    public void reset() {
+        this.cursor = 0;
+    }
 }

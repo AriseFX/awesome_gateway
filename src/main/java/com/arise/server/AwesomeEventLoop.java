@@ -5,6 +5,7 @@ import com.arise.modules.EventProcessor;
 import com.arise.modules.ReadReadyProcessor;
 import com.arise.modules.TimerReadyProcessor;
 import com.arise.modules.WriteReadyProcessor;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.unix.FileDescriptor;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
@@ -29,6 +30,8 @@ import static io.netty.channel.epoll.Native.*;
 @SuppressWarnings("all")
 public class AwesomeEventLoop implements Runnable {
 
+    public static final PooledByteBufAllocator Allocator = new PooledByteBufAllocator(true);
+
     private static final AtomicInteger counter = new AtomicInteger();
 
     //唤醒Reactor专用
@@ -50,7 +53,7 @@ public class AwesomeEventLoop implements Runnable {
     private final IntObjectMap<EventProcessor> fpMapping = new IntObjectHashMap<>();
 
     //避免重复唤醒使用
-    private volatile AtomicBoolean wakeuped = new AtomicBoolean(false);
+    private AtomicBoolean wakeuped = new AtomicBoolean(false);
 
     public AwesomeEventLoop(int eventQueueSize) throws IOException {
         this.events = new EpollEventArray(4096);
@@ -80,6 +83,7 @@ public class AwesomeEventLoop implements Runnable {
             }
             wakeuped.compareAndSet(true, false);
             //timeout使用timerFd对应的定时器 //TODO 秒和纳秒要处理
+            System.out.println("fpMapping size: " + fpMapping.size());
             int i = epollWait0(ep_fd, events.memoryAddress(), 4096, timerFd, timeout, timeout);
             wakeuped.compareAndSet(false, true);
             if (i > 0) {
