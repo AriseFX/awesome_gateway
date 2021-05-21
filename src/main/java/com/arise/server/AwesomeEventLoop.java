@@ -94,8 +94,8 @@ public class AwesomeEventLoop implements Runnable {
                     int fd = events.fd(index);
                     FileDescriptor wrapedFd = new FileDescriptor(fd);
                     //EPOLLIN必须先于EPOLLRDHUP处理，不然数据读不完整
-                    if ((event & (EPOLLERR | EPOLLIN)) != 0) {
-                        System.out.println("EPOLLERR:" + ((event & EPOLLERR) != 0));
+                    System.out.println("EPOLLERR:" + ((event & EPOLLERR) != 0));
+                    if ((event & (EPOLLIN)) != 0) {
                         System.out.println("EPOLLIN:" + ((event & EPOLLIN) != 0));
                         if (fd == wakeupFd) {
                             System.out.println("wakeupFd");
@@ -115,20 +115,25 @@ public class AwesomeEventLoop implements Runnable {
                             }
                         }
                     }
-                    if ((event & (EPOLLOUT)) != 0) {
+                    if ((event & (EPOLLOUT | EPOLLERR)) != 0) {
                         System.out.println("EPOLLOUT");
-                        EventProcessor processor = fpMapping.get(fd);
-                        if (processor == null) {
-                            epollCtlDel0(ep_fd, fd);
-                        }
-                        if (processor != null && processor instanceof WriteReadyProcessor) {
-                            processor.doProcess(wrapedFd, this);
-                        }
+                        do {
+                            if ((event & EPOLLERR) != 0) {
+
+                                break;
+                            }
+                            EventProcessor processor = fpMapping.get(fd);
+                            if (processor == null) {
+                                epollCtlDel0(ep_fd, fd);
+                            } else if (processor != null && processor instanceof WriteReadyProcessor) {
+                                processor.doProcess(wrapedFd, this);
+                            }
+                        } while (false);
                     }
                     if (((event & EPOLLRDHUP) != 0)) {
-                        System.out.println("EPOLLRDHUP");
                         wrapedFd.close();
                         fpMapping.remove(fd);
+                        System.out.println("EPOLLRDHUP：" + fd);
                     }
                     System.out.println("-------end------");
                 }
@@ -162,8 +167,18 @@ public class AwesomeEventLoop implements Runnable {
         wakeupReactor();
     }
 
+    public boolean contains(int fd) {
+        return fpMapping.containsKey(fd);
+    }
+
+    public void remove(int fd) {
+        //TODO 异常处理
+        epollCtlDel0(ep_fd, fd);
+        fpMapping.remove(fd);
+    }
+
     /**
-     * 提交定时任务到Reactor
+     * 提交定时任务到reactor
      */
     public void scheduled(ScheduledTask task) {
         scheduledQueue.offer(task);

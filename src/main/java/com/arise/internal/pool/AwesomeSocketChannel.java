@@ -28,7 +28,7 @@ public class AwesomeSocketChannel {
 
     private AwesomeEventLoop eventLoop;
 
-    private boolean active;
+    private volatile boolean active;
 
     public AwesomeSocketChannel(AwesomeEventLoop eventLoop, InetSocketAddress remoteAddress) {
         //非阻塞状态的socket文件
@@ -55,6 +55,7 @@ public class AwesomeSocketChannel {
                 eventLoop.scheduled(new ScheduledTask(timeout,
                         (TimerReadyProcessor) (callback_fd, callback_eventLoop) -> {
                             if (!active) {
+                                callback_eventLoop.remove(callback_fd.intValue());
                                 log.error("连接超时!");
                             }
                         }));
