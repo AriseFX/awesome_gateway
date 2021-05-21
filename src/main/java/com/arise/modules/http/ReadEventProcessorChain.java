@@ -15,7 +15,7 @@ import io.netty.channel.unix.FileDescriptor;
 public class ReadEventProcessorChain implements ReadReadyProcessor {
 
     @Override
-    public void doProcess(FileDescriptor fd, AwesomeEventLoop eventLoop) {
+    public void onReady(FileDescriptor fd, AwesomeEventLoop eventLoop) {
         HandleChain chain = new HandleChain();
         chain.addHandler(new HttpV1_1_ProtocolHandler());
         chain.addHandler(new HttpV1_1_RouteHandler());

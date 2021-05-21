@@ -102,7 +102,7 @@ public class AwesomeEventLoop implements Runnable {
                             /*void*/
                         } else if (fd == timerFd && sTask != null) {
                             System.out.println("timerFd");
-                            sTask.getProcess().doProcess(wrapedFd, this);
+                            sTask.getProcess().onReady(wrapedFd, this);
                         } else {
                             System.out.println("connFd");
                             EventProcessor processor = fpMapping.get(fd);
@@ -111,24 +111,22 @@ public class AwesomeEventLoop implements Runnable {
                             }
                             if (processor instanceof ReadReadyProcessor) {
                                 System.out.println("执行");
-                                processor.doProcess(wrapedFd, this);
+                                processor.onReady(wrapedFd, this);
                             }
                         }
                     }
                     if ((event & (EPOLLOUT | EPOLLERR)) != 0) {
                         System.out.println("EPOLLOUT");
-                        do {
+                        EventProcessor processor = fpMapping.get(fd);
+                        if (processor == null) {
+                            epollCtlDel0(ep_fd, fd);
+                        } else if (processor != null && processor instanceof WriteReadyProcessor) {
                             if ((event & EPOLLERR) != 0) {
-
-                                break;
+                                processor.onError(wrapedFd, this);
+                            } else {
+                                processor.onReady(wrapedFd, this);
                             }
-                            EventProcessor processor = fpMapping.get(fd);
-                            if (processor == null) {
-                                epollCtlDel0(ep_fd, fd);
-                            } else if (processor != null && processor instanceof WriteReadyProcessor) {
-                                processor.doProcess(wrapedFd, this);
-                            }
-                        } while (false);
+                        }
                     }
                     if (((event & EPOLLRDHUP) != 0)) {
                         wrapedFd.close();

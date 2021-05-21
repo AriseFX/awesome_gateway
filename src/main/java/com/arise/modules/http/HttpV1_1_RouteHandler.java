@@ -9,6 +9,7 @@ import io.netty.channel.unix.FileDescriptor;
 import lombok.extern.slf4j.Slf4j;
 import sun.misc.Unsafe;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 
@@ -34,33 +35,43 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
                 new InetSocketAddress("localhost", 8081));
         //TODO 连接复用
         //连接成功后执行write
-        channel.connect(3, () -> {
-            try {
-                //先写不完整的http
-                channel.write(request);
-                //body
-                int contentLength = request.contentLength;
-                if (contentLength > 0) {
-                    //创建pipe用于socket splice
-                    FileDescriptor[] reqPipe = pipe();
-                    splice(currentFd.intValue(), -1, reqPipe[1].intValue(), -1, contentLength);
-                    splice(reqPipe[0].intValue(), -1, channel.socket.intValue(), -1, contentLength);
-                }
-                eventLoop.pushFd(channel.socket.intValue(),
-                        (ReadReadyProcessor) (i_callback_fd, i_callback_ep) -> {
-                            if (eventLoop.contains(currentFd.intValue())) {
-                                FileDescriptor[] respPipe = pipe();
-                                //转发给客户端
-                                //TODO 连接复用的情况下len如何考虑？
-                                int toPipe = splice(i_callback_fd.intValue(), -1, respPipe[1].intValue(), -1, 0x7fffffff);
-                                int toSocket = splice(respPipe[0].intValue(), -1, currentFd.intValue(), -1, 0x7fffffff);
-                                log.info("toPipe:{},toSocket:{}", toPipe, toSocket);
-                            }
-                        });
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        channel.connect(3,
+                () -> {
+                    try {
+                        currentFd.close();
+                        eventLoop.remove(currentFd.intValue());
+                    } catch (IOException e) {
+                        System.err.println("错误！ " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                },
+                () -> {
+                    try {
+                        //先写不完整的http
+                        channel.write(request);
+                        //body
+                        int contentLength = request.contentLength;
+                        if (contentLength > 0) {
+                            //创建pipe用于socket splice
+                            FileDescriptor[] reqPipe = pipe();
+                            splice(currentFd.intValue(), -1, reqPipe[1].intValue(), -1, contentLength);
+                            splice(reqPipe[0].intValue(), -1, channel.socket.intValue(), -1, contentLength);
+                        }
+                        eventLoop.pushFd(channel.socket.intValue(),
+                                (ReadReadyProcessor) (i_callback_fd, i_callback_ep) -> {
+                                    if (eventLoop.contains(currentFd.intValue())) {
+                                        FileDescriptor[] respPipe = pipe();
+                                        //转发给客户端
+                                        //TODO 连接复用的情况下len如何考虑？
+                                        int toPipe = splice(i_callback_fd.intValue(), -1, respPipe[1].intValue(), -1, 0x7fffffff);
+                                        int toSocket = splice(respPipe[0].intValue(), -1, currentFd.intValue(), -1, 0x7fffffff);
+                                        log.info("toPipe:{},toSocket:{}", toPipe, toSocket);
+                                    }
+                                });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
     }
 
     private static Unsafe unsafe;

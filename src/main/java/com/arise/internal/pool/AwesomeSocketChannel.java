@@ -5,6 +5,7 @@ import com.arise.modules.TimerReadyProcessor;
 import com.arise.modules.WriteReadyProcessor;
 import com.arise.server.AwesomeEventLoop;
 import com.arise.server.ScheduledTask;
+import io.netty.channel.unix.FileDescriptor;
 import io.netty.channel.unix.Socket;
 import lombok.extern.slf4j.Slf4j;
 import net.openhft.chronicle.core.OS;
@@ -38,17 +39,25 @@ public class AwesomeSocketChannel {
         OS.memory().storeFence();
     }
 
-    public void connect(int timeout, Runnable command) {
+    public void connect(int timeout, Runnable errorHock, Runnable command) {
         try {
             boolean connected = socket.connect(remote);
             if (connected) {
                 command.run();
             } else {
-                eventLoop.pushFd(socket.intValue(),
-                        (WriteReadyProcessor) (callback_fd, callback_eventLoop) ->
-                        {
-                            active = true;
-                            command.run();
+                eventLoop.pushFd(socket.intValue(), new WriteReadyProcessor() {
+                            @Override
+                            public void onReady(FileDescriptor callback_fd, AwesomeEventLoop callback_eventLoop) {
+                                active = true;
+                                command.run();
+                            }
+
+                            @Override
+                            public void onError(FileDescriptor callback_fd, AwesomeEventLoop callback_eventLoop) {
+                                callback_eventLoop.remove(callback_fd.intValue());
+                                errorHock.run();
+                                log.error("连接错误!");
+                            }
                         }
                 );
                 //处理超时
