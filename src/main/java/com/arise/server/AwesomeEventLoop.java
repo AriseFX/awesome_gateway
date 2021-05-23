@@ -7,6 +7,7 @@ import com.arise.modules.TimerReadyProcessor;
 import com.arise.modules.WriteReadyProcessor;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.unix.FileDescriptor;
+import io.netty.channel.unix.Socket;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
 import lombok.SneakyThrows;

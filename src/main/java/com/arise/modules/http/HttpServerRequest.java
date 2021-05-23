@@ -5,7 +5,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.util.AsciiString;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 import static com.arise.server.AwesomeEventLoop.Allocator;
 
@@ -74,7 +73,6 @@ public class HttpServerRequest implements Bufferable {
         if (partContent != null) {
             buffer.writeBytes(partContent);
         }
-        ByteBuffer nioBuffer = buffer.nioBuffer(0, buffer.writerIndex());
-        return nioBuffer;
+        return buffer.nioBuffer(0, buffer.writerIndex());
     }
 }

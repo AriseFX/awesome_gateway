@@ -54,6 +54,11 @@ public class AwesomeSocketChannel {
 
                             @Override
                             public void onError(FileDescriptor callback_fd, AwesomeEventLoop callback_eventLoop) {
+                                try {
+                                    log.error("error no:{},fd:{}", new Socket(callback_fd.intValue()).getSoError(), callback_fd.intValue());
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
                                 callback_eventLoop.remove(callback_fd.intValue());
                                 errorHock.run();
                                 log.error("连接错误!");
