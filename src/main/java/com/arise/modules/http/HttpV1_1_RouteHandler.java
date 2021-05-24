@@ -34,7 +34,7 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
         AwesomeEventLoop eventLoop = ctx.getEventLoop();
 
         AwesomeSocketChannel channel = eventLoop.newAwesomeChannel(
-                new InetSocketAddress("localhost", 8081));
+                new InetSocketAddress("192.168.150.102", 8099));
         //TODO 连接复用
         //连接成功后执行write
         channel.connect(3,

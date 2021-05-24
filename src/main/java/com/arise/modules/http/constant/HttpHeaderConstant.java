@@ -108,7 +108,7 @@ public class HttpHeaderConstant {
     /**
      * {@code "content-length"}
      */
-    public static final AsciiString CONTENT_LENGTH = AsciiString.cached("content-length");
+    public static final AsciiString CONTENT_LENGTH = AsciiString.cached("Content-Length");
     /**
      * {@code "content-location"}
      */
