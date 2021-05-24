@@ -4,6 +4,7 @@ import com.arise.internal.chain.ChainContext;
 import com.arise.internal.pool.AwesomeSocketChannel;
 import com.arise.modules.ProtocolHandler;
 import com.arise.modules.ReadReadyProcessor;
+import com.arise.modules.http.constant.StandardHttpResponse;
 import com.arise.server.AwesomeEventLoop;
 import io.netty.channel.unix.FileDescriptor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import sun.misc.Unsafe;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 
 import static io.netty.channel.epoll.Native.splice;
 import static io.netty.channel.unix.FileDescriptor.pipe;
@@ -38,6 +40,8 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
         channel.connect(3,
                 () -> {
                     try {
+                        ByteBuffer cache = StandardHttpResponse.ServerError.cache();
+                        currentFd.write(cache, 0, cache.remaining());
                         currentFd.close();
                         eventLoop.remove(currentFd.intValue());
                     } catch (IOException e) {

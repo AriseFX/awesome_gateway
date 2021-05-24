@@ -2,6 +2,7 @@ package com.arise.modules.http;
 
 import com.arise.internal.chain.ChainContext;
 import com.arise.modules.ProtocolHandler;
+import com.arise.modules.http.constant.HttpHeaderConstant;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.unix.FileDescriptor;
 import io.netty.util.AsciiString;
@@ -9,8 +10,6 @@ import lombok.SneakyThrows;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.arise.modules.http.HttpV1_1_ProtocolHandler.State.*;
 import static com.arise.server.AwesomeEventLoop.Allocator;
@@ -107,7 +106,7 @@ public class HttpV1_1_ProtocolHandler implements ProtocolHandler {
                 if (map != null) {
                     request.headers = map;
                     //获取下一个状态
-                    AsciiString len = map.getHeader(HttpConstant.Http_Content_Length);
+                    AsciiString len = map.getHeader(HttpHeaderConstant.CONTENT_LENGTH);
                     if (len != null) {
                         int l = len.parseInt();
                         if (l > 0) {
