@@ -3,11 +3,11 @@ gateway:
   address: 0.0.0.0
   #连接复用
   keepalive: true
-  subReactorNum: 1
+  sub-reactor-num: 1
   registry:
     nacos:
-      serverAddr: 192.168.10.224:8848
+      server-addr: 192.168.10.224:8848
       namespace: bb6e6bb3-5c6a-455f-aac0-de061ec38faf
       ip: 172.16.110.63
-      serviceName: AsGateway
-      networkInterface: eth0
+      service-name: AsGateway
+      network-interface: eth0
