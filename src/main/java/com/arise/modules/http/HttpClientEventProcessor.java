@@ -17,11 +17,11 @@ import java.nio.ByteBuffer;
 @Slf4j
 public class HttpClientEventProcessor extends SimpleEventProcessor {
 
-    private FileDescriptor mainFd;
+    private final FileDescriptor mainFd;
 
-    private Runnable writeHock;
+    private final Runnable writeHock;
 
-    private Runnable readHock;
+    private final Runnable readHock;
 
     public HttpClientEventProcessor(FileDescriptor fd, FileDescriptor mainFd, Runnable writeHock, Runnable readHock) {
         super(fd);
