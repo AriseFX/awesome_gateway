@@ -75,7 +75,6 @@ public class ServerRunner implements CommandLineRunner {
                 for (int index = 0; index < i; index++) {
                     int event = events.events(index);
                     if ((event & (EPOLLERR | EPOLLOUT)) != 0) {
-                        System.out.println("writeable");
                         continue;
                     }
                     if ((event & (EPOLLERR | EPOLLIN)) != 0) {
@@ -86,9 +85,8 @@ public class ServerRunner implements CommandLineRunner {
                                 if (connFd < 0) {
                                     break;
                                 }
-                                System.out.println("connFd: " + connFd);
-                                getAndInitSubReactor().pushFd(connFd,
-                                        new ReadEventProcessorChain());
+                                getAndInitSubReactor()
+                                        .pushFd(new ReadEventProcessorChain(new FileDescriptor(connFd)));
                             }
                         }
                     }

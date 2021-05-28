@@ -2,8 +2,8 @@ package com.arise.modules.http;
 
 import com.arise.internal.chain.ChainContext;
 import com.arise.internal.pool.AwesomeSocketChannel;
+import com.arise.modules.EventProcessor;
 import com.arise.modules.ProtocolHandler;
-import com.arise.modules.ReadReadyProcessor;
 import com.arise.modules.http.constant.StandardHttpResponse;
 import com.arise.server.AwesomeEventLoop;
 import io.netty.channel.unix.FileDescriptor;
@@ -32,24 +32,11 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
         HttpServerRequest request = (HttpServerRequest) msg;
         FileDescriptor currentFd = ctx.getCurrentFd();
         AwesomeEventLoop eventLoop = ctx.getEventLoop();
-
         AwesomeSocketChannel channel = eventLoop.newAwesomeChannel(
-                new InetSocketAddress("192.168.150.102", 8099));
+                new InetSocketAddress("localhost", 8082));
         //TODO 连接复用
         //连接成功后执行write
-        channel.connect(3,
-                () -> {
-                    try {
-                        ByteBuffer cache = StandardHttpResponse.ServerError.cache();
-                        currentFd.write(cache, 0, cache.remaining());
-                        currentFd.close();
-                        eventLoop.remove(currentFd.intValue());
-                    } catch (IOException e) {
-                        System.err.println("错误！ " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                },
-                () -> {
+        channel.connect(3, currentFd, () -> {
                     try {
                         //先写不完整的http
                         channel.write(request);
@@ -61,18 +48,19 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
                             splice(currentFd.intValue(), -1, reqPipe[1].intValue(), -1, contentLength);
                             splice(reqPipe[0].intValue(), -1, channel.socket.intValue(), -1, contentLength);
                         }
-                        eventLoop.pushFd(channel.socket.intValue(),
-                                (ReadReadyProcessor) (i_callback_fd, i_callback_ep) -> {
-                                    if (eventLoop.contains(currentFd.intValue())) {
-                                        FileDescriptor[] respPipe = pipe();
-                                        //转发给客户端
-                                        //TODO 连接复用的情况下len如何考虑？
-                                        int toPipe = splice(i_callback_fd.intValue(), -1, respPipe[1].intValue(), -1, 0x7fffffff);
-                                        int toSocket = splice(respPipe[0].intValue(), -1, currentFd.intValue(), -1, 0x7fffffff);
-                                        log.info("toPipe:{},toSocket:{}", toPipe, toSocket);
-                                    }
-                                });
                     } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                },
+                () -> {
+                    try {
+                        FileDescriptor[] respPipe = pipe();
+                        //转发给客户端
+                        //TODO 连接复用的情况下len如何考虑？
+                        int toPipe = splice(currentFd.intValue(), -1, respPipe[1].intValue(), -1, 0x7fffffff);
+                        int toSocket = splice(respPipe[0].intValue(), -1, currentFd.intValue(), -1, 0x7fffffff);
+                        log.info("toPipe:{},toSocket:{}", toPipe, toSocket);
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                 });

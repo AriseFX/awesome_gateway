@@ -52,7 +52,7 @@ JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollCtlModify0(
 JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollCtlDel0(
     JNIEnv *env, jclass jc, jint efd, jint fd) {
   struct epoll_event ev = {0};
-  return epoll_ctl(efd, EPOLL_CTL_MOD, fd, &ev);
+  return epoll_ctl(efd, EPOLL_CTL_DEL, fd, &ev);
 }
 
 JNIEXPORT jint JNICALL

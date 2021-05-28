@@ -1,7 +1,6 @@
 package com.arise.server;
 
-import com.arise.modules.EventProcessor;
-import com.arise.modules.TimerReadyProcessor;
+import java.util.function.Consumer;
 
 /**
  * @Author: wy
@@ -14,19 +13,19 @@ public class ScheduledTask implements Comparable<ScheduledTask> {
     //超时(秒)
     private final int timeout;
 
-    private final TimerReadyProcessor processor;
+    private final Consumer<AwesomeEventLoop> task;
 
-    public ScheduledTask(int timeout, TimerReadyProcessor processor) {
+    public ScheduledTask(int timeout, Consumer<AwesomeEventLoop> task) {
         this.timeout = timeout;
-        this.processor = processor;
+        this.task = task;
     }
 
     public int getTimeout() {
         return this.timeout;
     }
 
-    public EventProcessor getProcess() {
-        return this.processor;
+    public Consumer<AwesomeEventLoop> getTask() {
+        return this.task;
     }
 
     @Override

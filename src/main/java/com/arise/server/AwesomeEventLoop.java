@@ -2,12 +2,9 @@ package com.arise.server;
 
 import com.arise.internal.pool.AwesomeSocketChannel;
 import com.arise.modules.EventProcessor;
-import com.arise.modules.ReadReadyProcessor;
-import com.arise.modules.TimerReadyProcessor;
-import com.arise.modules.WriteReadyProcessor;
+import com.arise.modules.SimpleEventProcessor;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.unix.FileDescriptor;
-import io.netty.channel.unix.Socket;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
 import lombok.SneakyThrows;
@@ -50,8 +47,7 @@ public class AwesomeEventLoop implements Runnable {
 
     private EpollEventArray events;
 
-    //拒绝java的包装类型
-    private final IntObjectMap<EventProcessor> fpMapping = new IntObjectHashMap<>();
+    private final IntObjectMap<SimpleEventProcessor> fpMapping = new IntObjectHashMap<>();
 
     //避免重复唤醒使用
     private AtomicBoolean wakeuped = new AtomicBoolean(false);
@@ -84,59 +80,60 @@ public class AwesomeEventLoop implements Runnable {
             }
             wakeuped.compareAndSet(true, false);
             //timeout使用timerFd对应的定时器 //TODO 秒和纳秒要处理
-            System.out.println("fpMapping size: " + fpMapping.size());
+            System.out.println("睡眠之前打印 fpMapping: " + fpMapping.keySet());
             int i = epollWait0(ep_fd, events.memoryAddress(), 4096, timerFd, timeout, timeout);
             wakeuped.compareAndSet(false, true);
+            System.out.println("-------start------");
             if (i > 0) {
                 for (int index = 0; index < i; index++) {
                     int event = events.events(index);
-                    System.out.println("-------start------");
-
                     int fd = events.fd(index);
-                    FileDescriptor wrapedFd = new FileDescriptor(fd);
-                    //EPOLLIN必须先于EPOLLRDHUP处理，不然数据读不完整
-                    System.out.println("EPOLLERR:" + ((event & EPOLLERR) != 0));
-                    if ((event & (EPOLLIN)) != 0) {
-                        System.out.println("EPOLLIN:" + ((event & EPOLLIN) != 0));
-                        if (fd == wakeupFd) {
-                            System.out.println("wakeupFd");
-                            /*void*/
-                        } else if (fd == timerFd && sTask != null) {
-                            System.out.println("timerFd");
-                            sTask.getProcess().onReady(wrapedFd, this);
-                        } else {
-                            System.out.println("connFd");
-                            EventProcessor processor = fpMapping.get(fd);
-                            if (processor == null) {
-                                epollCtlDel0(ep_fd, fd);
-                            }
-                            if (processor instanceof ReadReadyProcessor) {
-                                System.out.println("执行");
-                                processor.onReady(wrapedFd, this);
-                            }
-                        }
+                    if (((event & EPOLLRDHUP) != 0)) {
+                        System.err.println("收到EPOLLRDHUP事件:" + fd);
                     }
-                    if ((event & (EPOLLOUT | EPOLLERR)) != 0) {
-                        System.out.println("EPOLLOUT");
+                    if (((event & EPOLLERR) != 0)) {
+                        System.err.println("收到EPOLLERR事件:" + fd);
+                    }
+                    if (((event & EPOLLOUT) != 0)) {
+                        System.err.println("收到EPOLLOUT事件:" + fd);
+                    }
+                    if (((event & EPOLLIN) != 0)) {
+                        System.err.println("收到EPOLLIN事件: fd" + fd + ", wakeupFd," + (fd == wakeupFd) + ", timerFd:" + (fd == timerFd));
+                    }
+                    if (fd == wakeupFd) {
+                        /*void*/
+                    } else if (fd == timerFd) {
+                        if (sTask != null) {
+                            sTask.getTask().accept(this);
+                        }
+                    } else {
                         EventProcessor processor = fpMapping.get(fd);
                         if (processor == null) {
                             epollCtlDel0(ep_fd, fd);
-                        } else if (processor != null && processor instanceof WriteReadyProcessor) {
-                            if ((event & EPOLLERR) != 0) {
-                                processor.onError(wrapedFd, this);
-                            } else {
-                                processor.onReady(wrapedFd, this);
-                            }
+                            System.err.println("processor是空！epollCtlDel0：------> " + fd);
+                            continue;
+                        }
+                        //EPOLLIN必须先于EPOLLRDHUP处理，不然数据读不完整
+                        if ((event & EPOLLERR) != 0) {
+                            System.err.println("执行了onError:" + fd);
+                            processor.onError();
+                        }
+                        if ((event & (EPOLLIN)) != 0) {
+                            System.err.println("执行了onRead:" + fd);
+                            processor.onRead();
+                        }
+                        if ((event & (EPOLLOUT)) != 0) {
+                            System.err.println("执行了onWrite:" + fd);
+                            processor.onWrite();
+                        }
+                        if (((event & EPOLLRDHUP) != 0)) {
+                            System.err.println("执行了onClose:" + fd);
+                            processor.onClose();
                         }
                     }
-                    if (((event & EPOLLRDHUP) != 0)) {
-                        wrapedFd.close();
-                        fpMapping.remove(fd);
-                        System.out.println("EPOLLRDHUP：" + fd);
-                    }
-                    System.out.println("-------end------");
                 }
             }
+            System.out.println("-------end------");
         }
     }
 
@@ -146,24 +143,19 @@ public class AwesomeEventLoop implements Runnable {
      * @param fd
      * @param processor
      */
-    public void pushFd(int fd, EventProcessor processor) {
-        int flag = EPOLLET;
-        if (processor instanceof ReadReadyProcessor) {
-            flag |= EPOLLIN | EPOLLRDHUP;
-        } else if (processor instanceof WriteReadyProcessor) {
-            flag |= EPOLLOUT | EPOLLRDHUP;
-        } else if (processor instanceof TimerReadyProcessor) {
-            flag |= EPOLLIN;
-        }
-        EventProcessor old = fpMapping.put(fd, processor);
+    public void pushFd(SimpleEventProcessor processor) {
+        System.out.println("--->");
+        processor.setEventLoop(this);
+        FileDescriptor fd = processor.getFd();
+        System.out.println("推送事件给reactor:" + fd.intValue() + " " + processor);
+        int flag = EPOLLET | EPOLLIN | EPOLLOUT | EPOLLRDHUP;
+        EventProcessor old = fpMapping.put(fd.intValue(), processor);
         if (old == null) {
-            epollCtlAdd0(ep_fd, fd, flag);
-        } else if (old == processor) {
-            //忽略重复add的情况
-        } else {
-            epollCtlModify0(ep_fd, fd, flag);
+            epollCtlAdd0(ep_fd, fd.intValue(), flag);
+            System.out.println("epollCtlAdd:" + fd);
         }
         wakeupReactor();
+        System.out.println("<---");
     }
 
     public boolean contains(int fd) {
@@ -172,7 +164,8 @@ public class AwesomeEventLoop implements Runnable {
 
     public void remove(int fd) {
         //TODO 异常处理
-        epollCtlDel0(ep_fd, fd);
+        System.err.println("epollCtlDel:" + fd);
+        int i = epollCtlDel0(ep_fd, fd);
         fpMapping.remove(fd);
     }
 

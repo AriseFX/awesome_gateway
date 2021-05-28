@@ -1,8 +1,9 @@
 package com.arise.internal.pool;
 
 import com.arise.modules.Bufferable;
-import com.arise.modules.TimerReadyProcessor;
-import com.arise.modules.WriteReadyProcessor;
+import com.arise.modules.SimpleEventProcessor;
+import com.arise.modules.http.HttpClientEventProcessor;
+import com.arise.modules.http.constant.StandardHttpResponse;
 import com.arise.server.AwesomeEventLoop;
 import com.arise.server.ScheduledTask;
 import io.netty.channel.unix.FileDescriptor;
@@ -39,37 +40,26 @@ public class AwesomeSocketChannel {
         OS.memory().storeFence();
     }
 
-    public void connect(int timeout, Runnable errorHock, Runnable command) {
+    public void connect(int timeout, FileDescriptor mainFd, Runnable writeHock, Runnable readHock) {
         try {
             boolean connected = socket.connect(remote);
             if (connected) {
-                command.run();
+                writeHock.run();
             } else {
-                eventLoop.pushFd(socket.intValue(), new WriteReadyProcessor() {
-                            @Override
-                            public void onReady(FileDescriptor callback_fd, AwesomeEventLoop callback_eventLoop) {
-                                active = true;
-                                command.run();
-                            }
-
-                            @Override
-                            public void onError(FileDescriptor callback_fd, AwesomeEventLoop callback_eventLoop) {
-                                try {
-                                    log.error("error no:{},fd:{}", new Socket(callback_fd.intValue()).getSoError(), callback_fd.intValue());
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                                callback_eventLoop.remove(callback_fd.intValue());
-                                errorHock.run();
-                                log.error("连接错误!");
-                            }
-                        }
-                );
+                eventLoop.pushFd(new HttpClientEventProcessor(socket, mainFd, writeHock, readHock));
                 //处理超时
                 eventLoop.scheduled(new ScheduledTask(timeout,
-                        (TimerReadyProcessor) (callback_fd, callback_eventLoop) -> {
+                        eventLoop -> {
                             if (!active) {
-                                callback_eventLoop.remove(callback_fd.intValue());
+                                try {
+                                    ByteBuffer cache = StandardHttpResponse.ServerError.cache();
+                                    mainFd.write(cache, 0, cache.remaining());
+                                    mainFd.close();
+                                } catch (IOException e) {
+                                    System.err.println("错误！ " + e.getMessage());
+                                    e.printStackTrace();
+                                }
+                                eventLoop.remove(socket.intValue());
                                 log.error("连接超时!");
                             }
                         }));
