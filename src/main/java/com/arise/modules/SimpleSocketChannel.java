@@ -1,7 +1,6 @@
 package com.arise.modules;
 
 import com.arise.server.AwesomeEventLoop;
-import io.netty.channel.unix.FileDescriptor;
 import io.netty.channel.unix.Socket;
 
 import java.io.IOException;
@@ -12,15 +11,18 @@ import java.io.IOException;
  * @Description:
  * @Modified: By：
  */
-public class SimpleEventProcessor implements EventProcessor {
+public class SimpleSocketChannel implements Channel {
 
-    protected FileDescriptor fd;
+    protected Socket fd;
+
+    protected int opFlag = 0;
 
     protected AwesomeEventLoop eventLoop;
 
-    protected boolean active = true;
+    protected volatile boolean active;
 
-    public SimpleEventProcessor(FileDescriptor fd) {
+    public SimpleSocketChannel(Socket fd) {
+        this.active = true;
         this.fd = fd;
     }
 
@@ -28,7 +30,15 @@ public class SimpleEventProcessor implements EventProcessor {
         this.eventLoop = eventLoop;
     }
 
-    public FileDescriptor getFd() {
+    public int getOpFlag() {
+        return opFlag;
+    }
+
+    public boolean isActive() {
+        return this.active;
+    }
+
+    public Socket getFd() {
         return this.fd;
     }
 

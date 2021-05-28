@@ -1,5 +1,8 @@
 package com.arise.internal.util;
 
+import sun.misc.Unsafe;
+
+import java.lang.reflect.Field;
 import java.net.*;
 import java.util.*;
 
@@ -53,5 +56,38 @@ public class NetUtils {
             throw new RuntimeException("无指定网卡！");
         }
         return address.getHostAddress();
+    }
+
+    private static Unsafe unsafe;
+
+    static {
+        try {
+            Field field = Unsafe.class.getDeclaredField("theUnsafe");
+            field.setAccessible(true);
+            unsafe = (Unsafe) field.get(null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static long addressOf(Object o) {
+        Object[] array = new Object[]{o};
+        long baseOffset = unsafe.arrayBaseOffset(Object[].class);
+        //arrayBaseOffset方法是一个本地方法，可以获取数组第一个元素的偏移地址
+        int addressSize = unsafe.addressSize();
+        long objectAddress;
+        switch (addressSize) {
+            case 4:
+                objectAddress = unsafe.getInt(array, baseOffset);
+                //getInt方法获取对象中offset偏移地址对应的int型field的值
+                break;
+            case 8:
+                objectAddress = unsafe.getLong(array, baseOffset);
+                //getLong方法获取对象中offset偏移地址对应的long型field的值
+                break;
+            default:
+                throw new Error("unsupported address size: " + addressSize);
+        }
+        return (objectAddress);
     }
 }

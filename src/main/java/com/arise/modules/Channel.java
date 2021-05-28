@@ -6,7 +6,7 @@ package com.arise.modules;
  * @Description:
  * @Modified: By：
  */
-public interface EventProcessor {
+public interface Channel {
 
     void onRead();
 

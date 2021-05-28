@@ -1,9 +1,8 @@
 package com.arise.server;
 
 import com.arise.config.ServerProperties;
-import com.arise.modules.http.ReadEventProcessorChain;
+import com.arise.modules.http.ReadHandlerChain;
 import io.netty.channel.epoll.Native;
-import io.netty.channel.unix.FileDescriptor;
 import io.netty.channel.unix.Socket;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -86,7 +85,7 @@ public class ServerRunner implements CommandLineRunner {
                                     break;
                                 }
                                 getAndInitSubReactor()
-                                        .pushFd(new ReadEventProcessorChain(new FileDescriptor(connFd)));
+                                        .startMonitor(new ReadHandlerChain(new Socket(connFd)));
                             }
                         }
                     }

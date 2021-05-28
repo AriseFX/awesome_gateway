@@ -47,6 +47,18 @@ public class StandardHttpResponse {
         ServerError.getHttpHeaders().put(CONTENT_LENGTH, new AsciiString(len + ""));
     }
 
+    public static final HttpServerResponse TimeoutError = new HttpServerResponse(HTTP_1_1, INTERNAL_SERVER_ERROR);
+
+    static {
+        TimeoutError.getHttpHeaders().put(CONTENT_TYPE, APPLICATION_JSON);
+        int len = cacheBody(TimeoutError, new HashMap<String, Object>() {
+            {
+                put("msg", "gateway route timeout");
+            }
+        });
+        TimeoutError.getHttpHeaders().put(CONTENT_LENGTH, new AsciiString(len + ""));
+    }
+
     private static int cacheBody(HttpServerResponse response, Map<String, Object> map) {
         byte[] body = JSON.toJSONString(map).getBytes(StandardCharsets.UTF_8);
         ByteBuf byteBuf = UnpooledByteBufAllocator.DEFAULT.directBuffer(body.length);

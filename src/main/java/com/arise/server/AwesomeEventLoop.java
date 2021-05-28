@@ -1,8 +1,7 @@
 package com.arise.server;
 
-import com.arise.internal.pool.AwesomeSocketChannel;
-import com.arise.modules.EventProcessor;
-import com.arise.modules.SimpleEventProcessor;
+import com.arise.modules.Channel;
+import com.arise.modules.SimpleSocketChannel;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.unix.FileDescriptor;
 import io.netty.util.collection.IntObjectHashMap;
@@ -11,7 +10,6 @@ import lombok.SneakyThrows;
 import net.openhft.chronicle.core.OS;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.PriorityQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,7 +45,7 @@ public class AwesomeEventLoop implements Runnable {
 
     private EpollEventArray events;
 
-    private final IntObjectMap<SimpleEventProcessor> fpMapping = new IntObjectHashMap<>();
+    private final IntObjectMap<SimpleSocketChannel> fpMapping = new IntObjectHashMap<>();
 
     //避免重复唤醒使用
     private AtomicBoolean wakeuped = new AtomicBoolean(false);
@@ -74,7 +72,7 @@ public class AwesomeEventLoop implements Runnable {
         for (; ; ) {
             int timeout = -1;
             //定时任务相关
-            ScheduledTask sTask = scheduledQueue.poll();
+            ScheduledTask sTask = scheduledQueue.peek();
             if (sTask != null) {
                 timeout = sTask.getTimeout();
             }
@@ -98,16 +96,17 @@ public class AwesomeEventLoop implements Runnable {
                         System.err.println("收到EPOLLOUT事件:" + fd);
                     }
                     if (((event & EPOLLIN) != 0)) {
-                        System.err.println("收到EPOLLIN事件: fd" + fd + ", wakeupFd," + (fd == wakeupFd) + ", timerFd:" + (fd == timerFd));
+                        System.err.println("收到EPOLLIN事件: fd:" + fd + ", wakeupFd," + (fd == wakeupFd) + ", timerFd:" + (fd == timerFd));
                     }
                     if (fd == wakeupFd) {
                         /*void*/
                     } else if (fd == timerFd) {
-                        if (sTask != null) {
+                        ScheduledTask pollTask = scheduledQueue.poll();
+                        if (pollTask != null) {
                             sTask.getTask().accept(this);
                         }
                     } else {
-                        EventProcessor processor = fpMapping.get(fd);
+                        Channel processor = fpMapping.get(fd);
                         if (processor == null) {
                             epollCtlDel0(ep_fd, fd);
                             System.err.println("processor是空！epollCtlDel0：------> " + fd);
@@ -141,15 +140,19 @@ public class AwesomeEventLoop implements Runnable {
      * 提交任务到Reactor
      *
      * @param fd
-     * @param processor
+     * @param channel
      */
-    public void pushFd(SimpleEventProcessor processor) {
+    public void startMonitor(SimpleSocketChannel channel) {
         System.out.println("--->");
-        processor.setEventLoop(this);
-        FileDescriptor fd = processor.getFd();
-        System.out.println("推送事件给reactor:" + fd.intValue() + " " + processor);
-        int flag = EPOLLET | EPOLLIN | EPOLLOUT | EPOLLRDHUP;
-        EventProcessor old = fpMapping.put(fd.intValue(), processor);
+        channel.setEventLoop(this);
+        FileDescriptor fd = channel.getFd();
+        System.out.println("推送事件给reactor:" + fd.intValue() + " " + channel);
+        int flag = EPOLLET | EPOLLIN | EPOLLRDHUP;
+        int opFlag = channel.getOpFlag();
+        if (opFlag != 0) {
+            flag |= opFlag;
+        }
+        Channel old = fpMapping.put(fd.intValue(), channel);
         if (old == null) {
             epollCtlAdd0(ep_fd, fd.intValue(), flag);
             System.out.println("epollCtlAdd:" + fd);
@@ -175,13 +178,6 @@ public class AwesomeEventLoop implements Runnable {
     public void scheduled(ScheduledTask task) {
         scheduledQueue.offer(task);
         wakeupReactor();
-    }
-
-    /**
-     * 创建socket channel
-     */
-    public AwesomeSocketChannel newAwesomeChannel(InetSocketAddress remote) {
-        return new AwesomeSocketChannel(this, remote);
     }
 
     /**

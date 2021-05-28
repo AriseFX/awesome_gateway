@@ -1,8 +1,8 @@
 package com.arise.modules.http;
 
 import com.arise.internal.chain.HandleChain;
-import com.arise.modules.SimpleEventProcessor;
-import io.netty.channel.unix.FileDescriptor;
+import com.arise.modules.SimpleSocketChannel;
+import io.netty.channel.unix.Socket;
 
 
 /**
@@ -11,9 +11,9 @@ import io.netty.channel.unix.FileDescriptor;
  * @Description:
  * @Modified: By：
  */
-public class ReadEventProcessorChain extends SimpleEventProcessor {
+public class ReadHandlerChain extends SimpleSocketChannel {
 
-    public ReadEventProcessorChain(FileDescriptor fd) {
+    public ReadHandlerChain(Socket fd) {
         super(fd);
     }
 
@@ -22,6 +22,6 @@ public class ReadEventProcessorChain extends SimpleEventProcessor {
         HandleChain chain = new HandleChain();
         chain.addHandler(new HttpV1_1_ProtocolHandler());
         chain.addHandler(new HttpV1_1_RouteHandler());
-        chain.handleRead(super.getEventLoop(), super.getFd());
+        chain.handleRead(super.getEventLoop(), super.fd);
     }
 }
