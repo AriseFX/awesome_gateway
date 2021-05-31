@@ -69,70 +69,83 @@ public class AwesomeEventLoop implements Runnable {
     @SneakyThrows
     @Override
     public void run() {
+        ScheduledTask sTask = null;
+        int timeout = -1;
         for (; ; ) {
-            int timeout = -1;
+            timeout = -1;
             //定时任务相关
-            ScheduledTask sTask = scheduledQueue.peek();
-            if (sTask != null) {
-                timeout = sTask.getTimeout();
+            if (sTask == null) {
+                sTask = scheduledQueue.poll();
+                if (sTask != null) {
+                    timeout = sTask.getTimeout();
+                    if (timeout <= 0) {
+                        System.err.println("执行timeout <= 0 的项目");
+                        sTask.getTask().accept(this);
+                        timeout = 0;
+                        sTask = null;
+                    }
+                }
             }
             wakeuped.compareAndSet(true, false);
             //timeout使用timerFd对应的定时器 //TODO 秒和纳秒要处理
-            System.out.println("睡眠之前打印 fpMapping: " + fpMapping.keySet());
+            //System.out.println("睡眠之前打印 fpMapping: " + fpMapping.keySet());
             int i = epollWait0(ep_fd, events.memoryAddress(), 4096, timerFd, timeout, timeout);
             wakeuped.compareAndSet(false, true);
-            System.out.println("-------start------");
+            //System.out.println("-------start------");
             if (i > 0) {
                 for (int index = 0; index < i; index++) {
                     int event = events.events(index);
                     int fd = events.fd(index);
                     if (((event & EPOLLRDHUP) != 0)) {
-                        System.err.println("收到EPOLLRDHUP事件:" + fd);
+                        //System.err.println("收到EPOLLRDHUP事件:" + fd);
                     }
                     if (((event & EPOLLERR) != 0)) {
-                        System.err.println("收到EPOLLERR事件:" + fd);
+                        //System.err.println("收到EPOLLERR事件:" + fd);
                     }
                     if (((event & EPOLLOUT) != 0)) {
-                        System.err.println("收到EPOLLOUT事件:" + fd);
+                        //System.err.println("收到EPOLLOUT事件:" + fd);
                     }
                     if (((event & EPOLLIN) != 0)) {
-                        System.err.println("收到EPOLLIN事件: fd:" + fd + ", wakeupFd," + (fd == wakeupFd) + ", timerFd:" + (fd == timerFd));
+                        //System.err.println("收到EPOLLIN事件: fd:" + fd + ", wakeupFd," + (fd == wakeupFd) + ", timerFd:" + (fd == timerFd));
                     }
                     if (fd == wakeupFd) {
                         /*void*/
                     } else if (fd == timerFd) {
-                        ScheduledTask pollTask = scheduledQueue.poll();
-                        if (pollTask != null) {
+                        if (sTask != null) {
+                            System.err.println("执行timeout " + sTask.getTimeout() + " 的项目");
                             sTask.getTask().accept(this);
+                            sTask = null;
+                        } else {
+                            System.err.println("任务为空");
                         }
                     } else {
-                        Channel processor = fpMapping.get(fd);
-                        if (processor == null) {
+                        Channel channel = fpMapping.get(fd);
+                        if (channel == null) {
                             epollCtlDel0(ep_fd, fd);
-                            System.err.println("processor是空！epollCtlDel0：------> " + fd);
+                            //System.err.println("processor是空！epollCtlDel0：------> " + fd);
                             continue;
                         }
                         //EPOLLIN必须先于EPOLLRDHUP处理，不然数据读不完整
                         if ((event & EPOLLERR) != 0) {
-                            System.err.println("执行了onError:" + fd);
-                            processor.onError();
+                            //System.err.println("执行了onError:" + fd);
+                            channel.onError();
                         }
-                        if ((event & (EPOLLIN)) != 0) {
-                            System.err.println("执行了onRead:" + fd);
-                            processor.onRead();
+                        if ((event & EPOLLIN) != 0) {
+                            //System.err.println("执行了onRead:" + fd);
+                            channel.onRead();
                         }
-                        if ((event & (EPOLLOUT)) != 0) {
-                            System.err.println("执行了onWrite:" + fd);
-                            processor.onWrite();
+                        if ((event & EPOLLOUT) != 0) {
+                            //System.err.println("执行了onWrite:" + fd);
+                            channel.onWrite();
                         }
                         if (((event & EPOLLRDHUP) != 0)) {
-                            System.err.println("执行了onClose:" + fd);
-                            processor.onClose();
+                            //System.err.println("执行了onClose:" + fd);
+                            channel.onClose();
                         }
                     }
                 }
             }
-            System.out.println("-------end------");
+            //System.out.println("-------end------");
         }
     }
 
@@ -143,10 +156,10 @@ public class AwesomeEventLoop implements Runnable {
      * @param channel
      */
     public void startMonitor(SimpleSocketChannel channel) {
-        System.out.println("--->");
+        //System.out.println("--->");
         channel.setEventLoop(this);
         FileDescriptor fd = channel.getFd();
-        System.out.println("推送事件给reactor:" + fd.intValue() + " " + channel);
+        //System.out.println("推送事件给reactor:" + fd.intValue() + " " + channel);
         int flag = EPOLLET | EPOLLIN | EPOLLRDHUP;
         int opFlag = channel.getOpFlag();
         if (opFlag != 0) {
@@ -155,10 +168,10 @@ public class AwesomeEventLoop implements Runnable {
         Channel old = fpMapping.put(fd.intValue(), channel);
         if (old == null) {
             epollCtlAdd0(ep_fd, fd.intValue(), flag);
-            System.out.println("epollCtlAdd:" + fd);
+            //System.out.println("epollCtlAdd:" + fd);
         }
         wakeupReactor();
-        System.out.println("<---");
+        //System.out.println("<---");
     }
 
     public boolean contains(int fd) {
@@ -167,7 +180,7 @@ public class AwesomeEventLoop implements Runnable {
 
     public void remove(int fd) {
         //TODO 异常处理
-        System.err.println("epollCtlDel:" + fd);
+        //System.err.println("epollCtlDel:" + fd);
         int i = epollCtlDel0(ep_fd, fd);
         fpMapping.remove(fd);
     }

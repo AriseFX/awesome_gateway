@@ -12,7 +12,7 @@ JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollWait0(
     JNIEnv *env, jclass jc, jint efd, jlong address, jint len, jint timerfd,
     jint timeoutSec, jint timeoutNsec) {
   //设置定时器相关属性
-  if (timeoutSec != -1 && timeoutNsec != -1) {
+  if (timeoutSec > 0 && timeoutNsec > 0) {
     // TODO 确定在C栈分配？
     struct itimerspec spec;
     spec.it_interval.tv_sec = 0;
@@ -20,14 +20,14 @@ JNIEXPORT jint JNICALL Java_com_arise_linux_NativeSupport_epollWait0(
     spec.it_value.tv_sec = timeoutSec;   // Seconds
     spec.it_value.tv_nsec = timeoutNsec; // Nanoseconds
     if (timerfd_settime(timerfd, 0, &spec, NULL) < 0) {
-      return -1;
+      return -10086;
     }
   }
   // address是java里malloc的
   struct epoll_event *ev = (struct epoll_event *)(intptr_t)address;
   int result, err;
   do {
-    result = epoll_wait(efd, ev, len, -1);
+    result = epoll_wait(efd, ev, len, timeoutSec==0?0:-1);
     if (result >= 0) {
       return result;
     }

@@ -27,11 +27,11 @@ public class HttpV1_1_RouteHandler implements ProtocolHandler {
         FileDescriptor currentFd = ctx.getCurrentFd();
         AwesomeEventLoop eventLoop = ctx.getEventLoop();
         HttpRouteChannel channel = new HttpRouteChannel(
-                new InetSocketAddress("192.168.150.102", 8099),
+                new InetSocketAddress("localhost", 8081),
                 currentFd);
         channel.putRemoteBuf(request);
         eventLoop.startMonitor(channel);
-        eventLoop.scheduled(new ScheduledTask(3, callback_eventLoop -> {
+        eventLoop.scheduled(new ScheduledTask(5, callback_eventLoop -> {
             if (!channel.isConnected()) {
                 try {
                     ByteBuffer cache = StandardHttpResponse.TimeoutError.cache();

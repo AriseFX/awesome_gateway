@@ -42,10 +42,10 @@ public class RestRouteRadixTree {
         tree.addRoute("bos/principal", "bos/principal");
         tree.addRoute("fds/log/{id}/getSignSyncLogList", "fds/log/{id}/getSignSyncLogList");
         tree.addRoute("fds/log/signSync/getSignSyncLogInfo", "fds/log/signSync/getSignSyncLogInfo");
-        System.out.println(tree);
+        //System.out.println(tree);
 
         List<Object> matching = tree.matching("fds/log/3123123/getSignSyncLogList");
-        System.out.println(matching);
+        //System.out.println(matching);
     }
 
     /**

@@ -10,18 +10,18 @@ import java.util.function.Consumer;
  */
 public class ScheduledTask implements Comparable<ScheduledTask> {
 
-    //超时(秒)
-    private final int timeout;
+    private final long timestamp;
 
     private final Consumer<AwesomeEventLoop> task;
 
     public ScheduledTask(int timeout, Consumer<AwesomeEventLoop> task) {
-        this.timeout = timeout;
+        this.timestamp = System.currentTimeMillis() + timeout * 1000L;
+        //超时(秒)
         this.task = task;
     }
 
     public int getTimeout() {
-        return this.timeout;
+        return (int) ((timestamp - System.currentTimeMillis()) / 1000);
     }
 
     public Consumer<AwesomeEventLoop> getTask() {
@@ -30,6 +30,6 @@ public class ScheduledTask implements Comparable<ScheduledTask> {
 
     @Override
     public int compareTo(ScheduledTask o) {
-        return timeout - o.getTimeout();
+        return (int) (timestamp - o.timestamp);
     }
 }

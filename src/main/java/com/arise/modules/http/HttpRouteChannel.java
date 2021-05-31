@@ -66,12 +66,16 @@ public class HttpRouteChannel extends SimpleSocketChannel {
         try {
             FileDescriptor[] respPipe = pipe();
             //转发给客户端
+            while (true) {
+                int toPipe = splice(fd.intValue(), -1, respPipe[1].intValue(), -1, 0x7fffffff);
+                int toSocket = splice(respPipe[0].intValue(), -1, mainFd.intValue(), -1, 0x7fffffff);
+                log.info("toPipe:{},toSocket:{}", toPipe, toSocket);
+                if (toSocket == 0) break;
+            }
             //TODO 连接复用的情况下len如何考虑？
-            int toPipe = splice(fd.intValue(), -1, respPipe[1].intValue(), -1, 0x7fffffff);
-            int toSocket = splice(respPipe[0].intValue(), -1, mainFd.intValue(), -1, 0x7fffffff);
-            log.info("toPipe:{},toSocket:{}", toPipe, toSocket);
             //一次请求/响应结束应该移除该fd的监听，考虑连接复用时，
             eventLoop.remove(fd.intValue());
+//            close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -79,7 +83,7 @@ public class HttpRouteChannel extends SimpleSocketChannel {
 
     @Override
     public void onWrite() {
-        if (!connected) connected = true;
+        if (!connected) finishConnect();
         try {
             HttpServerRequest request = buffer.poll();
             if (request != null) {
@@ -100,6 +104,10 @@ public class HttpRouteChannel extends SimpleSocketChannel {
         }
     }
 
+    private void finishConnect() {
+        connected = true;
+    }
+
     @Override
     public void onError() {
         try {
@@ -111,5 +119,10 @@ public class HttpRouteChannel extends SimpleSocketChannel {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onClose() {
+        super.onClose();
     }
 }
