@@ -51,7 +51,7 @@ public class EpollHttpRouteHandler extends SimpleChannelInboundHandler<HttpObjec
 
                     EpollSocketChannel outbound = (EpollSocketChannel) future.getNow();
                     inbound.pipeline().addLast(new HttpResponseEncoder());
-                    inbound.writeAndFlush(new DefaultHttpResponse(request.protocolVersion(), new HttpResponseStatus(200, "Connection Established")))
+                    inbound.writeAndFlush(Established)
                             .addListener(res -> {
                                 if (res.isSuccess()) {
                                     //去掉所有handler(后续走tunnel)
