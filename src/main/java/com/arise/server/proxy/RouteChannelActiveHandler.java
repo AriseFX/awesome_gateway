@@ -1,4 +1,4 @@
-package com.arise.server.handler;
+package com.arise.server.proxy;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -11,11 +11,11 @@ import io.netty.util.concurrent.Promise;
  * @Description:
  * @Modified: By：
  */
-public final class ConnectServerHandler extends ChannelInboundHandlerAdapter {
+public final class RouteChannelActiveHandler extends ChannelInboundHandlerAdapter {
 
     private final Promise<Channel> promise;
 
-    public ConnectServerHandler(Promise<Channel> promise) {
+    public RouteChannelActiveHandler(Promise<Channel> promise) {
         this.promise = promise;
     }
 

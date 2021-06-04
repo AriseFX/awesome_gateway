@@ -1,11 +1,9 @@
 package com.arise.server;
 
-import com.arise.server.handler.EpollHttpRouteHandler;
+import com.arise.server.proxy.EpollHttpRouteHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
-import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollMode;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;
@@ -25,11 +23,29 @@ import org.springframework.stereotype.Component;
 public class ServerRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws InterruptedException {
+        /**
+         *
+         *               +------------+      +----------
+         *  request----> |LocalChannel+----> |HttpDecode
+         *               +------------+      +-----+----
+         *                                         v
+         *  +-------------+       +-----------+  +-+-----+
+         *  |RemoteChannel| <-----+Mod Request+--+Forward|
+         *  +-------------+       +-----------+  +-------+
+         *
+         *              +-------------+          +-------+
+         * response---->+RemoteChannel+--------> |Forward|
+         *              +-------------+          +---+---+
+         *                                           v
+         *                                  +------------+
+         *                                  |LocalChannel|
+         *                                  +------------+
+         *
+         */
         EventLoopGroup boss = new EpollEventLoopGroup(1);
-        EventLoopGroup worker = new EpollEventLoopGroup(1);
+        EventLoopGroup worker = new EpollEventLoopGroup(0);
         ServerBootstrap b = new ServerBootstrap();
         b.option(ChannelOption.SO_BACKLOG, 4096);
-        b.childOption(EpollChannelOption.EPOLL_MODE, EpollMode.LEVEL_TRIGGERED);
         b.group(boss, worker)
                 .channel(EpollServerSocketChannel.class)
                 .childHandler(new ChannelInitializer<SocketChannel>() {
@@ -41,7 +57,7 @@ public class ServerRunner implements CommandLineRunner {
                         p.addLast(new EpollHttpRouteHandler());
                     }
                 });
-        Channel channel = b.bind(8080).sync().channel();
+        Channel channel = b.bind(8192).sync().channel();
         channel.closeFuture().sync();
     }
 }

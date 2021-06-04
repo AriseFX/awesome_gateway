@@ -1,9 +1,10 @@
-package com.arise.server.handler;
+package com.arise.server.proxy;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.handler.codec.http.HttpRequest;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Objects;
 
@@ -13,12 +14,26 @@ import java.util.Objects;
  * @Description:
  * @Modified: By：
  */
+@Slf4j
 public class EpollForwardHandler extends ChannelInboundHandlerAdapter {
 
     private final EpollSocketChannel channel;
 
     public EpollForwardHandler(EpollSocketChannel channel) {
         this.channel = channel;
+    }
+
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) {
+        ctx.flush();
+    }
+
+
+    @Override
+    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+        //处理背压
+        channel.config().setAutoRead(ctx.channel().isWritable());
+        super.channelWritabilityChanged(ctx);
     }
 
     @Override
@@ -33,7 +48,15 @@ public class EpollForwardHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        channel.close();
+        if (channel.isActive()) {
+            channel.flush();
+            channel.close();
+        }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        ctx.close();
     }
 
     /**

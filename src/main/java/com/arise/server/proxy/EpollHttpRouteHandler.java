@@ -1,12 +1,10 @@
-package com.arise.server.handler;
+package com.arise.server.proxy;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.epoll.EpollChannelOption;
-import io.netty.channel.epoll.EpollMode;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.logging.LogLevel;
@@ -34,6 +32,11 @@ public class EpollHttpRouteHandler extends SimpleChannelInboundHandler<HttpObjec
     private final ArrayList<HttpContent> contents = new ArrayList<>();
 
     @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) {
+        ctx.flush();
+    }
+
+    @Override
     protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) {
         if (msg instanceof HttpRequest) {
             //获取目标ip端口
@@ -46,9 +49,10 @@ public class EpollHttpRouteHandler extends SimpleChannelInboundHandler<HttpObjec
         } else {
             EpollSocketChannel inbound = (EpollSocketChannel) ctx.channel();
             Promise<Channel> promise = ctx.executor().newPromise();
+            //处理https代理
             if (request.method().equals(HttpMethod.CONNECT)) {
                 promise.addListener((FutureListener<Channel>) future -> {
-
+                    //直到连接远程服务器成功
                     EpollSocketChannel outbound = (EpollSocketChannel) future.getNow();
                     inbound.pipeline().addLast(new HttpResponseEncoder());
                     inbound.writeAndFlush(Established)
@@ -68,15 +72,17 @@ public class EpollHttpRouteHandler extends SimpleChannelInboundHandler<HttpObjec
                 contents.add((HttpContent) msg);
                 if (msg instanceof LastHttpContent) {
                     promise.addListener((FutureListener<Channel>) future -> {
-                        EpollSocketChannel outbound = (EpollSocketChannel) future.getNow();
-                        //考虑http连接复用的情况，后续就不走协议栈了
-                        ctx.pipeline().remove(EpollHttpRouteHandler.class);
-                        ctx.pipeline().addLast(new EpollForwardHandler(outbound));
-                        //转发请求
-                        outbound.pipeline().addLast(new HttpRequestEncoder());
-                        outbound.pipeline().addLast(new EpollForwardHandler(inbound));
-                        outbound.writeAndFlush(request);
-                        contents.forEach(outbound::writeAndFlush);
+                        if (promise.isSuccess()) {
+                            EpollSocketChannel outbound = (EpollSocketChannel) future.getNow();
+                            //考虑http连接复用的情况，后续就不走协议栈了
+                            ctx.pipeline().remove(EpollHttpRouteHandler.class);
+                            ctx.pipeline().addLast(new EpollForwardHandler(outbound));
+                            //转发请求
+                            outbound.pipeline().addLast(new HttpRequestEncoder());
+                            outbound.pipeline().addLast(new EpollForwardHandler(inbound));
+                            outbound.writeAndFlush(request);
+                            contents.forEach(outbound::writeAndFlush);
+                        }
                     });
                 }
             }
@@ -84,9 +90,8 @@ public class EpollHttpRouteHandler extends SimpleChannelInboundHandler<HttpObjec
                     .channel(EpollSocketChannel.class)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                     .option(ChannelOption.SO_KEEPALIVE, true)
-                    .option(EpollChannelOption.EPOLL_MODE, EpollMode.LEVEL_TRIGGERED)
                     .handler(new LoggingHandler(LogLevel.INFO))
-                    .handler(new ConnectServerHandler(promise))
+                    .handler(new RouteChannelActiveHandler(promise))
                     .connect(host, port);
         }
     }
