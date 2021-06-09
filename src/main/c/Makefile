@@ -38,8 +38,6 @@ all: $(TARGET)
 $(TARGET): $(JNI_HEADERS) $(JNI_SOURCES)
 	$(CXX) -fPIC $(INCLUDES) -g -c $(JNI_SOURCES)
 	$(CXX) -shared com_arise_linux_NativeSupport.o -o $(TARGET)
-	#$(CXX) -shared $(TARGET_DIR)/libNativeSupport.o -o $(TARGET_DIR)/libNativeSupport.so
-	#gcc -fPIC -I /home/java/jdk1.8.0_291/include -I /home/java/jdk1.8.0_291/include/linux -g -c com_arise_linux_NativeSupport.c && gcc -shared com_arise_linux_NativeSupport.o -o com_arise_linux_NativeSupport.so
 
 $(JNI_HEADERS): $(JNI_JAVA_SOURCES)
 	mkdir -p $(TARGET_DIR)/jni

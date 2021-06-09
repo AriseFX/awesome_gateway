@@ -1,6 +1,5 @@
 package com.arise;
 
-import com.arise.linux.NativeSupport;
 import com.arise.server.ServerRunner;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.Banner;
