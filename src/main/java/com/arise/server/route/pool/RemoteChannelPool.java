@@ -15,6 +15,7 @@ import io.netty.handler.codec.http.HttpResponseDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.Promise;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -30,7 +31,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RemoteChannelPool {
 
     private static final ConcurrentHashMap<String, ChannelPool> pools = new ConcurrentHashMap<>();
-
+    @Setter
+    private static int connectTimeout;
+    @Setter
+    private static int maxConnections;
+    @Setter
+    private static int maxPendingAcquires;
 
     /**
      * 异步获取channel
@@ -60,7 +66,7 @@ public class RemoteChannelPool {
     private static ChannelPool newFixedChannelPool(String host, int port, EventLoop eventLoop) {
         Bootstrap b = new Bootstrap().group(eventLoop)
                 .channel(EpollSocketChannel.class)
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .handler(new LoggingHandler(LogLevel.INFO))
                 .remoteAddress(host, port);
@@ -71,6 +77,6 @@ public class RemoteChannelPool {
                     public void channelCreated(Channel ch) {
                         log.debug("Channel created:{}", ch.toString());
                     }
-                }, 3);
+                }, maxConnections, maxPendingAcquires);
     }
 }

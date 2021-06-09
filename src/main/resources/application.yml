@@ -1,9 +1,10 @@
 gateway:
   port: 8192
   address: 0.0.0.0
-  #连接复用
-  keepalive: true
-  sub-reactor-num: 6
+  pool:
+    timeout: 3000 #超时时间
+    max-connections: 10 #最大连接数
+    max-pending-acquires: 5 #最大pending数
   registry:
     nacos:
       server-addr: 192.168.10.224:8848

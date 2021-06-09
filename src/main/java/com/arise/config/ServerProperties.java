@@ -1,5 +1,6 @@
 package com.arise.config;
 
+import com.arise.server.route.pool.RemoteChannelPool;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.List;
+import javax.annotation.PostConstruct;
 import java.util.Map;
 
 /**
@@ -21,6 +22,7 @@ import java.util.Map;
 @EnableConfigurationProperties(ServerProperties.class)
 @ConfigurationProperties("gateway")
 public class ServerProperties {
+
     /**
      * 端口
      */
@@ -29,12 +31,9 @@ public class ServerProperties {
      * 地址
      */
     private String address;
-    /**
-     * 开启keepalive后，gateway会连接复用
-     */
-    private boolean keepalive;
 
-    private int subReactorNum;
+    private Pool pool;
+
     /**
      * 注册中心相关
      */
@@ -49,5 +48,22 @@ public class ServerProperties {
         private String namespace;
         private String networkInterface;
         private String ip;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Pool {
+        private int timeout;
+        private int maxConnections;
+        private int maxPendingAcquires;
+    }
+
+    @PostConstruct
+    private void after() {
+        Pool pool = this.getPool();
+        RemoteChannelPool.setConnectTimeout(pool.timeout);
+        RemoteChannelPool.setMaxPendingAcquires(pool.maxPendingAcquires);
+        RemoteChannelPool.setMaxConnections(pool.maxConnections);
     }
 }

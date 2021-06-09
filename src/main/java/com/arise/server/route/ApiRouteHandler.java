@@ -27,9 +27,9 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
     private static final RestRouteRadixTree<String> tree = new RestRouteRadixTree<>();
 
-    private static final String host = "172.28.155.212";
+    private static final String host = "192.168.150.102";
 
-    private static final int port = 8081;
+    private static final int port = 8099;
 
     private List<HttpObject> contents = new ArrayList<>();
 
