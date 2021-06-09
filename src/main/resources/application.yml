@@ -1,5 +1,5 @@
 gateway:
-  port: 8080
+  port: 8192
   address: 0.0.0.0
   #连接复用
   keepalive: true
@@ -11,3 +11,6 @@ gateway:
       ip: 172.16.110.63
       service-name: AsGateway
       network-interface: eth0
+logging:
+  level:
+    root: debug

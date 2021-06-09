@@ -1,5 +1,11 @@
 package com.arise.linux;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Enumeration;
+
 /**
  * @Author: wy
  * @Date: Created in 12:06 2020/12/28
@@ -10,7 +16,25 @@ public class NativeSupport {
 
     static {
         //默认打包路径
-        System.load("/mnt/d/work/project/OpenHft/awesome_gateway/docker/com_arise_linux_NativeSupport.so");
+        try {
+            Enumeration<URL> dir = Thread.currentThread().getContextClassLoader().getResources("jni");
+            while (dir.hasMoreElements()) {
+                URL url = dir.nextElement();
+                File file = new File(url.getPath());
+                File[] files = file.listFiles();
+                if (files == null) {
+                    System.err.println("libNativeSupport.so不存在！");
+                } else {
+                    Arrays.stream(files).forEach(lib -> {
+                        if (lib.getName().endsWith("so")) {
+                            System.load(lib.getPath());
+                        }
+                    });
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

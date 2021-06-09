@@ -11,11 +11,11 @@ import io.netty.util.concurrent.Promise;
  * @Description:
  * @Modified: By：
  */
-public final class RouteChannelActiveHandler extends ChannelInboundHandlerAdapter {
+public final class RemoteChannelActiveHandler extends ChannelInboundHandlerAdapter {
 
     private final Promise<Channel> promise;
 
-    public RouteChannelActiveHandler(Promise<Channel> promise) {
+    public RemoteChannelActiveHandler(Promise<Channel> promise) {
         this.promise = promise;
     }
 
@@ -24,6 +24,12 @@ public final class RouteChannelActiveHandler extends ChannelInboundHandlerAdapte
         ctx.pipeline().remove(this);
         promise.setSuccess(ctx.channel());
     }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        super.channelInactive(ctx);
+    }
+
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable throwable) {

@@ -15,11 +15,11 @@ import java.util.Objects;
  * @Modified: By：
  */
 @Slf4j
-public class EpollForwardHandler extends ChannelInboundHandlerAdapter {
+public class ProxyForwardHandler extends ChannelInboundHandlerAdapter {
 
     private final EpollSocketChannel channel;
 
-    public EpollForwardHandler(EpollSocketChannel channel) {
+    public ProxyForwardHandler(EpollSocketChannel channel) {
         this.channel = channel;
     }
 

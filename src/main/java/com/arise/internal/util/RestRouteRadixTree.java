@@ -2,7 +2,9 @@ package com.arise.internal.util;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,46 +20,42 @@ import java.util.List;
  * route2:     /api/oms/**           ->  http://OMS/**
  * route2:     /api/user             ->  http://OMS/**
  */
-public class RestRouteRadixTree {
+public class RestRouteRadixTree<T> {
 
     public static final String Standard_Wildcard = "{key}";
-    public Node root;
+    public Node<T> root;
 
     public RestRouteRadixTree() {
-        this.root = new Node(null, null, new HashMap<>());
+        this.root = new Node<>(null, null, new HashMap<>());
     }
 
-    public static void main(String[] args) {
-        RestRouteRadixTree tree = new RestRouteRadixTree();
-        tree.addRoute("api/ums/user", "we");
-        tree.addRoute("bos/xtmls/search/current", "bos/xtmls/search/current");
-        tree.addRoute("addOrigin", "addOrigin");
-        tree.addRoute("selectOriginInfo", "selectOriginInfo");
-        tree.addRoute("selectOriginInfoList", "selectOriginInfoList");
-        tree.addRoute("updateOriginInfo", "updateOriginInfo");
-        tree.addRoute("fds/medInst/getMedInstList", "fds/medInst/getMedInstList");
-        tree.addRoute("getSqm", "getSqm");
-        tree.addRoute("getUserName", "getUserName");
-        tree.addRoute("verificationGrantCode", "verificationGrantCode");
-        tree.addRoute("bos/principal", "bos/principal");
-        tree.addRoute("fds/log/{id}/getSignSyncLogList", "fds/log/{id}/getSignSyncLogList");
-        tree.addRoute("fds/log/signSync/getSignSyncLogInfo", "fds/log/signSync/getSignSyncLogInfo");
+    public void init() {
+        this.addRoute("api/ums/user", (T) "lb://FDS/we");
+        this.addRoute("bos/xtmls/search/current", (T) "lb://FDSbos/xtmls/search/current");
+        this.addRoute("addOrigin", (T) "lb://FDSaddOrigin");
+        this.addRoute("selectOriginInfo", (T) "lb://FDSselectOriginInfo");
+        this.addRoute("selectOriginInfoList", (T) "lb://FDSselectOriginInfoList");
+        this.addRoute("updateOriginInfo", (T) "lb://FDSupdateOriginInfo");
+        this.addRoute("fds/medInst/getMedInstList", (T) "lb://FDSfds/medInst/getMedInstList");
+        this.addRoute("getSqm", (T) "lb://FDSgetSqm");
+        this.addRoute("getUserName", (T) "lb://FDSgetUserName");
+        this.addRoute("verificationGrantCode", (T) "lb://FDSverificationGrantCode");
+        this.addRoute("bos/principal", (T) "lb://FDSbos/principal");
+        this.addRoute("fds/log/{id}/getSignSyncLogList", (T) "lb://FDSlb://FDS/fds/log/{id}/getSignSyncLogList");
+        this.addRoute("fds/log/signSync/getSignSyncLogInfo", (T) "lb://FDSfds/log/signSync/getSignSyncLogInfo");
         //System.out.println(tree);
-
-        List<Object> matching = tree.matching("fds/log/3123123/getSignSyncLogList");
-        //System.out.println(matching);
     }
 
     /**
      * 匹配数据
      */
-    public List<Object> matching(String url) {
-        List<Object> res = new LinkedList<>();
-        HashMap<CharSequence, Node> child = root.child;
+    public List<T> matching(String url) {
+        List<T> res = new LinkedList<>();
+        HashMap<CharSequence, Node<T>> child = root.child;
         String[] tokens = url.split("/");
-        for (int i = 0; i < tokens.length; i++) {
+        for (int i = 1; i < tokens.length; i++) {
             String token = tokens[i];
-            Node node = child.get(token);
+            Node<T> node = child.get(token);
             if (node == null) {
                 node = child.get(Standard_Wildcard);
                 if (node == null) {
@@ -65,7 +63,7 @@ public class RestRouteRadixTree {
                 }
             }
             //最后一个节点
-            Object route = node.getPointer();
+            T route = node.getPointer();
             if (route != null && i == tokens.length - 1) {
                 res.add(route);
                 break;
@@ -79,17 +77,17 @@ public class RestRouteRadixTree {
     /**
      * 添加路由
      */
-    public void addRoute(String url, Object pointer) {
-        HashMap<CharSequence, Node> child = root.child;
+    public void addRoute(String url, T pointer) {
+        HashMap<CharSequence, Node<T>> child = root.child;
         String[] tokens = url.split("/");
         for (int i = 0; i < tokens.length; i++) {
             String token = tokens[i];
             if (token.charAt(0) == '{' && token.charAt(token.length() - 1) == '}') {
                 token = Standard_Wildcard;
             }
-            Node node = child.get(token);
+            Node<T> node = child.get(token);
             if (node == null) {
-                child.put(token, node = new Node(token, null, new HashMap<>()));
+                child.put(token, node = new Node<>(token, null, new HashMap<>()));
             }
             child = node.child;
             //最后一位
@@ -101,12 +99,10 @@ public class RestRouteRadixTree {
 
     @Data
     @AllArgsConstructor
-    static class Node {
+    static class Node<T> {
         private String content;
         //该节点
-        private Object pointer;
-        private HashMap<CharSequence, Node> child;
+        private T pointer;
+        private HashMap<CharSequence, Node<T>> child;
     }
-
-
 }

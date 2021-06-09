@@ -1,16 +1,23 @@
 package com.arise.server;
 
-import com.arise.server.proxy.EpollHttpRouteHandler;
+import com.arise.config.ServerProperties;
+import com.arise.server.proxy.EpollHttpProxyHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
 
 /**
  * @Author: wy
@@ -18,15 +25,20 @@ import org.springframework.stereotype.Component;
  * @Description:
  * @Modified: By：
  */
+@Slf4j
 @Component
 @Order(Ordered.LOWEST_PRECEDENCE)
 public class ServerRunner implements CommandLineRunner {
+
+    @Resource(name = "serverProperties")
+    private ServerProperties prop;
+
     @Override
     public void run(String... args) throws InterruptedException {
         /**
          *
-         *               +------------+      +----------
-         *  request----> |LocalChannel+----> |HttpDecode
+         *               +------------+      +-----------
+         *  request----> |LocalChannel+----> |HttpDecode|
          *               +------------+      +-----+----
          *                                         v
          *  +-------------+       +-----------+  +-+-----+
@@ -52,12 +64,16 @@ public class ServerRunner implements CommandLineRunner {
                     @Override
                     protected void initChannel(SocketChannel ch) {
                         ChannelPipeline p = ch.pipeline();
-                        //解析请求行，后续走splice
                         p.addLast(new HttpRequestDecoder());
-                        p.addLast(new EpollHttpRouteHandler());
+                        p.addLast(new EpollHttpProxyHandler());
                     }
                 });
-        Channel channel = b.bind(8192).sync().channel();
+        Channel channel = b.bind(prop.getAddress(), prop.getPort())
+                .addListener(future -> {
+                    if (future.isSuccess()) {
+                        log.info("Server startup complete！[{}:{}]", prop.getAddress(), prop.getPort());
+                    }
+                }).sync().channel();
         channel.closeFuture().sync();
     }
 }
