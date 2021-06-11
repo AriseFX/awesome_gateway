@@ -8,6 +8,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.LastHttpContent;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.NoSuchElementException;
+
 /**
  * @Author: wy
  * @Date: Created in 22:47 2021-06-01
@@ -38,17 +40,24 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        SocketChannel channel = (SocketChannel) ctx.channel();
         if (otherChannel.isActive()) {
             otherChannel.writeAndFlush(msg).addListener(future -> {
                 if (msg instanceof LastHttpContent && future.isDone()) {
-                    SocketChannel channel = (SocketChannel) ctx.channel();
-                    RemoteChannelPool.releaseChannel(channel);
+                    try {
+                        RemoteChannelPool.releaseChannel(channel);
+                    } catch (NoSuchElementException e) {
+                        e.printStackTrace();
+                        System.err.println(msg.getClass());
+                        System.err.println(channel.pipeline());
+                        System.err.println(channel.isActive());
+                    }
                     log.debug("释放连接：{}", ctx.channel().toString());
                 }
             });
         } else {
-            RemoteChannelPool.releaseChannel((SocketChannel) ctx.channel());
-            log.debug("inbound 关闭 ，释放连接：{}", ctx.channel().toString());
+            RemoteChannelPool.releaseChannel(channel);
+            log.error("inbound 关闭 ，释放连接：{}", ctx.channel().toString());
         }
     }
 

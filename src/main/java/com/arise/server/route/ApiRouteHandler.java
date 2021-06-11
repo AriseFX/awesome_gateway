@@ -3,6 +3,8 @@ package com.arise.server.route;
 import com.arise.internal.util.RestRouteRadixTree;
 import com.arise.server.StandardHttpMessage;
 import com.arise.server.route.pool.RemoteChannelPool;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -11,6 +13,7 @@ import io.netty.handler.codec.http.*;
 import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
+import net.openhft.affinity.Affinity;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -29,7 +32,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
     private static final String host = "192.168.150.102";
 
-    private static final int port = 8099;
+    private static final int port = 10086;
 
     private List<HttpObject> contents = new ArrayList<>();
 
@@ -40,8 +43,16 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        log.debug("channelInactive:{}", ctx.channel().toString());
+        ctx.channel().close();
+    }
+
+
+    @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         log.debug("收到msg:{},this:{}", msg.getClass(), this.hashCode());
+        log.debug("当前thread id:{},cpu id:{}", Affinity.getThreadId(), Affinity.getCpu());
         EpollSocketChannel inbound = (EpollSocketChannel) ctx.channel();
         if (msg instanceof HttpRequest) {
             request = (HttpRequest) msg;
@@ -59,7 +70,6 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                         //TODO 获取IP端口 modeRequest()
                         Promise<Channel> promise = ctx.executor().newPromise();
                         promise.addListener((FutureListener<Channel>) future -> {
-                            log.debug("future 返回success:{}", future.isSuccess());
                             if (future.isSuccess()) {
                                 EpollSocketChannel outbound = (EpollSocketChannel) future.getNow();
                                 //转发
@@ -70,22 +80,25 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                 outbound.writeAndFlush(request);
                                 contents.forEach(outbound::writeAndFlush);
                             } else {
-                                inbound.writeAndFlush(StandardHttpMessage._500).addListener(e -> {
-                                    if (e.isSuccess()) {
-                                        inbound.close();
-                                    }
-                                });
+                                if (inbound.isActive()) {
+                                    StandardHttpMessage._500.toByteBuf(ctx).forEach(e ->
+                                            inbound.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
+                                    inbound.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(f -> {
+                                        if (f.isSuccess()) {
+                                            inbound.close();
+                                        }
+                                    });
+                                }
                             }
                         });
                         //获取连接
                         RemoteChannelPool.acquireChannel(host, port, inbound.eventLoop(), promise);
                     }
                 } else {
-                    inbound.writeAndFlush(StandardHttpMessage._404).addListener(future -> {
-                        if (future.isSuccess()) {
-                            inbound.close();
-                        }
-                    });
+                    if (inbound.isActive()) {
+                        StandardHttpMessage._200.toByteBuf(ctx).forEach(e ->
+                                inbound.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
+                    }
                 }
             }
         }
@@ -93,14 +106,11 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable throwable) {
-        Channel channel = ctx.channel();
-        channel.pipeline().addLast(new HttpResponseEncoder());
-        channel.writeAndFlush(StandardHttpMessage._500).addListener(future -> {
-            if (future.isSuccess()) {
-                channel.close();
-            }
-        });
         throwable.printStackTrace();
-        log.error(throwable.getMessage());
+        Channel channel = ctx.channel();
+        if (channel.isActive()) {
+            StandardHttpMessage._500.toByteBuf(ctx).forEach(e ->
+                    channel.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
+        }
     }
 }

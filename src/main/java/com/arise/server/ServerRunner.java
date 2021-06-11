@@ -9,6 +9,10 @@ import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import lombok.extern.slf4j.Slf4j;
+import net.openhft.affinity.AffinityLock;
+import net.openhft.affinity.AffinityStrategies;
+import net.openhft.affinity.AffinityStrategy;
+import net.openhft.affinity.AffinityThreadFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -51,6 +55,7 @@ public class ServerRunner implements CommandLineRunner {
          *                                  +------------+
          *
          */
+        AffinityThreadFactory threadFactory = new AffinityThreadFactory("awesome", AffinityStrategies.SAME_SOCKET, AffinityStrategies.DIFFERENT_CORE);
         EventLoopGroup boss = new EpollEventLoopGroup(1);
         EventLoopGroup worker = new EpollEventLoopGroup(0);
         ServerBootstrap b = new ServerBootstrap();
@@ -68,6 +73,7 @@ public class ServerRunner implements CommandLineRunner {
         Channel channel = b.bind(prop.getAddress(), prop.getPort())
                 .addListener(future -> {
                     if (future.isSuccess()) {
+                        log.debug("CPU布局如下: \r\n{}", AffinityLock.cpuLayout());
                         log.info("Server startup complete！[{}:{}]", prop.getAddress(), prop.getPort());
                     }
                 }).sync().channel();

@@ -12,6 +12,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.Promise;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 
@@ -23,6 +24,7 @@ import static com.arise.server.StandardHttpMessage.Established;
  * @Description:
  * @Modified: By：
  */
+@Slf4j
 public class EpollHttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
 
     private final Bootstrap b = new Bootstrap();
@@ -46,7 +48,7 @@ public class EpollHttpProxyHandler extends SimpleChannelInboundHandler<HttpObjec
                 ctx.pipeline().remove(this);
                 ApiRouteHandler apiRouteHandler = new ApiRouteHandler();
                 ctx.pipeline().addLast(apiRouteHandler);
-                ctx.pipeline().addLast(new HttpResponseEncoder());
+                log.debug("EpollHttpProxyHandler  msg:{}", ((HttpRequest) msg).uri());
                 apiRouteHandler.channelRead(ctx, msg);
             } else {
                 //http代理
