@@ -39,7 +39,6 @@ public class StandardHttpMessage {
         }
     }, OK);
 
-
     public static StandardResponse _500 = new StandardResponse(new HashMap<String, Object>() {
         {
             put("msg", "server error");

@@ -3,8 +3,8 @@ gateway:
   address: 0.0.0.0
   pool:
     timeout: 3000 #超时时间
-    max-connections: 10 #最大连接数
-    max-pending-acquires: 5 #最大pending数
+    max-connections: 80 #最大连接数
+    max-pending-acquires: 0x7fffffff #最大pending数
   registry:
     nacos:
       server-addr: 192.168.10.224:8848
@@ -14,4 +14,4 @@ gateway:
       network-interface: eth0
 logging:
   level:
-    root: debug
+    root: info

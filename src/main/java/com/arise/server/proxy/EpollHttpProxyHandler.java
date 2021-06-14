@@ -2,14 +2,9 @@ package com.arise.server.proxy;
 
 import com.arise.server.route.ApiRouteHandler;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.*;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.handler.codec.http.*;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
@@ -45,9 +40,11 @@ public class EpollHttpProxyHandler extends SimpleChannelInboundHandler<HttpObjec
             request = (HttpRequest) msg;
             if (request.uri().startsWith("/")) {
                 //api路由
-                ctx.pipeline().remove(this);
+                ChannelPipeline pipeline = ctx.pipeline();
+                pipeline.remove(this);
                 ApiRouteHandler apiRouteHandler = new ApiRouteHandler();
-                ctx.pipeline().addLast(apiRouteHandler);
+                pipeline.addLast(apiRouteHandler);
+//                pipeline.addLast(new LogStorageHandler());
                 log.debug("EpollHttpProxyHandler  msg:{}", ((HttpRequest) msg).uri());
                 apiRouteHandler.channelRead(ctx, msg);
             } else {
@@ -107,7 +104,6 @@ public class EpollHttpProxyHandler extends SimpleChannelInboundHandler<HttpObjec
                 .channel(EpollSocketChannel.class)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                 .option(ChannelOption.SO_KEEPALIVE, true)
-                .handler(new LoggingHandler(LogLevel.INFO))
                 .handler(new RemoteChannelActiveHandler(promise))
                 .connect(host, port);
     }

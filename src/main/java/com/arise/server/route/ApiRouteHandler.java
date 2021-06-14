@@ -4,7 +4,6 @@ import com.arise.internal.util.RestRouteRadixTree;
 import com.arise.server.StandardHttpMessage;
 import com.arise.server.route.pool.RemoteChannelPool;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -30,20 +29,22 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
     private static final RestRouteRadixTree<String> tree = new RestRouteRadixTree<>();
 
-    private static final String host = "192.168.150.102";
+    private static final String host = "192.168.0.68";
 
-    private static final int port = 10086;
+    private static final int port = 8888;
 
     private List<HttpObject> contents = new ArrayList<>();
 
     private HttpRequest request;
+
+    private EpollSocketChannel outbound;
 
     static {
         tree.init();
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) {
         log.debug("channelInactive:{}", ctx.channel().toString());
         ctx.channel().close();
     }
@@ -71,11 +72,10 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                         Promise<Channel> promise = ctx.executor().newPromise();
                         promise.addListener((FutureListener<Channel>) future -> {
                             if (future.isSuccess()) {
-                                EpollSocketChannel outbound = (EpollSocketChannel) future.getNow();
+                                outbound = (EpollSocketChannel) future.getNow();
+                                request.setUri("/test/index.html");
                                 //转发
                                 log.debug("inbound:{},hashcode:{},outbound:{},hashcode:{}", inbound.isActive(), inbound.hashCode(), outbound.isActive(), outbound.hashCode());
-                                outbound.pipeline().addLast(new HttpRequestEncoder());
-                                outbound.pipeline().addLast(new HttpResponseDecoder());
                                 outbound.pipeline().addLast(new ForwardHandler(inbound));
                                 outbound.writeAndFlush(request);
                                 contents.forEach(outbound::writeAndFlush);
@@ -83,11 +83,6 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                 if (inbound.isActive()) {
                                     StandardHttpMessage._500.toByteBuf(ctx).forEach(e ->
                                             inbound.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
-                                    inbound.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(f -> {
-                                        if (f.isSuccess()) {
-                                            inbound.close();
-                                        }
-                                    });
                                 }
                             }
                         });
@@ -96,7 +91,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                     }
                 } else {
                     if (inbound.isActive()) {
-                        StandardHttpMessage._200.toByteBuf(ctx).forEach(e ->
+                        StandardHttpMessage._404.toByteBuf(ctx).forEach(e ->
                                 inbound.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
                     }
                 }
@@ -106,7 +101,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable throwable) {
-        throwable.printStackTrace();
+        log.error("ApiRouteHandler:{}", throwable.toString());
         Channel channel = ctx.channel();
         if (channel.isActive()) {
             StandardHttpMessage._500.toByteBuf(ctx).forEach(e ->

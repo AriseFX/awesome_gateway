@@ -12,6 +12,7 @@ import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpRequestEncoder;
 import io.netty.handler.codec.http.HttpResponseDecoder;
+import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.Promise;
@@ -19,8 +20,8 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
-import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @Author: wy
@@ -51,10 +52,6 @@ public class RemoteChannelPool {
     }
 
     public static void releaseChannel(SocketChannel channel) {
-        //handler
-        channel.pipeline().remove(ForwardHandler.class);
-        channel.pipeline().remove(HttpRequestEncoder.class);
-        channel.pipeline().remove(HttpResponseDecoder.class);
         InetSocketAddress address = channel.remoteAddress();
         String host = address.getHostString();
         int port = address.getPort();
@@ -76,7 +73,25 @@ public class RemoteChannelPool {
                 new AbstractChannelPoolHandler() {
                     @Override
                     public void channelCreated(Channel ch) {
-                        log.debug("Channel created:{}", ch.toString());
+                        log.debug("Channel created:{}", ch);
+                    }
+
+                    @Override
+                    public void channelReleased(Channel ch) {
+                        //为了清空状态
+                        ch.pipeline().remove(HttpRequestEncoder.class);
+                        ch.pipeline().remove(HttpResponseEncoder.class);
+                        ch.pipeline().remove(HttpResponseDecoder.class);
+                        ch.pipeline().remove(ForwardHandler.class);
+//                        log.error("Channel released:{}", atomicInteger.addAndGet(-1));
+                    }
+
+                    @Override
+                    public void channelAcquired(Channel ch) {
+                        ch.pipeline().addLast(new HttpRequestEncoder());
+                        ch.pipeline().addLast(new HttpResponseEncoder());
+                        ch.pipeline().addLast(new HttpResponseDecoder());
+//                        log.error("Channel acquired:{}", atomicInteger.incrementAndGet());
                     }
                 }, maxConnections, maxPendingAcquires);
     }
