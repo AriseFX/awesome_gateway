@@ -42,6 +42,11 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
+    public void handlerAdded(ChannelHandlerContext ctx) {
+        forwardChannel.pipeline().addLast(new HttpResponseEncoder());
+    }
+
+    @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         SocketChannel channel = (SocketChannel) ctx.channel();
         if (forwardChannel.isActive()) {
@@ -69,8 +74,7 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
 //        log.error("ForwardHandler:{}", "channelInactive");
         RemoteChannelPool.releaseChannel((SocketChannel) ctx.channel());
         if (forwardChannel.isActive()) {
-            forwardChannel.pipeline().remove(HttpResponseEncoder.class);
-            StandardHttpMessage._200.toByteBuf(ctx).forEach(e ->
+            StandardHttpMessage._503.toByteBuf(ctx).forEach(e ->
                     forwardChannel.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
         }
     }

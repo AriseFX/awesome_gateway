@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Description: 主要用于管理服务节点
  * @Modified: By：
  */
-//@Component
+@Component
 @ThreadSafe
 public class ServiceManager {
 
@@ -30,10 +30,10 @@ public class ServiceManager {
     @Resource
     private ServerProperties serverProperties;
 
-    private Map<String, Object> nodeContainer = new ConcurrentHashMap<>();
+    private static final Map<String, ServiceInfo> nodeContainer = new ConcurrentHashMap<>();
 
     @PostConstruct
-    private  void init() {
+    private void init() {
         //TODO 推断当前注册中心类型
         ServerProperties.RegistryDefinition definition = serverProperties.getRegistry().get("nacos");
         if (definition == null) {
@@ -49,14 +49,15 @@ public class ServiceManager {
         //以下为钩子方法
         registrySpi.init(definition.getNamespace(), definition.getServerAddr());
         registrySpi.registerInstance(definition.getServiceName(), ip, serverProperties.getPort());
-        registrySpi.subscribeServices(e -> {
-            String a = e.getServiceName();
-            nodeContainer.put(e.getServiceName(), e.getInstances());
-        });
+        registrySpi.subscribeServices(e ->
+                nodeContainer.put(e.getServiceName().split("@@")[1], e)
+        );
     }
 
-    public List<InetSocketAddress> serviceList(String name, boolean subscribe) {
-        return registrySpi.serviceList(name);
+    public static InetSocketAddress selectService(String name) {
+        ServiceInfo serviceInfo = nodeContainer.get(name);
+        ServiceInfo.InstanceInfo info = serviceInfo.getInstances().get(0);
+        return new InetSocketAddress(info.getIp(), info.getPort());
     }
 
 }

@@ -7,9 +7,9 @@ gateway:
     max-pending-acquires: 0x7fffffff #最大pending数
   registry:
     nacos:
-      server-addr: 192.168.10.224:8848
-      namespace: bb6e6bb3-5c6a-455f-aac0-de061ec38faf
-      ip: 172.16.110.63
+      server-addr: 172.27.217.61:8848
+      namespace: 80a6dec8-f6fd-4dff-beb8-569554671f45
+      ip: 172.27.217.61
       service-name: AsGateway
       network-interface: eth0
 logging:

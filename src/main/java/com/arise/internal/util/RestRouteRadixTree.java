@@ -30,7 +30,7 @@ public class RestRouteRadixTree<T> {
     }
 
     public void init() {
-        this.addRoute("api/ums/user", (T) "lb://FDS/we");
+        this.addRoute("test", (T) "lb://BM/test");
         this.addRoute("bos/xtmls/search/current", (T) "lb://FDSbos/xtmls/search/current");
         this.addRoute("addOrigin", (T) "lb://FDSaddOrigin");
         this.addRoute("selectOriginInfo", (T) "lb://FDSselectOriginInfo");

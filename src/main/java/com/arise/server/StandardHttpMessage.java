@@ -45,6 +45,12 @@ public class StandardHttpMessage {
         }
     }, INTERNAL_SERVER_ERROR);
 
+    public static StandardResponse _503 = new StandardResponse(new HashMap<String, Object>() {
+        {
+            put("msg", "server 503");
+        }
+    }, SERVICE_UNAVAILABLE);
+
 
     public static class StandHttpResponseEncoder extends HttpResponseEncoder {
 

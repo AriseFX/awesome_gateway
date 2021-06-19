@@ -1,9 +1,9 @@
 package com.arise.server.route.pool;
 
-import com.arise.server.route.ForwardHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.pool.AbstractChannelPoolHandler;
@@ -12,7 +12,6 @@ import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpRequestEncoder;
 import io.netty.handler.codec.http.HttpResponseDecoder;
-import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.Promise;
@@ -21,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @Author: wy
@@ -79,17 +77,21 @@ public class RemoteChannelPool {
                     @Override
                     public void channelReleased(Channel ch) {
                         //为了清空状态
-                        ch.pipeline().remove(HttpRequestEncoder.class);
-                        ch.pipeline().remove(HttpResponseEncoder.class);
-                        ch.pipeline().remove(HttpResponseDecoder.class);
-                        ch.pipeline().remove(ForwardHandler.class);
-//                        log.error("Channel released:{}", atomicInteger.addAndGet(-1));
+                        ChannelPipeline pipeline = ch.pipeline();
+                        while (pipeline.last() != null) {
+                            pipeline.removeLast();
+                        }
                     }
 
+                    /**
+                     * write -> http request encode -> bytebuf
+                     * read -> bytebuf -> http response decode
+                     */
                     @Override
                     public void channelAcquired(Channel ch) {
+//                        ch.pipeline().addLast(new LogStorageHandler());
+                        ch.pipeline().addLast(new LoggingHandler());
                         ch.pipeline().addLast(new HttpRequestEncoder());
-                        ch.pipeline().addLast(new HttpResponseEncoder());
                         ch.pipeline().addLast(new HttpResponseDecoder());
 //                        log.error("Channel acquired:{}", atomicInteger.incrementAndGet());
                     }
