@@ -1,9 +1,9 @@
 package com.arise.server.proxy;
 
+import com.arise.os.OSHelper;
 import com.arise.server.route.ApiRouteHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
-import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.Promise;
@@ -20,7 +20,7 @@ import static com.arise.server.StandardHttpMessage.Established;
  * @Modified: By：
  */
 @Slf4j
-public class EpollHttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
+public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
 
     private final Bootstrap b = new Bootstrap();
 
@@ -44,7 +44,6 @@ public class EpollHttpProxyHandler extends SimpleChannelInboundHandler<HttpObjec
                 pipeline.remove(this);
                 ApiRouteHandler apiRouteHandler = new ApiRouteHandler();
                 pipeline.addLast(apiRouteHandler);
-//                pipeline.addLast(new LogStorageHandler());
                 log.debug("EpollHttpProxyHandler  msg:{}", ((HttpRequest) msg).uri());
                 apiRouteHandler.channelRead(ctx, msg);
             } else {
@@ -62,13 +61,13 @@ public class EpollHttpProxyHandler extends SimpleChannelInboundHandler<HttpObjec
     }
 
     protected void handleProxy(ChannelHandlerContext ctx, HttpObject msg) {
-        EpollSocketChannel inbound = (EpollSocketChannel) ctx.channel();
+        Channel inbound = ctx.channel();
         Promise<Channel> promise = ctx.executor().newPromise();
         //处理https代理
         if (request.method().equals(HttpMethod.CONNECT)) {
             promise.addListener((FutureListener<Channel>) future -> {
                 //直到连接远程服务器成功
-                EpollSocketChannel outbound = (EpollSocketChannel) future.getNow();
+                Channel outbound = future.getNow();
                 inbound.pipeline().addLast(new HttpResponseEncoder());
                 inbound.writeAndFlush(Established)
                         .addListener(res -> {
@@ -76,7 +75,7 @@ public class EpollHttpProxyHandler extends SimpleChannelInboundHandler<HttpObjec
                                 //去掉所有handler(后续走tunnel)
                                 ctx.pipeline().remove(HttpResponseEncoder.class);
                                 ctx.pipeline().remove(HttpRequestDecoder.class);
-                                ctx.pipeline().remove(EpollHttpProxyHandler.class);
+                                ctx.pipeline().remove(HttpProxyHandler.class);
                                 ctx.pipeline().addLast(new ProxyForwardHandler(outbound));
                                 outbound.pipeline().addLast(new ProxyForwardHandler(inbound));
                             }
@@ -88,8 +87,8 @@ public class EpollHttpProxyHandler extends SimpleChannelInboundHandler<HttpObjec
             if (msg instanceof LastHttpContent) {
                 promise.addListener((FutureListener<Channel>) future -> {
                     if (promise.isSuccess()) {
-                        EpollSocketChannel outbound = (EpollSocketChannel) future.getNow();
-                        ctx.pipeline().remove(EpollHttpProxyHandler.class);
+                        Channel outbound = future.getNow();
+                        ctx.pipeline().remove(HttpProxyHandler.class);
                         ctx.pipeline().addLast(new ProxyForwardHandler(outbound));
                         //转发请求
                         outbound.pipeline().addLast(new HttpRequestEncoder());
@@ -101,7 +100,7 @@ public class EpollHttpProxyHandler extends SimpleChannelInboundHandler<HttpObjec
             }
         }
         b.group(inbound.eventLoop())
-                .channel(EpollSocketChannel.class)
+                .channel(OSHelper.channelType())
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .handler(new RemoteChannelActiveHandler(promise))

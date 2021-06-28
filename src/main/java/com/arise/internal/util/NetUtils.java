@@ -1,10 +1,16 @@
 package com.arise.internal.util;
 
+import lombok.extern.slf4j.Slf4j;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
-import java.net.*;
-import java.util.*;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @Author: wy
@@ -12,6 +18,7 @@ import java.util.*;
  * @Description:
  * @Modified: By：
  */
+@Slf4j
 public class NetUtils {
 
     private static final Map<String, InetAddress> netList;
@@ -53,6 +60,7 @@ public class NetUtils {
     public static String getAddress(String interfaceName) {
         InetAddress address = netList.get(interfaceName);
         if (address == null) {
+            log.error("网卡列表:{}", netList.keySet());
             throw new RuntimeException("无指定网卡！");
         }
         return address.getHostAddress();

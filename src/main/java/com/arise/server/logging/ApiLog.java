@@ -1,10 +1,9 @@
 package com.arise.server.logging;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.http.HttpHeaders;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.nio.ByteBuffer;
 
 /**
  * @Author: wy
@@ -13,22 +12,24 @@ import lombok.NoArgsConstructor;
  * @Modified: By：
  */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 public class ApiLog {
 
-    private long num;
+    /**
+     * id结构如下:
+     * 85899345921 [1234][1234]
+     * 92233720368  5477  5807
+     * [offset][len1][len2]
+     */
+    private long id;
+    private long timestamp;
+    private ByteBuffer[] req;
+    private ByteBuffer[] resp;
 
-    private String url;
-
-    private HttpHeaders reqHeaders;
-
-    private ByteBuf reqBody;
-
-    private int status;
-
-    private HttpHeaders respHeaders;
-
-    private ByteBuf respBody;
+    public ApiLog(ByteBuffer[] req, ByteBuffer[] resp) {
+        this.timestamp = System.currentTimeMillis();
+        this.req = req;
+        this.resp = resp;
+    }
 
 }

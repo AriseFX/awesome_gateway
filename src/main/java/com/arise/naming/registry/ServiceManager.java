@@ -1,9 +1,10 @@
-package com.arise.cloud.registry;
+package com.arise.naming.registry;
 
 import com.arise.config.ServerProperties;
 import com.arise.internal.exception.ServiceRegistryException;
 import com.arise.internal.util.NetUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.PostConstruct;
@@ -50,13 +51,20 @@ public class ServiceManager {
         registrySpi.init(definition.getNamespace(), definition.getServerAddr());
         registrySpi.registerInstance(definition.getServiceName(), ip, serverProperties.getPort());
         registrySpi.subscribeServices(e ->
-                nodeContainer.put(e.getServiceName().split("@@")[1], e)
+                nodeContainer.put(e.getServiceName(), e)
         );
     }
 
     public static InetSocketAddress selectService(String name) {
         ServiceInfo serviceInfo = nodeContainer.get(name);
-        ServiceInfo.InstanceInfo info = serviceInfo.getInstances().get(0);
+        if (serviceInfo == null) {
+            return null;
+        }
+        List<ServiceInfo.InstanceInfo> instances = serviceInfo.getInstances();
+        if (CollectionUtils.isEmpty(instances)) {
+            return null;
+        }
+        ServiceInfo.InstanceInfo info = instances.get(0);
         return new InetSocketAddress(info.getIp(), info.getPort());
     }
 

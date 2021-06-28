@@ -1,15 +1,16 @@
 package com.arise.server.route.pool;
 
+import com.arise.server.logging.LogStorageHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
-import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.pool.AbstractChannelPoolHandler;
 import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpRequestEncoder;
 import io.netty.handler.codec.http.HttpResponseDecoder;
 import io.netty.handler.logging.LogLevel;
@@ -61,7 +62,7 @@ public class RemoteChannelPool {
 
     private static ChannelPool newFixedChannelPool(String host, int port, EventLoop eventLoop) {
         Bootstrap b = new Bootstrap().group(eventLoop)
-                .channel(EpollSocketChannel.class)
+                .channel(NioSocketChannel.class)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .handler(new LoggingHandler(LogLevel.INFO))
@@ -89,11 +90,9 @@ public class RemoteChannelPool {
                      */
                     @Override
                     public void channelAcquired(Channel ch) {
-//                        ch.pipeline().addLast(new LogStorageHandler());
-                        ch.pipeline().addLast(new LoggingHandler());
+                        ch.pipeline().addLast(new LogStorageHandler());
                         ch.pipeline().addLast(new HttpRequestEncoder());
                         ch.pipeline().addLast(new HttpResponseDecoder());
-//                        log.error("Channel acquired:{}", atomicInteger.incrementAndGet());
                     }
                 }, maxConnections, maxPendingAcquires);
     }

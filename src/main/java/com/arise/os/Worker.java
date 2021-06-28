@@ -1,4 +1,4 @@
-package com.arise.linux;
+package com.arise.os;
 
 /**
  * @Author: wy

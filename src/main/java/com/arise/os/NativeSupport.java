@@ -1,4 +1,4 @@
-package com.arise.linux;
+package com.arise.os;
 
 import java.io.File;
 import java.io.IOException;

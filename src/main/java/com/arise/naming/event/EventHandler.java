@@ -1,4 +1,4 @@
-package com.arise.cloud.event;
+package com.arise.naming.event;
 
 
 /**

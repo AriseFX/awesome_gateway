@@ -12,7 +12,6 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
  * @Description: 基于Springboot构建，服务入口是{@link ServerRunner}
  * @Modified: By：
  */
-@Slf4j
 @SpringBootApplication
 public class Main {
     public static void main(String[] args) {

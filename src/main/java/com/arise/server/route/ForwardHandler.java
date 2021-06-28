@@ -3,9 +3,9 @@ package com.arise.server.route;
 import com.arise.server.StandardHttpMessage;
 import com.arise.server.route.pool.RemoteChannelPool;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.codec.http.LastHttpContent;
@@ -22,9 +22,9 @@ import java.util.NoSuchElementException;
 @Slf4j
 public class ForwardHandler extends ChannelInboundHandlerAdapter {
 
-    private final EpollSocketChannel forwardChannel;
+    private final Channel forwardChannel;
 
-    public ForwardHandler(EpollSocketChannel forwardChannel) {
+    public ForwardHandler(Channel forwardChannel) {
         this.forwardChannel = forwardChannel;
     }
 
@@ -53,6 +53,7 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
             forwardChannel.writeAndFlush(msg).addListener(future -> {
                 if (msg instanceof LastHttpContent && future.isDone()) {
                     try {
+                        forwardChannel.pipeline().remove(HttpResponseEncoder.class);
                         RemoteChannelPool.releaseChannel(channel);
                     } catch (NoSuchElementException e) {
                         e.printStackTrace();

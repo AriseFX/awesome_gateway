@@ -1,6 +1,6 @@
 package com.arise.server.route;
 
-import com.arise.cloud.registry.ServiceManager;
+import com.arise.naming.registry.ServiceManager;
 import com.arise.internal.util.RestRouteRadixTree;
 import com.arise.server.StandardHttpMessage;
 import com.arise.server.route.pool.RemoteChannelPool;
@@ -8,7 +8,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
@@ -41,7 +40,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
     private HttpRequest request;
 
-    private EpollSocketChannel outbound;
+    private Channel outbound;
 
     static {
         tree.init();
@@ -58,7 +57,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         log.debug("收到msg:{},this:{}", msg.getClass(), this.hashCode());
         log.debug("当前thread id:{},cpu id:{}", Affinity.getThreadId(), Affinity.getCpu());
-        EpollSocketChannel inbound = (EpollSocketChannel) ctx.channel();
+        Channel inbound = ctx.channel();
         if (msg instanceof HttpRequest) {
             request = (HttpRequest) msg;
             contents = new ArrayList<>();
@@ -73,6 +72,11 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                     URI remoteUri = URI.create(res.get(0));
                     if (remoteUri.getScheme().equals("lb")) {
                         InetSocketAddress address = ServiceManager.selectService(remoteUri.getHost());
+                        if (address == null) {
+                            StandardHttpMessage._503.toByteBuf(ctx).forEach(e ->
+                                    inbound.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
+                            return;
+                        }
                         host = address.getHostName();
                         port = address.getPort();
                     } else {
@@ -83,7 +87,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                     Promise<Channel> promise = ctx.executor().newPromise();
                     promise.addListener((FutureListener<Channel>) future -> {
                         if (future.isSuccess()) {
-                            outbound = (EpollSocketChannel) future.getNow();
+                            outbound = future.getNow();
                             //转发
                             outbound.pipeline().addLast(new ForwardHandler(inbound));
                             outbound.writeAndFlush(request);
@@ -109,6 +113,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable throwable) {
+        throwable.printStackTrace();
         log.error("ApiRouteHandler:{}", throwable.toString());
         Channel channel = ctx.channel();
         if (channel.isActive()) {

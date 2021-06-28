@@ -1,21 +1,24 @@
-package com.arise.cloud.registry.nacos;
+package com.arise.naming.registry.nacos;
 
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.NamingFactory;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.listener.NamingEvent;
 import com.alibaba.nacos.api.naming.pojo.Instance;
-import com.alibaba.nacos.api.naming.pojo.ListView;
-import com.arise.cloud.registry.ServiceInfo;
-import com.arise.cloud.registry.ServerRegistrySpi;
 import com.arise.internal.exception.ServiceRegistryException;
+import com.arise.naming.registry.ServerRegistrySpi;
+import com.arise.naming.registry.ServiceInfo;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.net.InetSocketAddress;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -30,6 +33,10 @@ import java.util.stream.Collectors;
 public class NacosProvider implements ServerRegistrySpi {
 
     private NamingService naming;
+
+    private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+
+    private final Set<String> subscribeList = new HashSet<>();
 
     @Override
     public void init(String namespace,
@@ -57,37 +64,40 @@ public class NacosProvider implements ServerRegistrySpi {
     @SneakyThrows
     @Override
     public void subscribeServices(Consumer<ServiceInfo> handler) {
-        int i = 1;
-        Thread.sleep(10000);
-        while (true) {
+        executor.scheduleWithFixedDelay(() -> {
             try {
-                ListView<String> services = naming.getServicesOfServer(i++, 10);
-                if (services.getData().size() == 0) {
-                    break;
+                List<String> services = naming.getServicesOfServer(1, 999).getData()
+                        .stream()
+                        .filter(e -> !subscribeList.contains(e))
+                        .collect(Collectors.toList());
+                if (services.size() == 0) {
+                    return;
                 }
-                services.getData().forEach(svr -> {
-                    try {
-                        naming.subscribe(svr, event -> {
-                            if (event instanceof NamingEvent) {
-                                NamingEvent namingEvent = (NamingEvent) event;
-                                String serviceName = namingEvent.getServiceName();
-                                List<ServiceInfo.InstanceInfo> instances = namingEvent.getInstances()
-                                        .stream().map(e ->
-                                                new ServiceInfo.InstanceInfo(e.getIp(), e.getPort(), e.getWeight(),
-                                                        e.isHealthy(), e.getMetadata())
-                                        ).collect(Collectors.toList());
-                                handler.accept(new ServiceInfo(serviceName, instances));
-                            }
-                        });
-                    } catch (NacosException e) {
-                        log.error(e.getErrMsg());
-                        throw new ServiceRegistryException();
-                    }
-                });
-            } catch (NacosException ignore) {
-                break;
+                for (String svr : services) {
+                    subscribeList.add(svr);
+                    List<Instance> allInstances = naming.getAllInstances(svr);
+                    handler.accept(new ServiceInfo(svr, map2InstanceInfo(allInstances)));
+                    naming.subscribe(svr, event -> {
+                        if (event instanceof NamingEvent) {
+                            NamingEvent namingEvent = (NamingEvent) event;
+                            String serviceName = namingEvent.getServiceName();
+                            List<ServiceInfo.InstanceInfo> instances = map2InstanceInfo(namingEvent.getInstances());
+                            handler.accept(new ServiceInfo(serviceName.split("@@")[1], instances));
+                        }
+                    });
+                }
+            } catch (NacosException e) {
+                e.printStackTrace();
             }
-        }
+        }, 0, 15, TimeUnit.SECONDS);
+    }
+
+    private List<ServiceInfo.InstanceInfo> map2InstanceInfo(List<Instance> instances) {
+        return instances
+                .stream().map(e ->
+                        new ServiceInfo.InstanceInfo(e.getIp(), e.getPort(), e.getWeight(),
+                                e.isHealthy(), e.getMetadata())
+                ).collect(Collectors.toList());
     }
 
     @Override

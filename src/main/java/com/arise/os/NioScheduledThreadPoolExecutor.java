@@ -1,4 +1,4 @@
-package com.arise.linux;
+package com.arise.os;
 
 import org.jetbrains.annotations.NotNull;
 

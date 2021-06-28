@@ -1,4 +1,4 @@
-package com.arise.cloud.registry;
+package com.arise.naming.registry;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

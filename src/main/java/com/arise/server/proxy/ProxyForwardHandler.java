@@ -1,8 +1,8 @@
 package com.arise.server.proxy;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.handler.codec.http.HttpRequest;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,9 +17,9 @@ import java.util.Objects;
 @Slf4j
 public class ProxyForwardHandler extends ChannelInboundHandlerAdapter {
 
-    private final EpollSocketChannel channel;
+    private final Channel channel;
 
-    public ProxyForwardHandler(EpollSocketChannel channel) {
+    public ProxyForwardHandler(Channel channel) {
         this.channel = channel;
     }
 

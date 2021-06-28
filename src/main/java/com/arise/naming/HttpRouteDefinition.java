@@ -1,4 +1,4 @@
-package com.arise.cloud;
+package com.arise.naming;
 
 /**
  * @Author: wy
