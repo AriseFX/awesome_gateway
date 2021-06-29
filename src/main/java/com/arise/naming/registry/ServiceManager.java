@@ -3,13 +3,13 @@ package com.arise.naming.registry;
 import com.arise.config.ServerProperties;
 import com.arise.internal.exception.ServiceRegistryException;
 import com.arise.internal.util.NetUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import javax.annotation.concurrent.ThreadSafe;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
@@ -22,10 +22,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Modified: By：
  */
 @Component
-@ThreadSafe
+@ConditionalOnProperty(prefix = "gateway.registry", name = "naming", matchIfMissing = false)
 public class ServiceManager {
 
-    @Resource(name = "nacosProvider")
+    @Resource
     private ServerRegistrySpi registrySpi;
 
     @Resource
@@ -36,7 +36,7 @@ public class ServiceManager {
     @PostConstruct
     private void init() {
         //TODO 推断当前注册中心类型
-        ServerProperties.RegistryDefinition definition = serverProperties.getRegistry().get("nacos");
+        ServerProperties.RegistryDefinition definition = serverProperties.getRegistry();
         if (definition == null) {
             throw new ServiceRegistryException();
         }

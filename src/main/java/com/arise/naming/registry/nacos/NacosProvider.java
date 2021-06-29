@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  * @Modified: By：
  */
 @Slf4j
-@Component
+@Component(value = "registrySpi")
 public class NacosProvider implements ServerRegistrySpi {
 
     private NamingService naming;

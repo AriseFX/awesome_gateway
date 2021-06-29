@@ -1,5 +1,6 @@
 package com.arise.config;
 
+import com.arise.server.logging.service.MappedFileService;
 import com.arise.server.route.pool.RemoteChannelPool;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -32,17 +33,23 @@ public class ServerProperties {
      */
     private String address;
 
+    /**
+     * 存储dir
+     */
+    private String storageDir;
+
     private Pool pool;
 
     /**
      * 注册中心相关
      */
-    private Map<String, RegistryDefinition> registry;
+    private RegistryDefinition registry;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RegistryDefinition {
+        private String naming;
         private String serviceName;
         private String serverAddr;
         private String namespace;
@@ -65,5 +72,6 @@ public class ServerProperties {
         RemoteChannelPool.setConnectTimeout(pool.timeout);
         RemoteChannelPool.setMaxPendingAcquires(pool.maxPendingAcquires);
         RemoteChannelPool.setMaxConnections(pool.maxConnections);
+        MappedFileService.dir = storageDir;
     }
 }

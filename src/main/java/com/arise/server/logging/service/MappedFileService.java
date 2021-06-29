@@ -14,6 +14,8 @@ import static com.arise.os.OSHelper.mmap;
  */
 public class MappedFileService {
 
+    public static String dir;
+
     private MappedByteBuffer mapBuffer;
     private MappedByteBuffer indexBuffer;
     private MappedByteBuffer metaBuffer;
@@ -22,16 +24,12 @@ public class MappedFileService {
 
     private int index;
 
-    public static void main(String[] args) {
-        MappedFileService mappedFileService = new MappedFileService();
-        System.out.println(mappedFileService);
-    }
 
     public MappedFileService() {
         try {
-            mapBuffer = mmap("./data", 1 << 20); //日志
-            indexBuffer = mmap("./index", 1 << 20); //索引
-            metaBuffer = mmap("./meta", 32); //meta
+            mapBuffer = mmap(dir + "data", 1 << 20); //日志
+            indexBuffer = mmap(dir + "index", 1 << 20); //索引
+            metaBuffer = mmap(dir + "/meta", 32); //meta
             index = metaBuffer.getInt();
             if (index == 0) {
                 offset = 0;
