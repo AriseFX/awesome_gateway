@@ -3,6 +3,10 @@ package com.arise.server;
 import com.arise.config.ServerProperties;
 import com.arise.os.OSHelper;
 import com.arise.server.proxy.HttpProxyHandler;
+import com.arise.server.route.ApiRouteHandler;
+import com.arise.server.route.RouteMatcher;
+import com.arise.server.route.filter.HttpObjectFilterHandler;
+import com.arise.server.route.filter.HttpObjectFilter;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
@@ -10,11 +14,16 @@ import io.netty.handler.codec.http.HttpRequestDecoder;
 import lombok.extern.slf4j.Slf4j;
 import net.openhft.affinity.AffinityLock;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @Author: wy
@@ -29,6 +38,15 @@ public class ServerRunner implements CommandLineRunner {
 
     @Resource(name = "serverProperties")
     private ServerProperties prop;
+
+    @Bean(name = "filterInit")
+    public Object init(List<HttpObjectFilter> filters, RouteMatcher matcher) {
+        HttpObjectFilterHandler.sortedFilter = filters.stream()
+                .sorted(Comparator.comparing(Ordered::getOrder))
+                .collect(Collectors.toList());
+        ApiRouteHandler.matcher = matcher;
+        return new Object();
+    }
 
     @Override
     public void run(String... args) throws InterruptedException {

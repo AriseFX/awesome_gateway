@@ -1,8 +1,9 @@
 package com.arise.server.route;
 
-import com.arise.naming.registry.ServiceManager;
 import com.arise.internal.util.RestRouteRadixTree;
 import com.arise.server.StandardHttpMessage;
+import com.arise.server.route.filter.HttpObjectFilterHandler;
+import com.arise.server.route.filter.RequestContext;
 import com.arise.server.route.pool.RemoteChannelPool;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -17,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.openhft.affinity.Affinity;
 
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,21 +30,13 @@ import java.util.List;
 @Slf4j
 public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
-    private static final RestRouteRadixTree<String> tree = new RestRouteRadixTree<>();
+    public static RouteMatcher matcher;
 
-    private static String host;
-
-    private static int port;
-
-    private List<HttpObject> contents = new ArrayList<>();
+    private final List<HttpObject> contents = new ArrayList<>(5);
 
     private HttpRequest request;
 
     private Channel outbound;
-
-    static {
-        tree.init();
-    }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
@@ -58,39 +50,29 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
         log.debug("收到msg:{},this:{}", msg.getClass(), this.hashCode());
         log.debug("当前thread id:{},cpu id:{}", Affinity.getThreadId(), Affinity.getCpu());
         Channel inbound = ctx.channel();
+        contents.add((HttpObject) msg);
         if (msg instanceof HttpRequest) {
             request = (HttpRequest) msg;
-            contents = new ArrayList<>();
         } else {
-            contents.add((HttpObject) msg);
             if (msg instanceof LastHttpContent) {
                 //最后一个http 请求
                 log.debug("最后一个http content");
-                String uri = request.uri();
-                List<String> res = tree.matching(uri);
-                if (res.size() > 0) {
-                    URI remoteUri = URI.create(res.get(0));
-                    if (remoteUri.getScheme().equals("lb")) {
-                        InetSocketAddress address = ServiceManager.selectService(remoteUri.getHost());
-                        if (address == null) {
-                            StandardHttpMessage._503.toByteBuf(ctx).forEach(e ->
-                                    inbound.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
-                            return;
-                        }
-                        host = address.getHostName();
-                        port = address.getPort();
-                    } else {
-                        //TODO 这段代码抽出来
-                        return;
+                InetSocketAddress address = matcher.matching(request);
+                if (address == null) {
+                    if (inbound.isActive()) {
+                        StandardHttpMessage._404.toByteBuf(ctx).forEach(e ->
+                                inbound.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
                     }
-                    //TODO 获取IP端口 modeRequest()
+                } else {
                     Promise<Channel> promise = ctx.executor().newPromise();
                     promise.addListener((FutureListener<Channel>) future -> {
                         if (future.isSuccess()) {
                             outbound = future.getNow();
                             //转发
-                            outbound.pipeline().addLast(new ForwardHandler(inbound));
-                            outbound.writeAndFlush(request);
+                            Promise<List<HttpObject>> respPromise = ctx.executor().newPromise();
+                            HttpObjectFilterHandler filters = new HttpObjectFilterHandler(new RequestContext(respPromise));
+                            outbound.pipeline().addLast(new ForwardHandler(respPromise, inbound));
+                            filters.handle(contents);
                             contents.forEach(outbound::writeAndFlush);
                         } else {
                             if (inbound.isActive()) {
@@ -100,12 +82,8 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                         }
                     });
                     //获取连接
-                    RemoteChannelPool.acquireChannel(host, port, inbound.eventLoop(), promise);
-                } else {
-                    if (inbound.isActive()) {
-                        StandardHttpMessage._404.toByteBuf(ctx).forEach(e ->
-                                inbound.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
-                    }
+                    RemoteChannelPool.acquireChannel(address.getHostName(), address.getPort(),
+                            inbound.eventLoop(), promise);
                 }
             }
         }

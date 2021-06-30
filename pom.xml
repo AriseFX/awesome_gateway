@@ -29,7 +29,7 @@
             </dependency>
             <dependency>
                 <groupId>com.arise</groupId>
-                <artifactId>http-filter</artifactId>
+                <artifactId>gateway-filter</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
