@@ -19,7 +19,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 /**
  * @Author: wy
  * @Date: Created in 14:54 2021-06-05
- * @Description: 实现这个类的目的是为了
+ * @Description:
  * @Modified: By：
  */
 public class StandardHttpMessage {

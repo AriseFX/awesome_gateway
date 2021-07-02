@@ -7,11 +7,16 @@ gateway:
     max-connections: 80 #最大连接数
     max-pending-acquires: 0x7fffffff #最大pending数
   registry:
-      naming: nacos
-      server-addr: 192.168.10.224:8848
-      namespace: 5dd476b5-316b-4f2e-bf78-06eed9f57ec2
-      service-name: AsGateway
-      network-interface: wlan3
+    naming: nacos
+    server-addr: 192.168.10.224:8848
+    namespace: 5dd476b5-316b-4f2e-bf78-06eed9f57ec2
+    service-name: AsGateway
+    network-interface: wlan3
+  redis:
+    uri: redis://192.168.150.103:6379/2?timeout=10s
+  endpoint:
+    port: 8098
+    address: 0.0.0.0
 logging:
   level:
     root: info

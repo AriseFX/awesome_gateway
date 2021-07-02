@@ -1,4 +1,4 @@
-package com.arise.internal.util;
+package com.arise.filter.route;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -37,12 +37,12 @@ public class RestRouteRadixTree<T> {
         this.addRoute("selectOriginInfoList", (T) "lb://FDSselectOriginInfoList");
         this.addRoute("updateOriginInfo", (T) "lb://FDSupdateOriginInfo");
         this.addRoute("fds/medInst/getMedInstList", (T) "lb://FDSfds/medInst/getMedInstList");
-        this.addRoute("getSqm", (T) "lb://FDSgetSqm");
-        this.addRoute("getUserName", (T) "lb://FDSgetUserName");
-        this.addRoute("verificationGrantCode", (T) "lb://FDSverificationGrantCode");
-        this.addRoute("bos/principal", (T) "lb://FDSbos/principal");
-        this.addRoute("fds/log/{id}/getSignSyncLogList", (T) "lb://FDSlb://FDS/fds/log/{id}/getSignSyncLogList");
-        this.addRoute("fds/log/signSync/getSignSyncLogInfo", (T) "lb://FDSfds/log/signSync/getSignSyncLogInfo");
+        this.addRoute("getSqm", (T) "lb://FDS/getSqm");
+        this.addRoute("getUserName", (T) "lb://FDS/getUserName");
+        this.addRoute("verificationGrantCode", (T) "lb://FDS/verificationGrantCode");
+        this.addRoute("bos/principal", (T) "lb://FDS/bos/principal");
+        this.addRoute("fds/log/{id}/getSignSyncLogList", (T) "lb://FDS/fds/log/{id}/getSignSyncLogList");
+        this.addRoute("fds/log/signSync/getSignSyncLogInfo", (T) "lb://FDS/fds/log/signSync/getSignSyncLogInfo");
         //System.out.println(tree);
     }
 

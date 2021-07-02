@@ -36,7 +36,7 @@ public class ServiceManager {
     @PostConstruct
     private void init() {
         //TODO 推断当前注册中心类型
-        ServerProperties.RegistryDefinition definition = serverProperties.getRegistry();
+        ServerProperties.Registry definition = serverProperties.getRegistry();
         if (definition == null) {
             throw new ServiceRegistryException();
         }

@@ -24,6 +24,10 @@
             <groupId>com.arise</groupId>
             <artifactId>gateway-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.arise</groupId>
+            <artifactId>gateway-endpoint</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

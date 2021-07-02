@@ -5,8 +5,8 @@ import com.arise.os.OSHelper;
 import com.arise.server.proxy.HttpProxyHandler;
 import com.arise.server.route.ApiRouteHandler;
 import com.arise.server.route.RouteMatcher;
-import com.arise.server.route.filter.HttpObjectFilterHandler;
 import com.arise.server.route.filter.HttpObjectFilter;
+import com.arise.server.route.filter.HttpObjectFilterHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -33,7 +32,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-@Order(Ordered.LOWEST_PRECEDENCE)
+@Order(2)
 public class ServerRunner implements CommandLineRunner {
 
     @Resource(name = "serverProperties")
@@ -90,6 +89,8 @@ public class ServerRunner implements CommandLineRunner {
                         log.info("Server startup complete！[{}:{}]", prop.getAddress(), prop.getPort());
                     }
                 }).sync().channel();
-        channel.closeFuture().sync();
+        channel.closeFuture().sync().addListener(
+                e -> log.info("Server Stopped！")
+        );
     }
 }

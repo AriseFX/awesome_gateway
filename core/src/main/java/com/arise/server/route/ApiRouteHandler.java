@@ -1,6 +1,5 @@
 package com.arise.server.route;
 
-import com.arise.internal.util.RestRouteRadixTree;
 import com.arise.server.StandardHttpMessage;
 import com.arise.server.route.filter.HttpObjectFilterHandler;
 import com.arise.server.route.filter.RequestContext;
