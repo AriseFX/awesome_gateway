@@ -1,6 +1,6 @@
 package com.arise.naming.registry;
 
-import com.arise.config.ServerProperties;
+import com.arise.spring.ServerProperties;
 import com.arise.internal.exception.ServiceRegistryException;
 import com.arise.internal.util.NetUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

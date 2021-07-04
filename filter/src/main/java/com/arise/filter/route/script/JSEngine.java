@@ -17,9 +17,7 @@ public class JSEngine {
                                 "})();");
                 engine.put("counter", 1);
                 System.out.println(script.eval());
-//                engine.put("counter", 1);
                 System.out.println(script.eval());
-//                engine.put("counter", 1);
                 System.out.println(script.eval());
             } catch (ScriptException e) {
                 System.err.println(e);

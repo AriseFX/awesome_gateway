@@ -2,17 +2,10 @@ package com.arise.redis;
 
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
-import io.netty.buffer.ByteBufInputStream;
-import io.netty.handler.codec.serialization.ClassResolvers;
-import io.netty.handler.codec.serialization.ObjectDecoder;
-import io.netty.handler.codec.serialization.ObjectDecoderInputStream;
-import io.netty.handler.codec.serialization.ObjectEncoder;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 
 /**
@@ -21,7 +14,8 @@ import java.nio.ByteBuffer;
  * @Description:
  * @Modified: By：
  */
-public class MyRedisCodec implements RedisCodec<String, Object> {
+@Slf4j
+public class JdkSerializableRedisCodec implements RedisCodec<String, Object> {
 
     private final StringCodec codec = new StringCodec();
 
@@ -46,13 +40,15 @@ public class MyRedisCodec implements RedisCodec<String, Object> {
         }
     }
 
-    @SneakyThrows
     @Override
     public ByteBuffer encodeValue(Object value) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              ObjectOutputStream oos = new ObjectOutputStream(outputStream)) {
             oos.writeObject(value);
             return ByteBuffer.wrap(outputStream.toByteArray());
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
         }
     }
 }

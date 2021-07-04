@@ -1,12 +1,14 @@
-package com.arise.config;
+package com.arise.spring;
 
 import com.arise.server.logging.service.MappedFileService;
 import com.arise.server.route.pool.RemoteChannelPool;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.beans.BeansException;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
@@ -22,6 +24,13 @@ import javax.annotation.PostConstruct;
 @EnableConfigurationProperties(ServerProperties.class)
 @ConfigurationProperties("gateway")
 public class ServerProperties {
+
+    private static ApplicationContext applicationContext;
+
+    public ServerProperties(ApplicationContext applicationContext) {
+        ServerProperties.applicationContext = applicationContext;
+    }
+
     //端口
     private int port;
     //地址
@@ -89,5 +98,10 @@ public class ServerProperties {
         RemoteChannelPool.setMaxPendingAcquires(pool.maxPendingAcquires);
         RemoteChannelPool.setMaxConnections(pool.maxConnections);
         MappedFileService.dir = storageDir;
+    }
+
+    public static <T> T getBean(Class<T> clz) throws BeansException {
+        T result = (T) applicationContext.getBean(clz);
+        return result;
     }
 }

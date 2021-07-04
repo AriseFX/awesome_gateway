@@ -1,7 +1,6 @@
 package com.arise.endpoint;
 
 import com.arise.endpoint.service.EndpointResponse;
-import com.arise.endpoint.service.Services;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -12,6 +11,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+import static com.arise.endpoint.service.EndpointResponse.standJsonResp;
+import static com.arise.endpoint.service.Services.*;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 
 /**
@@ -26,9 +27,9 @@ public class HttpMappingHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
     //初始化endpoint
     static {
-        mapping.put("/route/get", Services.route_get);
-        mapping.put("/route/put", Services.route_put);
-        mapping.put("/route/refresh", Services.route_refresh);
+        mapping.put("/route/get", route_get);
+        mapping.put("/route/put", route_put);
+        mapping.put("/route/refresh", route_refresh);
     }
 
     @Override
@@ -39,6 +40,6 @@ public class HttpMappingHandler extends SimpleChannelInboundHandler<FullHttpRequ
             ctx.channel().writeAndFlush(function.apply(msg));
             return;
         }
-        ctx.channel().writeAndFlush(EndpointResponse.standResp(new EndpointResponse("mapping not found"), NOT_FOUND));
+        ctx.channel().writeAndFlush(standJsonResp(new EndpointResponse("mapping not found"), NOT_FOUND));
     }
 }

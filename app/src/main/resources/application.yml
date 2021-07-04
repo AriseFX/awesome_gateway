@@ -13,7 +13,7 @@ gateway:
     service-name: AsGateway
     network-interface: wlan3
   redis:
-    uri: redis://192.168.150.103:6379/2?timeout=10s
+    uri: redis://192.168.150.103:6379/1?timeout=10s
   endpoint:
     port: 8098
     address: 0.0.0.0

@@ -1,7 +1,7 @@
 package com.arise.redis;
 
 
-import com.arise.config.ServerProperties;
+import com.arise.spring.ServerProperties;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -31,7 +31,7 @@ public class AsyncRedisClient {
     public void init() {
         RedisClient redisClient = RedisClient.create();
         RedisURI uri = RedisURI.create(properties.getRedis().getUri());
-        StatefulRedisConnection<String, Object> connect = redisClient.connect(new MyRedisCodec(), uri);
+        StatefulRedisConnection<String, Object> connect = redisClient.connect(new JdkSerializableRedisCodec(), uri);
         commands = connect.async();
     }
 

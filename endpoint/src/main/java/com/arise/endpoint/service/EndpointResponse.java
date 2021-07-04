@@ -33,11 +33,7 @@ public class EndpointResponse {
 
     }
 
-    public EndpointResponse(String msg) {
-        this.msg = msg;
-    }
-
-    public static DefaultFullHttpResponse standResp(Object body, HttpResponseStatus status) {
+    public static DefaultFullHttpResponse standJsonResp(Object body, HttpResponseStatus status) {
         ByteBuf buf = JsonUtils.toBuff(JSON.toJSONString(body));
         DefaultFullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, status, buf);
         response.headers().set(CONTENT_TYPE, "application/json");
@@ -45,4 +41,12 @@ public class EndpointResponse {
         return response;
     }
 
+    public EndpointResponse(String msg) {
+        this.msg = msg;
+    }
+
+    public EndpointResponse(String msg, Object result) {
+        this.msg = msg;
+        this.result = result;
+    }
 }
