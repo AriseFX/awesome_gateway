@@ -1,10 +1,9 @@
-package com.arise.filter.route;
+package com.arise.server.route.manager;
 
+import com.alibaba.nacos.api.utils.StringUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,12 +19,12 @@ import java.util.List;
  * route2:     /api/oms/**           ->  http://OMS/**
  * route2:     /api/user             ->  http://OMS/**
  */
-public class RestRouteRadixTree<T> {
+public class RestRouteTrie<T> {
 
     public static final String Standard_Wildcard = "{key}";
     public Node<T> root;
 
-    public RestRouteRadixTree() {
+    public RestRouteTrie() {
         this.root = new Node<>(null, null, new HashMap<>());
     }
 
@@ -44,6 +43,10 @@ public class RestRouteRadixTree<T> {
         this.addRoute("fds/log/{id}/getSignSyncLogList", (T) "lb://FDS/fds/log/{id}/getSignSyncLogList");
         this.addRoute("fds/log/signSync/getSignSyncLogInfo", (T) "lb://FDS/fds/log/signSync/getSignSyncLogInfo");
         //System.out.println(tree);
+    }
+
+    public void clear() {
+        this.root = new Node<>(null, null, new HashMap<>());
     }
 
     /**
@@ -80,7 +83,8 @@ public class RestRouteRadixTree<T> {
     public void addRoute(String url, T pointer) {
         HashMap<CharSequence, Node<T>> child = root.child;
         String[] tokens = url.split("/");
-        for (int i = 0; i < tokens.length; i++) {
+        int i = StringUtils.isEmpty(tokens[0]) ? 1 : 0;
+        for (; i < tokens.length; i++) {
             String token = tokens[i];
             if (token.charAt(0) == '{' && token.charAt(token.length() - 1) == '}') {
                 token = Standard_Wildcard;

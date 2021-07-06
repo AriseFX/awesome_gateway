@@ -11,7 +11,6 @@
         <module>core</module>
         <module>filter</module>
         <module>app</module>
-        <module>redis</module>
         <module>endpoint</module>
     </modules>
     <packaging>pom</packaging>
@@ -42,11 +41,6 @@
             <dependency>
                 <groupId>com.arise</groupId>
                 <artifactId>gateway-endpoint</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.arise</groupId>
-                <artifactId>gateway-redis-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

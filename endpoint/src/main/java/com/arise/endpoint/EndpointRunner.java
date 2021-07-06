@@ -1,6 +1,6 @@
 package com.arise.endpoint;
 
-import com.arise.spring.ServerProperties;
+import com.arise.config.ServerProperties;
 import com.arise.os.OSHelper;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;

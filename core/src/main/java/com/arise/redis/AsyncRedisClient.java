@@ -1,7 +1,7 @@
 package com.arise.redis;
 
 
-import com.arise.spring.ServerProperties;
+import com.arise.config.ServerProperties;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;

@@ -1,4 +1,4 @@
-package com.arise.spring;
+package com.arise.config;
 
 import com.arise.server.logging.service.MappedFileService;
 import com.arise.server.route.pool.RemoteChannelPool;

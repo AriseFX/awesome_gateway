@@ -17,10 +17,6 @@
             <groupId>com.arise</groupId>
             <artifactId>gateway-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.arise</groupId>
-            <artifactId>gateway-redis-client</artifactId>
-        </dependency>
     </dependencies>
 
     <properties>

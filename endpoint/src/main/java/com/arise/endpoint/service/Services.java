@@ -1,10 +1,12 @@
 package com.arise.endpoint.service;
 
 import com.alibaba.fastjson.JSON;
-import com.arise.endpoint.service.dto.RouteAddDto;
+import com.arise.endpoint.service.dto.RouteDto;
 import com.arise.internal.util.JsonUtils;
 import com.arise.redis.AsyncRedisClient;
-import com.arise.spring.ServerProperties;
+import com.arise.server.route.RouteBean;
+import com.arise.server.route.manager.RouteManager;
+import com.arise.config.ServerProperties;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 
@@ -30,7 +32,19 @@ public enum Services implements Function<FullHttpRequest, DefaultFullHttpRespons
         @Override
         public DefaultFullHttpResponse apply(FullHttpRequest request) {
             AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);
-            return standJsonResp(new EndpointResponse("route refresh successful"), OK);
+            RouteManager routeManager = ServerProperties.getBean(RouteManager.class);
+            try {
+                routeManager.clear();
+                client.commands().hgetall("ROUTE").get(5, TimeUnit.SECONDS)
+                        .values().forEach(e -> {
+                    //更新路由
+                    routeManager.addRoute((RouteBean) e);
+                });
+                return standJsonResp(new EndpointResponse("route refresh successful"), OK);
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                e.printStackTrace();
+                return standJsonResp(new EndpointResponse("route refresh fail"), INTERNAL_SERVER_ERROR);
+            }
         }
     },
     route_get {
@@ -51,11 +65,12 @@ public enum Services implements Function<FullHttpRequest, DefaultFullHttpRespons
         public DefaultFullHttpResponse apply(FullHttpRequest request) {
             try {
                 AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);
-                RouteAddDto dto = JSON.parseObject(JsonUtils.toJson(request.content()), RouteAddDto.class);
+                RouteDto dto = JSON.parseObject(JsonUtils.toJson(request.content()), RouteDto.class);
                 Map<String, Object> map = dto.getRoutes().stream()
-                        .collect(Collectors.toMap(RouteAddDto.RouteBean::getId, v -> v, (v1, v2) -> v1));
+                        .collect(Collectors.toMap(RouteBean::getId, v -> v, (v1, v2) -> v1));
                 client.commands().hset("ROUTE", map);
             } catch (Exception e) {
+                e.printStackTrace();
                 return standJsonResp(new EndpointResponse("server error"), INTERNAL_SERVER_ERROR);
             }
             return standJsonResp(new EndpointResponse("route put successful"), OK);

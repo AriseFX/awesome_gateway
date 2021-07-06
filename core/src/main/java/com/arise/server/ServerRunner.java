@@ -1,6 +1,6 @@
 package com.arise.server;
 
-import com.arise.spring.ServerProperties;
+import com.arise.config.ServerProperties;
 import com.arise.os.OSHelper;
 import com.arise.server.proxy.HttpProxyHandler;
 import com.arise.server.route.ApiRouteHandler;

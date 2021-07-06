@@ -1,6 +1,7 @@
 package com.arise.filter.route.script;
 
 import javax.script.*;
+import java.util.HashMap;
 
 public class JSEngine {
 
@@ -15,8 +16,12 @@ public class JSEngine {
                                 "    counter = counter + 1;\n" +
                                 "    return counter;\n" +
                                 "})();");
-                engine.put("counter", 1);
-                System.out.println(script.eval());
+//                engine.put("counter", 1);
+                System.out.println(script.eval(new SimpleBindings(new HashMap<String, Object>() {
+                    {
+                        put("counter", 1);
+                    }
+                })));
                 System.out.println(script.eval());
                 System.out.println(script.eval());
             } catch (ScriptException e) {

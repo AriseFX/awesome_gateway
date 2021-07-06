@@ -2,10 +2,7 @@ package com.arise.server.route.pool;
 
 import com.arise.server.logging.LogStorageHandler;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoop;
+import io.netty.channel.*;
 import io.netty.channel.pool.AbstractChannelPoolHandler;
 import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.pool.FixedChannelPool;
@@ -15,6 +12,7 @@ import io.netty.handler.codec.http.HttpRequestEncoder;
 import io.netty.handler.codec.http.HttpResponseDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.Promise;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -65,23 +63,28 @@ public class RemoteChannelPool {
                 .channel(NioSocketChannel.class)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
                 .option(ChannelOption.SO_KEEPALIVE, true)
-                .handler(new LoggingHandler(LogLevel.INFO))
                 .remoteAddress(host, port);
         return new FixedChannelPool(
                 b,
                 new AbstractChannelPoolHandler() {
+
+                    //TODO 处理连接心跳
+                    final LoggingHandler loggingHandler = new LoggingHandler(LogLevel.DEBUG);
+
                     @Override
                     public void channelCreated(Channel ch) {
+                        ch.pipeline().addLast(loggingHandler);
                         log.debug("Channel created:{}", ch);
                     }
 
                     @Override
                     public void channelReleased(Channel ch) {
-                        //为了清空状态
+                        //清空状态
                         ChannelPipeline pipeline = ch.pipeline();
                         while (pipeline.last() != null) {
                             pipeline.removeLast();
                         }
+                        ch.pipeline().addLast(loggingHandler);
                     }
 
                     /**

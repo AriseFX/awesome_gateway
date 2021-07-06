@@ -3,14 +3,10 @@ package com.arise.endpoint.service;
 import com.alibaba.fastjson.JSON;
 import com.arise.internal.util.JsonUtils;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpVersion;
 import lombok.Data;
-
-import java.nio.charset.StandardCharsets;
+import lombok.NoArgsConstructor;
 
 import static com.alibaba.nacos.common.constant.HttpHeaderConsts.CONTENT_LENGTH;
 import static com.alibaba.nacos.common.constant.HttpHeaderConsts.CONTENT_TYPE;
@@ -23,15 +19,12 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  * @Modified: By：
  */
 @Data
+@NoArgsConstructor
 public class EndpointResponse {
 
     private String msg;
 
     private Object result;
-
-    public EndpointResponse() {
-
-    }
 
     public static DefaultFullHttpResponse standJsonResp(Object body, HttpResponseStatus status) {
         ByteBuf buf = JsonUtils.toBuff(JSON.toJSONString(body));

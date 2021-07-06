@@ -31,7 +31,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
     public static RouteMatcher matcher;
 
-    private final List<HttpObject> contents = new ArrayList<>(5);
+    private List<HttpObject> contents;
 
     private HttpRequest request;
 
@@ -49,10 +49,12 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
         log.debug("收到msg:{},this:{}", msg.getClass(), this.hashCode());
         log.debug("当前thread id:{},cpu id:{}", Affinity.getThreadId(), Affinity.getCpu());
         Channel inbound = ctx.channel();
-        contents.add((HttpObject) msg);
         if (msg instanceof HttpRequest) {
+            contents = new ArrayList<>(5);
+            contents.add((HttpObject) msg);
             request = (HttpRequest) msg;
         } else {
+            contents.add((HttpObject) msg);
             if (msg instanceof LastHttpContent) {
                 //最后一个http 请求
                 log.debug("最后一个http content");
