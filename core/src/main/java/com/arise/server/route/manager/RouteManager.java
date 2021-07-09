@@ -1,5 +1,6 @@
 package com.arise.server.route.manager;
 
+import com.alibaba.nacos.api.utils.StringUtils;
 import com.arise.redis.AsyncRedisClient;
 import com.arise.server.route.RouteBean;
 import com.arise.config.ServerProperties;
@@ -47,8 +48,11 @@ public class RouteManager {
 
     public void addRoute(RouteBean route) {
         try {
-            CompiledScript compiled = ((Compilable) jsEngine).compile(route.getScript());
-            route.setCompiledScript(compiled);
+            String script = route.getScript();
+            if (!StringUtils.isEmpty(script)) {
+                CompiledScript compiled = ((Compilable) jsEngine).compile(route.getScript());
+                route.setCompiledScript(compiled);
+            }
             tree.addRoute(route.getGatewayPath(), route);
         } catch (ScriptException e) {
             e.printStackTrace();

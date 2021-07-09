@@ -3,6 +3,7 @@ package com.arise.server.route;
 import com.arise.server.StandardHttpMessage;
 import com.arise.server.route.filter.HttpObjectFilterHandler;
 import com.arise.server.route.filter.RequestContext;
+import com.arise.server.route.match.RouteMatcher;
 import com.arise.server.route.pool.RemoteChannelPool;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -50,7 +51,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
         log.debug("当前thread id:{},cpu id:{}", Affinity.getThreadId(), Affinity.getCpu());
         Channel inbound = ctx.channel();
         if (msg instanceof HttpRequest) {
-            contents = new ArrayList<>(5);
+            contents = new ArrayList<>(3);
             contents.add((HttpObject) msg);
             request = (HttpRequest) msg;
         } else {
@@ -58,7 +59,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
             if (msg instanceof LastHttpContent) {
                 //最后一个http 请求
                 log.debug("最后一个http content");
-                InetSocketAddress address = matcher.matching(request);
+                InetSocketAddress address = matcher.match(request);
                 if (address == null) {
                     if (inbound.isActive()) {
                         StandardHttpMessage._404.toByteBuf(ctx).forEach(e ->

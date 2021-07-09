@@ -49,6 +49,7 @@ public class RemoteChannelPool {
     }
 
     public static void releaseChannel(SocketChannel channel) {
+        log.debug("channel pool:{}", "releaseChannel");
         InetSocketAddress address = channel.remoteAddress();
         String host = address.getHostString();
         int port = address.getPort();

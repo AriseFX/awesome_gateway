@@ -10,11 +10,11 @@ import java.util.List;
 /**
  * @Author: wy
  * @Date: Created in 16:17 2021-06-29
- * @Description: 处理跨域
+ * @Description: 处理路由脚本
  * @Modified: By：
  */
 @Component
-public class HttpCorsFilter implements HttpObjectFilter {
+public class JavascriptFilter implements HttpObjectFilter {
     @Override
     public void doFilter(List<HttpObject> req, RequestContext ctx) {
         ctx.filter(req);
