@@ -2,7 +2,11 @@ package com.arise.filter;
 
 import com.arise.server.route.filter.HttpObjectFilter;
 import com.arise.server.route.filter.RequestContext;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.util.concurrent.FutureListener;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -17,6 +21,23 @@ import java.util.List;
 public class HttpCorsFilter implements HttpObjectFilter {
     @Override
     public void doFilter(List<HttpObject> req, RequestContext ctx) {
+        HttpRequest request = (HttpRequest) req.get(0);
+        if (request.headers().get("Origin") != null) {
+            ctx.getRespPromise().addListener((FutureListener<List<HttpObject>>) future -> {
+                if (future.isSuccess()) {
+                    List<HttpObject> object = future.get();
+                    HttpResponse response = (HttpResponse) object.get(0);
+                    HttpHeaders headers = response.headers();
+                    if (!headers.contains("Access-Control-Allow-Origin")) {
+                        headers.set("Access-Control-Allow-Origin", "*");
+                        headers.set("Access-Control-Allow-Methods", "*");
+                        headers.set("Access-Control-Max-Age", "3600");
+                        headers.set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Connection, User-Agent, Cookie");
+                        headers.set("Access-Control-Allow-Credentials", "true");
+                    }
+                }
+            });
+        }
         ctx.filter(req);
     }
 
