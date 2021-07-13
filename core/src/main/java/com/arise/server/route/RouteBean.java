@@ -32,5 +32,7 @@ public class RouteBean implements Serializable {
 
     private String servicePath;
 
+    private Map<String, String> metadata;
+
     private transient CompiledScript compiledScript;
 }

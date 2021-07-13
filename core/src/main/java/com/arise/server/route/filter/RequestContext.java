@@ -1,10 +1,11 @@
 package com.arise.server.route.filter;
 
-import io.netty.handler.codec.http.HttpObject;
 import io.netty.util.concurrent.Promise;
 
+import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: wy
@@ -12,25 +13,24 @@ import java.util.List;
  * @Description: 能够跳转下一个filter，能够
  * @Modified: By：
  */
-public class RequestContext {
+public class RequestContext<P2> {
 
-    private Iterator<HttpObjectFilter> iterator;
+    private final Iterator<SchedulableFilter<P2>> iterator;
 
-    private final Promise<List<HttpObject>> respPromise;
+    private Map<String, Object> routeAttr;
 
-    public Promise<List<HttpObject>> getRespPromise() {
+    private final Promise<P2> respPromise;
+
+    public Promise<P2> getRespPromise() {
         return this.respPromise;
     }
 
-    public void setIterator(Iterator<HttpObjectFilter> iterator) {
-        this.iterator = iterator;
-    }
-
-    public RequestContext(Promise<List<HttpObject>> promise) {
+    public RequestContext(@Nullable Promise<P2> promise, List<SchedulableFilter<P2>> filters) {
         this.respPromise = promise;
+        this.iterator = filters.iterator();
     }
 
-    public void filter(List<HttpObject> req) {
+    public void filter(Object req) {
         if (iterator.hasNext()) {
             iterator.next().doFilter(req, this);
         }

@@ -3,10 +3,11 @@ package com.arise.server;
 import com.arise.config.ServerProperties;
 import com.arise.os.OSHelper;
 import com.arise.server.proxy.HttpProxyHandler;
+import com.arise.server.route.ReqRespFilter;
 import com.arise.server.route.ApiRouteHandler;
+import com.arise.server.route.filter.RouteFilter;
+import com.arise.server.route.filter.SchedulableFilter;
 import com.arise.server.route.match.RouteMatcher;
-import com.arise.server.route.filter.HttpObjectFilter;
-import com.arise.server.route.filter.HttpObjectFilterHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
@@ -39,12 +40,17 @@ public class ServerRunner implements CommandLineRunner {
     private ServerProperties prop;
 
     @Bean(name = "filterInit")
-    public Object init(List<HttpObjectFilter> filters, RouteMatcher matcher) {
-        HttpObjectFilterHandler.sortedFilter = filters.stream()
-                .sorted(Comparator.comparing(Ordered::getOrder))
-                .collect(Collectors.toList());
+    public Object init(List<ReqRespFilter> reqRespFilters, List<RouteFilter> routeFilters, RouteMatcher matcher) {
+        ApiRouteHandler.reqRespFilter = sort(reqRespFilters);
+        RouteMatcher.routeFilter = sort(routeFilters);
         ApiRouteHandler.matcher = matcher;
         return new Object();
+    }
+
+    private <P2> List<SchedulableFilter<P2>> sort(List<? extends SchedulableFilter<P2>> filters) {
+        return filters.stream()
+                .sorted(Comparator.comparing(Ordered::getOrder))
+                .collect(Collectors.toList());
     }
 
     @Override

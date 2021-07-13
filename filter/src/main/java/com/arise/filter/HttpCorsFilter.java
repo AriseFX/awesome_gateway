@@ -1,6 +1,6 @@
 package com.arise.filter;
 
-import com.arise.server.route.filter.HttpObjectFilter;
+import com.arise.server.route.ReqRespFilter;
 import com.arise.server.route.filter.RequestContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
@@ -18,9 +18,11 @@ import java.util.List;
  * @Modified: By：
  */
 @Component
-public class HttpCorsFilter implements HttpObjectFilter {
+public class HttpCorsFilter extends ReqRespFilter {
+
     @Override
-    public void doFilter(List<HttpObject> req, RequestContext ctx) {
+    public void doFilter(Object pram, RequestContext<List<HttpObject>> ctx) {
+        List<HttpObject> req = (List<HttpObject>) pram;
         HttpRequest request = (HttpRequest) req.get(0);
         if (request.headers().get("Origin") != null) {
             ctx.getRespPromise().addListener((FutureListener<List<HttpObject>>) future -> {

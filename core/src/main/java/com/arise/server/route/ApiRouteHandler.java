@@ -1,8 +1,9 @@
 package com.arise.server.route;
 
 import com.arise.server.StandardHttpMessage;
-import com.arise.server.route.filter.HttpObjectFilterHandler;
+import com.arise.server.route.filter.FilterHandler;
 import com.arise.server.route.filter.RequestContext;
+import com.arise.server.route.filter.SchedulableFilter;
 import com.arise.server.route.match.RouteMatcher;
 import com.arise.server.route.pool.RemoteChannelPool;
 import io.netty.buffer.ByteBuf;
@@ -29,6 +30,8 @@ import java.util.List;
  */
 @Slf4j
 public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
+
+    public static List<SchedulableFilter<List<HttpObject>>> reqRespFilter;
 
     public static RouteMatcher matcher;
 
@@ -70,11 +73,11 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                     promise.addListener((FutureListener<Channel>) future -> {
                         if (future.isSuccess()) {
                             outbound = future.getNow();
-                            //转发
                             Promise<List<HttpObject>> respPromise = ctx.executor().newPromise();
-                            HttpObjectFilterHandler filters = new HttpObjectFilterHandler(new RequestContext(respPromise));
+                            FilterHandler<List<HttpObject>> filterHandler =
+                                    new FilterHandler<>(new RequestContext<>(respPromise, reqRespFilter));
                             outbound.pipeline().addLast(new ForwardHandler(respPromise, inbound));
-                            filters.handle(contents);
+                            filterHandler.handle(contents);
                             contents.forEach(outbound::writeAndFlush);
                         } else {
                             if (inbound.isActive()) {
