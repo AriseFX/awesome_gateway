@@ -46,7 +46,7 @@ public class EndpointRunner implements CommandLineRunner {
                         public void initChannel(SocketChannel ch) {
                             ch.pipeline().addLast(new HttpResponseEncoder());
                             ch.pipeline().addLast(new HttpRequestDecoder());
-                            ch.pipeline().addLast(new HttpObjectAggregator(512 * 1024));
+                            ch.pipeline().addLast(new HttpObjectAggregator(512 << 10));
                             ch.pipeline().addLast(new HttpMappingHandler());
                         }
                     }).option(ChannelOption.SO_BACKLOG, 128)

@@ -3,12 +3,14 @@ package com.arise.server.route.match;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.arise.naming.registry.ServiceManager;
 import com.arise.server.route.RouteBean;
-import com.arise.server.route.filter.FilterHandler;
-import com.arise.server.route.filter.RequestContext;
+import com.arise.server.route.filter.FilterContext;
 import com.arise.server.route.filter.SchedulableFilter;
 import com.arise.server.route.manager.RouteManager;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.EventLoop;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.util.concurrent.EventExecutor;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -17,6 +19,7 @@ import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,9 +36,9 @@ public class RouteMatcher {
     @Resource
     private RouteManager routeManager;
 
-    public static List<SchedulableFilter<Object>> routeFilter;
+    public static List<SchedulableFilter<List<RouteBean>, Object>> routeFilters;
 
-    public InetSocketAddress match(HttpRequest request) {
+    public InetSocketAddress match(EventLoop eventLoop, Map<String, Object> attr, HttpRequest request) {
         List<RouteBean> matched = routeManager.match(request.uri());
         //脚本相关
         HttpHeaders headers = request.headers();
@@ -60,9 +63,7 @@ public class RouteMatcher {
             }
             return true;
         }).collect(Collectors.toList());
-        FilterHandler<Object> handler =
-                new FilterHandler<>(new RequestContext<>(null, routeFilter));
-        handler.handle(result);
+        new FilterContext<>(result, routeFilters, eventLoop, attr).handleNext();
         if (result.size() > 0) {
             //默认取第一个
             RouteBean route = result.get(0);

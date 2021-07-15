@@ -8,7 +8,7 @@ import org.springframework.core.Ordered;
  * @Description:
  * @Modified: By：
  */
-public interface SchedulableFilter<P2> extends Ordered {
+public interface SchedulableFilter<P1, P2> extends Ordered {
 
-    void doFilter(Object pram, RequestContext<P2> ctx);
+    void doFilter(FilterContext<P1, P2> ctx);
 }

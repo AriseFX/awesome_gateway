@@ -1,6 +1,5 @@
-package com.arise.server.route;
+package com.arise.server.route.filter;
 
-import com.arise.server.route.filter.SchedulableFilter;
 import io.netty.handler.codec.http.HttpObject;
 
 import java.util.List;
@@ -11,6 +10,6 @@ import java.util.List;
  * @Description: 请求响应内容过滤器
  * @Modified: By：
  */
-public abstract class ReqRespFilter implements SchedulableFilter<List<HttpObject>> {
+public abstract class ForwardFilter implements SchedulableFilter<List<HttpObject>,List<HttpObject>> {
 
 }

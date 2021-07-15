@@ -1,7 +1,7 @@
 package com.arise.filter;
 
-import com.arise.server.route.ReqRespFilter;
-import com.arise.server.route.filter.RequestContext;
+import com.arise.server.route.filter.ForwardFilter;
+import com.arise.server.route.filter.FilterContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
@@ -18,14 +18,18 @@ import java.util.List;
  * @Modified: By：
  */
 @Component
-public class HttpCorsFilter extends ReqRespFilter {
+public class HttpCorsFilter extends ForwardFilter {
 
     @Override
-    public void doFilter(Object pram, RequestContext<List<HttpObject>> ctx) {
-        List<HttpObject> req = (List<HttpObject>) pram;
-        HttpRequest request = (HttpRequest) req.get(0);
+    public int getOrder() {
+        return 0;
+    }
+
+    @Override
+    public void doFilter(FilterContext<List<HttpObject>, List<HttpObject>> ctx) {
+        HttpRequest request = (HttpRequest) (ctx.getPram().get(0));
         if (request.headers().get("Origin") != null) {
-            ctx.getRespPromise().addListener((FutureListener<List<HttpObject>>) future -> {
+            ctx.getPromise().addListener((FutureListener<List<HttpObject>>) future -> {
                 if (future.isSuccess()) {
                     List<HttpObject> object = future.get();
                     HttpResponse response = (HttpResponse) object.get(0);
@@ -37,15 +41,9 @@ public class HttpCorsFilter extends ReqRespFilter {
                         headers.set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Connection, User-Agent, Cookie");
                         headers.set("Access-Control-Allow-Credentials", "true");
                     }
+                    ctx.handleNext();
                 }
             });
         }
-        ctx.filter(req);
     }
-
-    @Override
-    public int getOrder() {
-        return 0;
-    }
-
 }

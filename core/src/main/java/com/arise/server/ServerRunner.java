@@ -3,7 +3,8 @@ package com.arise.server;
 import com.arise.config.ServerProperties;
 import com.arise.os.OSHelper;
 import com.arise.server.proxy.HttpProxyHandler;
-import com.arise.server.route.ReqRespFilter;
+import com.arise.server.route.filter.PreRouteFilter;
+import com.arise.server.route.filter.ForwardFilter;
 import com.arise.server.route.ApiRouteHandler;
 import com.arise.server.route.filter.RouteFilter;
 import com.arise.server.route.filter.SchedulableFilter;
@@ -40,14 +41,15 @@ public class ServerRunner implements CommandLineRunner {
     private ServerProperties prop;
 
     @Bean(name = "filterInit")
-    public Object init(List<ReqRespFilter> reqRespFilters, List<RouteFilter> routeFilters, RouteMatcher matcher) {
-        ApiRouteHandler.reqRespFilter = sort(reqRespFilters);
-        RouteMatcher.routeFilter = sort(routeFilters);
+    public Object init(List<ForwardFilter> forwardFilters, List<RouteFilter> routeFilters, List<PreRouteFilter> preRouteFilters, RouteMatcher matcher) {
+        ApiRouteHandler.forwardFilters = sort(forwardFilters);
+        ApiRouteHandler.preRouteFilters = sort(preRouteFilters);
+        RouteMatcher.routeFilters = sort(routeFilters);
         ApiRouteHandler.matcher = matcher;
         return new Object();
     }
 
-    private <P2> List<SchedulableFilter<P2>> sort(List<? extends SchedulableFilter<P2>> filters) {
+    private <P1, P2> List<SchedulableFilter<P1, P2>> sort(List<? extends SchedulableFilter<P1, P2>> filters) {
         return filters.stream()
                 .sorted(Comparator.comparing(Ordered::getOrder))
                 .collect(Collectors.toList());
