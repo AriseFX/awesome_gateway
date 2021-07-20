@@ -9,6 +9,7 @@ import com.arise.server.route.manager.RouteManager;
 import com.arise.config.ServerProperties;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -27,6 +28,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.OK;
  * @Description:
  * @Modified: By：
  */
+@Slf4j
 public enum Services implements Function<FullHttpRequest, DefaultFullHttpResponse> {
     route_refresh {
         @Override
@@ -65,7 +67,9 @@ public enum Services implements Function<FullHttpRequest, DefaultFullHttpRespons
         public DefaultFullHttpResponse apply(FullHttpRequest request) {
             try {
                 AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);
-                RouteDto dto = JSON.parseObject(JsonUtils.toJson(request.content()), RouteDto.class);
+                String s = JsonUtils.toJson(request.content());
+                log.info("route_put:{}", s);
+                RouteDto dto = JSON.parseObject(s, RouteDto.class);
                 Map<String, Object> map = dto.getRoutes().stream()
                         .collect(Collectors.toMap(RouteBean::getId, v -> v, (v1, v2) -> v1));
                 client.commands().hset("ROUTE", map);
