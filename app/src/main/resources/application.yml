@@ -1,5 +1,5 @@
 gateway:
-  port: 8192
+  port: 1723
   address: 0.0.0.0
   storage-dir: ./
   pool:
