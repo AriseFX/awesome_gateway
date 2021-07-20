@@ -31,6 +31,7 @@
     </dependencies>
 
     <build>
+        <finalName>gateway</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -48,25 +49,25 @@
                     </execution>
                 </executions>
             </plugin>
-<!--            <plugin>-->
-<!--                <groupId>org.codehaus.mojo</groupId>-->
-<!--                <artifactId>exec-maven-plugin</artifactId>-->
-<!--                <version>1.2.1</version>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        &lt;!&ndash; this execution happens just after compiling the java classes, and builds the native code. &ndash;&gt;-->
-<!--                        <id>build-native</id>-->
-<!--                        <phase>process-classes</phase>-->
-<!--                        <goals>-->
-<!--                            <goal>exec</goal>-->
-<!--                        </goals>-->
-<!--                        <configuration>-->
-<!--                            <executable>make</executable>-->
-<!--                            <workingDirectory>${project.basedir}/${native.source.dir}</workingDirectory>-->
-<!--                        </configuration>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
+            <!--            <plugin>-->
+            <!--                <groupId>org.codehaus.mojo</groupId>-->
+            <!--                <artifactId>exec-maven-plugin</artifactId>-->
+            <!--                <version>1.2.1</version>-->
+            <!--                <executions>-->
+            <!--                    <execution>-->
+            <!--                        &lt;!&ndash; this execution happens just after compiling the java classes, and builds the native code. &ndash;&gt;-->
+            <!--                        <id>build-native</id>-->
+            <!--                        <phase>process-classes</phase>-->
+            <!--                        <goals>-->
+            <!--                            <goal>exec</goal>-->
+            <!--                        </goals>-->
+            <!--                        <configuration>-->
+            <!--                            <executable>make</executable>-->
+            <!--                            <workingDirectory>${project.basedir}/${native.source.dir}</workingDirectory>-->
+            <!--                        </configuration>-->
+            <!--                    </execution>-->
+            <!--                </executions>-->
+            <!--            </plugin>-->
         </plugins>
     </build>
 </project>
