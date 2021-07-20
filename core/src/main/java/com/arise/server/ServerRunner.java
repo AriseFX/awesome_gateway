@@ -57,24 +57,24 @@ public class ServerRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws InterruptedException {
-        /**
-         *
-         *               +------------+      +-----------
-         *  request----> |LocalChannel+----> |HttpDecode|
-         *               +------------+      +-----+----
-         *                                         v
-         *  +-------------+       +-----------+  +-+-----+
-         *  |RemoteChannel| <-----+Mod Request+--+Forward|
-         *  +-------------+       +-----------+  +-------+
-         *
-         *              +-------------+          +-------+
-         * response---->+RemoteChannel+--------> |Forward|
-         *              +-------------+          +---+---+
-         *                                           v
-         *                                  +------------+
-         *                                  |LocalChannel|
-         *                                  +------------+
-         *
+        /*
+
+                        +------------+      +-----------
+           request----> |LocalChannel+----> |HttpDecode|
+                        +------------+      +-----+----
+                                                  v
+           +-------------+       +-----------+  +-+-----+
+           |RemoteChannel| <-----+Mod Request+--+Forward|
+           +-------------+       +-----------+  +-------+
+
+                       +-------------+          +-------+
+          response---->+RemoteChannel+--------> |Forward|
+                       +-------------+          +---+---+
+                                                    v
+                                           +------------+
+                                           |LocalChannel|
+                                           +------------+
+
          */
         EventLoopGroup boss = OSHelper.eventLoopGroup(1);
         EventLoopGroup worker = OSHelper.eventLoopGroup(0);

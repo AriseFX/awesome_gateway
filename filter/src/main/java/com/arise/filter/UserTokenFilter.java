@@ -3,13 +3,19 @@ package com.arise.filter;
 import com.arise.redis.AsyncRedisClient;
 import com.arise.server.route.filter.FilterContext;
 import com.arise.server.route.filter.PreRouteFilter;
+import com.xcewell.esb.common.Token;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +39,8 @@ public class UserTokenFilter extends PreRouteFilter {
 
     public static String RequestURI = "RequestURI";
 
+    public static String FullToken = "FullToken";
+
     @Override
     public int getOrder() {
         return 0;
@@ -45,22 +53,80 @@ public class UserTokenFilter extends PreRouteFilter {
         URI uri = URI.create(request.uri());
         //解析query参数
         Map<String, String> queryString = parseQueryString(uri.getQuery());
-        redisClient.commands().get("WY").whenCompleteAsync((v, ex) -> {
-            if (ex != null) {
-                ctx.getCallback().setFailure(ex);
-                return;
+        //解析token
+        String auth = headers.get("Authorization");
+        final String[] originCode = new String[]{headers.get(OriginCode)};
+        if (StringUtils.hasLength(auth)) {
+            RandomToken wrapToken = parseShortToken(auth);
+            if (wrapToken != null) {
+                redisClient.commands().get(wrapToken.getRedisKey()).whenCompleteAsync((v, ex) -> {
+                    if (ex != null) {
+                        fail(ctx, ex);
+                        return;
+                    }
+                    if (v != null) {
+                        Token token = (Token) v;
+                        String accessToken = token.getAccessToken();
+                        headers.set("Token", auth);//短令牌
+                        headers.set("Authorization", accessToken);//长令牌
+                        if (originCode[0] == null) {
+                            originCode[0] = token.getOriginCode();
+                        }
+                        if (originCode[0] == null) {
+                            originCode[0] = queryString.get(OriginCode);
+                        }
+                        Map<String, Object> attr = ctx.attr();
+                        attr.put(OriginCode, originCode[0]);
+                        attr.put(HttpQueryParam, queryString);
+                        attr.put(RequestURI, uri);
+                    }
+                    //获取token
+                    success(ctx);
+                });
+            } else {
+                success(ctx);
             }
-            //假装获取到了token
-            String originCode = headers.get(OriginCode);
-            if (originCode == null) {
+        } else {
+            success(ctx);
+        }
+    }
 
+    private static void success(FilterContext<List<HttpObject>, Object> ctx) {
+        ctx.getCallback().setSuccess(null);
+    }
+
+    private static void fail(FilterContext<List<HttpObject>, Object> ctx, Throwable cause) {
+        ctx.getCallback().setFailure(cause);
+    }
+
+    public static RandomToken parseShortToken(String shortToken) {
+        try {
+            String usernameShortToken = new String(Base64.getDecoder().decode(shortToken), StandardCharsets.UTF_8);
+            if (StringUtils.hasLength(usernameShortToken)) {
+                String[] split = usernameShortToken.split(":");
+                if (split.length == 4 && "EWELL".equals(split[0])) {
+                    return new RandomToken(split[1], split[2], split[3]);
+                }
             }
-            Map<String, Object> attr = ctx.attr();
-            attr.put(OriginCode, originCode);
-            attr.put(HttpQueryParam, queryString);
-            attr.put(RequestURI, uri);
-            //获取token
-            ctx.getCallback().setSuccess(null);
-        });
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        return null;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class RandomToken {
+        private String usernameKey;
+        private String randomToken;
+        private String redisKey;
+        private String originCode;
+
+        public RandomToken(String usernameKey, String randomToken, String originCode) {
+            this.originCode = originCode;
+            this.usernameKey = usernameKey;
+            this.randomToken = randomToken;
+            this.redisKey = usernameKey + "-" + randomToken;
+        }
     }
 }

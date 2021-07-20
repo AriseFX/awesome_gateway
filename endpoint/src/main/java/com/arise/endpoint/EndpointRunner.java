@@ -6,7 +6,6 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
@@ -35,8 +34,8 @@ public class EndpointRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        EventLoopGroup workerGroup = new NioEventLoopGroup(1);
+        EventLoopGroup bossGroup = OSHelper.eventLoopGroup(1);
+        EventLoopGroup workerGroup = OSHelper.eventLoopGroup(1);
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)

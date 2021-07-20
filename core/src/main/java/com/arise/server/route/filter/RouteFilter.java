@@ -11,5 +11,5 @@ import java.util.List;
  * @Description: 路由过滤器
  * @Modified: By：
  */
-public abstract class RouteFilter implements SchedulableFilter<List<RouteBean>, Object> {
+public abstract class RouteFilter implements SchedulableFilter<List<RouteBean>[], Object> {
 }

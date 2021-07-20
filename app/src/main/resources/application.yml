@@ -8,14 +8,14 @@ gateway:
     max-pending-acquires: 0x7fffffff #最大pending数
   registry:
     naming: nacos
-    server-addr: 192.168.10.224:8848
-    namespace: 5dd476b5-316b-4f2e-bf78-06eed9f57ec2
+    server-addr: 192.168.0.56:8848
+    namespace: 06b72914-e3e0-452c-bac6-9b22af6213cd
     service-name: AsGateway
-    network-interface: wlan1
+    network-interface: eth0
   redis:
-    uri: redis://192.168.150.103:6379/1?timeout=10s
+    uri: redis://XCwjj%40xcewell123@192.168.0.176:6379/2?timeout=10s
   endpoint:
-    port: 8098
+    port: 9876
     address: 0.0.0.0
 logging:
   level:

@@ -6,11 +6,9 @@ import com.arise.server.route.RouteBean;
 import com.arise.server.route.filter.FilterContext;
 import com.arise.server.route.filter.SchedulableFilter;
 import com.arise.server.route.manager.RouteManager;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoop;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.util.concurrent.EventExecutor;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -19,7 +17,6 @@ import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,7 +33,7 @@ public class RouteMatcher {
     @Resource
     private RouteManager routeManager;
 
-    public static List<SchedulableFilter<List<RouteBean>, Object>> routeFilters;
+    public static List<SchedulableFilter<List<RouteBean>[], Object>> routeFilters;
 
     public InetSocketAddress match(EventLoop eventLoop, Map<String, Object> attr, HttpRequest request) {
         List<RouteBean> matched = routeManager.match(request.uri());
@@ -63,15 +60,20 @@ public class RouteMatcher {
             }
             return true;
         }).collect(Collectors.toList());
-        new FilterContext<>(result, routeFilters, eventLoop, attr).handleNext();
-        if (result.size() > 0) {
+        List<RouteBean>[] pointer = new List[]{result};
+        new FilterContext<>(pointer, routeFilters, eventLoop, attr).handleNext();
+        if (pointer[0].size() > 0) {
             //默认取第一个
             RouteBean route = result.get(0);
             URI remoteUri = URI.create(route.getService() + route.getServicePath());
             String scheme = remoteUri.getScheme();
             if (scheme.equals("lb")) {
                 request.setUri(remoteUri.getPath());
-                return ServiceManager.selectService(remoteUri.getHost());
+                InetSocketAddress address = ServiceManager.selectService(remoteUri.getHost());
+                if (address == null) {
+                    throw new RuntimeException("服务未找到");
+                }
+                return address;
             }
         }
         return null;

@@ -79,7 +79,16 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                         }
                         return;
                     }
-                    InetSocketAddress address = matcher.match(eventLoop, attr, request);
+                    InetSocketAddress address = null;
+                    try {
+                        address = matcher.match(eventLoop, attr, request);
+                    } catch (RuntimeException e) {
+                        if (inbound.isActive()) {
+                            StandardHttpMessage._503.toByteBuf(ctx).forEach(x ->
+                                    inbound.writeAndFlush(((ByteBuf) x).retainedDuplicate()));
+                        }
+                        return;
+                    }
                     if (address == null) {
                         if (inbound.isActive()) {
                             StandardHttpMessage._404.toByteBuf(ctx).forEach(e ->

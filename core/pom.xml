@@ -51,7 +51,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-epoll</artifactId>
-            <!--            <classifier>linux-aarch64</classifier>-->
+            <classifier>linux-aarch64</classifier>
         </dependency>
         <dependency>
             <groupId>com.alibaba.nacos</groupId>

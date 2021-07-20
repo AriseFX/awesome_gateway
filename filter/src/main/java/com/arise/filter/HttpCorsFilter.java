@@ -34,13 +34,11 @@ public class HttpCorsFilter extends ForwardFilter {
                     List<HttpObject> object = future.get();
                     HttpResponse response = (HttpResponse) object.get(0);
                     HttpHeaders headers = response.headers();
-                    if (!headers.contains("Access-Control-Allow-Origin")) {
-                        headers.set("Access-Control-Allow-Origin", "*");
-                        headers.set("Access-Control-Allow-Methods", "*");
-                        headers.set("Access-Control-Max-Age", "3600");
-                        headers.set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Connection, User-Agent, Cookie");
-                        headers.set("Access-Control-Allow-Credentials", "true");
-                    }
+                    headers.set("Access-Control-Allow-Origin", "*");
+                    headers.set("Access-Control-Allow-Methods", "*");
+                    headers.set("Access-Control-Max-Age", "3600");
+                    headers.set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Connection, User-Agent, Cookie");
+                    headers.set("Access-Control-Allow-Credentials", "true");
                     ctx.handleNext();
                 }
             });
