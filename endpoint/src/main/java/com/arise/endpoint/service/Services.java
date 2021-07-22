@@ -1,6 +1,7 @@
 package com.arise.endpoint.service;
 
 import com.alibaba.fastjson.JSON;
+import com.arise.endpoint.service.dto.EndpointResponse;
 import com.arise.endpoint.service.dto.RouteDto;
 import com.arise.internal.util.JsonUtils;
 import com.arise.redis.AsyncRedisClient;
@@ -18,7 +19,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.arise.endpoint.service.EndpointResponse.standJsonResp;
+import static com.arise.endpoint.service.dto.EndpointResponse.standJsonResp;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 

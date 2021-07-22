@@ -1,4 +1,4 @@
-package com.arise.endpoint.service;
+package com.arise.endpoint.service.dto;
 
 import com.alibaba.fastjson.JSON;
 import com.arise.internal.util.JsonUtils;

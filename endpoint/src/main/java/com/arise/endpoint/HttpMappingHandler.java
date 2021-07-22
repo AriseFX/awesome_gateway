@@ -1,6 +1,6 @@
 package com.arise.endpoint;
 
-import com.arise.endpoint.service.EndpointResponse;
+import com.arise.endpoint.service.dto.EndpointResponse;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-import static com.arise.endpoint.service.EndpointResponse.standJsonResp;
+import static com.arise.endpoint.service.dto.EndpointResponse.standJsonResp;
 import static com.arise.endpoint.service.Services.*;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 
