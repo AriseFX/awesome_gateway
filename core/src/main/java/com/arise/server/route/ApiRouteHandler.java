@@ -79,7 +79,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                         }
                         return;
                     }
-                    InetSocketAddress address = null;
+                    InetSocketAddress address;
                     try {
                         address = matcher.match(eventLoop, attr, request);
                     } catch (RuntimeException e) {

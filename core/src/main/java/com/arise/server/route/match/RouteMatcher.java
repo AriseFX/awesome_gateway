@@ -60,9 +60,13 @@ public class RouteMatcher {
             }
             return true;
         }).collect(Collectors.toList());
+        if (result.size() == 0) {
+            return null;
+        }
+        //路由过滤
         List<RouteBean>[] pointer = new List[]{result};
         new FilterContext<>(pointer, routeFilters, eventLoop, attr).handleNext();
-        if (pointer[0].size() > 0) {
+        if (pointer[0] != null && pointer[0].size() > 0) {
             //默认取第一个
             RouteBean route = result.get(0);
             URI remoteUri = URI.create(route.getService() + route.getServicePath());

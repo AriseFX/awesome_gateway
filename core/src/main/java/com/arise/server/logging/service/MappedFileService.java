@@ -29,7 +29,7 @@ public class MappedFileService {
         try {
             mapBuffer = mmap(dir + "data", 1 << 20); //日志
             indexBuffer = mmap(dir + "index", 1 << 20); //索引
-            metaBuffer = mmap(dir + "/meta", 32); //meta
+            metaBuffer = mmap(dir + "meta", 32); //meta
             index = metaBuffer.getInt();
             if (index == 0) {
                 offset = 0;

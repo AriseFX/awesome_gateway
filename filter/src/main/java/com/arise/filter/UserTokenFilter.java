@@ -48,6 +48,7 @@ public class UserTokenFilter extends PreRouteFilter {
 
     @Override
     public void doFilter(FilterContext<List<HttpObject>, Object> ctx) {
+        Map<String, Object> attr = ctx.attr();
         HttpRequest request = (HttpRequest) ctx.getPram().get(0);
         HttpHeaders headers = request.headers();
         URI uri = URI.create(request.uri());
@@ -56,6 +57,9 @@ public class UserTokenFilter extends PreRouteFilter {
         //解析token
         String auth = headers.get("Authorization");
         final String[] originCode = new String[]{headers.get(OriginCode)};
+        attr.put(OriginCode, originCode[0]);
+        attr.put(HttpQueryParam, queryString);
+        attr.put(RequestURI, uri);
         if (StringUtils.hasLength(auth)) {
             RandomToken wrapToken = parseShortToken(auth);
             if (wrapToken != null) {
@@ -75,11 +79,8 @@ public class UserTokenFilter extends PreRouteFilter {
                         if (originCode[0] == null) {
                             originCode[0] = queryString.get(OriginCode);
                         }
-                        Map<String, Object> attr = ctx.attr();
-                        attr.put(OriginCode, originCode[0]);
-                        attr.put(HttpQueryParam, queryString);
-                        attr.put(RequestURI, uri);
                     }
+                    attr.put(OriginCode, originCode[0]);
                     //获取token
                     success(ctx);
                 });
