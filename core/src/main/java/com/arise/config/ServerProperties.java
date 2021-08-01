@@ -1,6 +1,6 @@
 package com.arise.config;
 
-import com.arise.server.logging.service.MappedFileService;
+import com.arise.server.logging.queue.DiskQueue;
 import com.arise.server.route.pool.RemoteChannelPool;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -97,7 +97,10 @@ public class ServerProperties {
         RemoteChannelPool.setConnectTimeout(pool.timeout);
         RemoteChannelPool.setMaxPendingAcquires(pool.maxPendingAcquires);
         RemoteChannelPool.setMaxConnections(pool.maxConnections);
-        MappedFileService.dir = storageDir;
+        if (!storageDir.endsWith("/")) {
+            storageDir = storageDir + "/";
+        }
+        DiskQueue.dir = storageDir;
     }
 
     public static <T> T getBean(Class<T> clz) throws BeansException {

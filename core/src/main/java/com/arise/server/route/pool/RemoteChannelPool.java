@@ -1,5 +1,6 @@
 package com.arise.server.route.pool;
 
+import com.arise.os.OSHelper;
 import com.arise.server.logging.LogStorageHandler;
 import com.arise.server.route.filter.FilterContext;
 import io.netty.bootstrap.Bootstrap;
@@ -11,7 +12,6 @@ import io.netty.channel.pool.AbstractChannelPoolHandler;
 import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpRequestEncoder;
 import io.netty.handler.codec.http.HttpResponseDecoder;
 import io.netty.handler.logging.LogLevel;
@@ -64,7 +64,7 @@ public class RemoteChannelPool {
 
     private static ChannelPool newFixedChannelPool(String host, int port, EventLoop eventLoop) {
         Bootstrap b = new Bootstrap().group(eventLoop)
-                .channel(NioSocketChannel.class)
+                .channel(OSHelper.channelType())
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .remoteAddress(host, port);
@@ -97,9 +97,9 @@ public class RemoteChannelPool {
                      */
                     @Override
                     public void channelAcquired(Channel ch) {
-                        ch.pipeline().addLast(new LogStorageHandler());
                         ch.pipeline().addLast(new HttpRequestEncoder());
                         ch.pipeline().addLast(new HttpResponseDecoder());
+                        ch.pipeline().addLast(new LogStorageHandler());
                     }
                 }, maxConnections, maxPendingAcquires);
     }

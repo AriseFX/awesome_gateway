@@ -1,9 +1,10 @@
 package com.arise.server.logging;
 
+import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.HttpContent;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.nio.ByteBuffer;
 
 /**
  * @Author: wy
@@ -23,13 +24,11 @@ public class ApiLog {
      */
     private long id;
     private long timestamp;
-    private ByteBuffer[] req;
-    private ByteBuffer[] resp;
 
-    public ApiLog(ByteBuffer[] req, ByteBuffer[] resp) {
-        this.timestamp = System.currentTimeMillis();
-        this.req = req;
-        this.resp = resp;
-    }
-
+    private DefaultHttpRequest req;
+    private HttpContent reqBody;
+    private String reqBodyStr;
+    private DefaultHttpResponse resp;
+    private HttpContent respBody;
+    private String respBodyStr;
 }
