@@ -16,7 +16,7 @@ import static com.arise.server.StandardHttpMessage.Established;
 /**
  * @Author: wy
  * @Date: Created in 23:54 2021-05-31
- * @Description:
+ * @Description: 处理http代理
  * @Modified: By：
  */
 @Slf4j
@@ -73,9 +73,10 @@ public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
                         .addListener(res -> {
                             if (res.isSuccess()) {
                                 //去掉所有handler(后续走tunnel)
-                                ctx.pipeline().remove(HttpResponseEncoder.class);
-                                ctx.pipeline().remove(HttpRequestDecoder.class);
-                                ctx.pipeline().remove(HttpProxyHandler.class);
+                                ChannelPipeline pipeline = ctx.pipeline();
+                                while (pipeline.last() != null) {
+                                    pipeline.removeLast();
+                                }
                                 ctx.pipeline().addLast(new ProxyForwardHandler(outbound));
                                 outbound.pipeline().addLast(new ProxyForwardHandler(inbound));
                             }
@@ -99,12 +100,14 @@ public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
                 });
             }
         }
-        b.group(inbound.eventLoop())
-                .channel(OSHelper.channelType())
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
-                .option(ChannelOption.SO_KEEPALIVE, true)
-                .handler(new RemoteChannelActiveHandler(promise))
-                .connect(host, port);
+        //超时情况下，客户端会重传，导致group set already异常
+        if (b.config()!=null){
+            b.group(inbound.eventLoop())
+                    .channel(OSHelper.channelType())
+                    .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+                    .option(ChannelOption.SO_KEEPALIVE, true)
+                    .handler(new RemoteChannelActiveHandler(promise))
+                    .connect(host, port);
+        }
     }
-
 }

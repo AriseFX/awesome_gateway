@@ -4,6 +4,7 @@ import com.alibaba.nacos.api.utils.StringUtils;
 import com.arise.redis.AsyncRedisClient;
 import com.arise.server.route.RouteBean;
 import com.arise.config.ServerProperties;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ import java.util.concurrent.TimeoutException;
  * @Description: 路由管理
  * @Modified: By：
  */
+@Slf4j
 @Component
 @DependsOn(value = "redisClient")
 public class RouteManager {
@@ -29,13 +31,17 @@ public class RouteManager {
     private final ScriptEngine jsEngine = new ScriptEngineManager().getEngineByName("javascript");
 
     @PostConstruct
-    public void init() throws ExecutionException, InterruptedException, TimeoutException {
+    public void init() throws ExecutionException, InterruptedException {
         AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);
-        client.commands().hgetall("ROUTE").get(10, TimeUnit.SECONDS).values()
-                .forEach(e -> {
-                    //初始化路由
-                    addRoute((RouteBean) e);
-                });
+        try {
+            client.commands().hgetall("ROUTE").get(10, TimeUnit.SECONDS).values()
+                    .forEach(e -> {
+                        //初始化路由
+                        addRoute((RouteBean) e);
+                    });
+        } catch (TimeoutException e) {
+            log.error("初始化路由超时:{}", e.getMessage());
+        }
     }
 
     public List<RouteBean> match(String url) {
