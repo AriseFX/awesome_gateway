@@ -11,12 +11,13 @@ gateway:
     server-addr: 123.60.29.248:8848
     namespace: 06b72914-e3e0-452c-bac6-9b22af6213cd
     service-name: AsGateway
-    network-interface: en0
+    network-interface: en7
   redis:
     uri: redis://XCwjj%40xcewell123@124.71.195.67:6379/2?timeout=10s
   endpoint:
     port: 9876
     address: 0.0.0.0
 logging:
-  level:
-    root: info
+  config: classpath:logback-spring.xml
+app:
+  id: gateway
