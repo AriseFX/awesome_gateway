@@ -49,6 +49,10 @@
             <classifier>linux-aarch64</classifier>
         </dependency>
         <dependency>
+            <groupId>com.arise</groupId>
+            <artifactId>gateway-mq</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.alibaba.nacos</groupId>
             <artifactId>nacos-client</artifactId>
             <exclusions>
@@ -82,7 +86,7 @@
             <groupId>io.lettuce</groupId>
             <artifactId>lettuce-core</artifactId>
         </dependency>
-         <dependency>
+        <dependency>
             <groupId>org.jboss.marshalling</groupId>
             <artifactId>jboss-marshalling</artifactId>
         </dependency>

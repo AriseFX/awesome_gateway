@@ -14,11 +14,6 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import net.openhft.chronicle.core.OS;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-
 /**
  * @Author: wy
  * @Date: Created in 16:49 2021-06-23
@@ -60,11 +55,5 @@ public class OSHelper {
         } else {
             return new NioEventLoopGroup(num);
         }
-    }
-
-    public static MappedByteBuffer mmap(String path, long len) throws IOException {
-        return new RandomAccessFile(path, "rw")
-                .getChannel()
-                .map(FileChannel.MapMode.READ_WRITE, 0, len);
     }
 }

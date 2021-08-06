@@ -1,6 +1,8 @@
 package com.arise.config;
 
-import com.arise.server.logging.queue.DiskQueue;
+
+import com.arise.mq.DiskQueue;
+import com.arise.mq.MappedLogFile;
 import com.arise.server.route.pool.RemoteChannelPool;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -45,6 +47,8 @@ public class ServerProperties {
     private Redis redis;
     //endpint
     private Endpoint endpoint;
+    //byte
+    private int logFileSize;
 
     @Data
     @NoArgsConstructor
@@ -101,6 +105,7 @@ public class ServerProperties {
             storageDir = storageDir + "/";
         }
         DiskQueue.dir = storageDir;
+        MappedLogFile.logFileSize = this.logFileSize;
     }
 
     public static <T> T getBean(Class<T> clz) throws BeansException {

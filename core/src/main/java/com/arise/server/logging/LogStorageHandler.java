@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class LogStorageHandler extends ChannelDuplexHandler {
 
-    private static final LogService logService = new LogService();
+    public static LogService logService;
 
     private final ApiLog apiLog;
 

@@ -2,6 +2,8 @@ package com.arise.server;
 
 import com.arise.config.ServerProperties;
 import com.arise.os.OSHelper;
+import com.arise.server.logging.LogService;
+import com.arise.server.logging.LogStorageHandler;
 import com.arise.server.proxy.HttpProxyHandler;
 import com.arise.server.route.filter.PreRouteFilter;
 import com.arise.server.route.filter.ForwardFilter;
@@ -95,6 +97,8 @@ public class ServerRunner implements CommandLineRunner {
                     if (future.isSuccess()) {
                         log.debug("CPU布局如下: \r\n{}", AffinityLock.cpuLayout());
                         log.info("Server startup complete！[{}:{}]", prop.getAddress(), prop.getPort());
+                        //为了让LogStorageHandler先初始化
+                        LogStorageHandler.logService = new LogService();
                     }
                 }).sync().channel();
         channel.closeFuture().sync().addListener(

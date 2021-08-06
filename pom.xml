@@ -12,6 +12,7 @@
         <module>filter</module>
         <module>app</module>
         <module>endpoint</module>
+        <module>mq</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -36,6 +37,11 @@
             <dependency>
                 <groupId>com.arise</groupId>
                 <artifactId>gateway-filter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.arise</groupId>
+                <artifactId>gateway-mq</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -2,7 +2,6 @@ package com.arise.server.route.pool;
 
 import com.arise.os.OSHelper;
 import com.arise.server.logging.LogStorageHandler;
-import com.arise.server.route.filter.FilterContext;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;

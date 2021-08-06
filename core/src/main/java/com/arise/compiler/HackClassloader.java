@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
 /**
  * @Author: wy
  * @Date: Created in 15:57 2021/1/8
- * @Description: 一个不安全的类加载器, 使用hack的方式去加载类，违背了双亲委派机制
+ * @Description: 一个不安全的类加载器, 使用hack的方式去加载类，也违背了双亲委派机制
  * @Modified: By：
  */
 public class HackClassloader {
