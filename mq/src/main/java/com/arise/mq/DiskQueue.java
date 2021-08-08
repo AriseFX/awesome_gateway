@@ -57,10 +57,10 @@ public class DiskQueue {
         dataPrefix = dir + "data";
         this.rFilePath = (dataPrefix + rFileNum + suffix).intern();
         dataMap.put(rFilePath,
-                new MappedLogFile(rFilePath, readOffset(), writeOffset()));
+                new MappedLogFile(rFilePath));
         this.wFilePath = (dataPrefix + wFileNum + suffix).intern();
         dataMap.computeIfAbsent(wFilePath,
-                path -> new MappedLogFile(path, readOffset(), writeOffset()));
+                MappedLogFile::new);
         Runnable deleteLog = new Runnable() {
             private final File file = new File(DiskQueue.dir);
 
@@ -109,7 +109,7 @@ public class DiskQueue {
      * @param func 消费者，输入ByteBuffer，输出Boolean为消费结果（false失败）
      */
     public void consume(Function<ByteBuffer, Boolean> func) throws InterruptedException {
-        MappedLogFile file = dataMap.get(rFilePath);
+        MappedLogFile file = dataMap.computeIfAbsent(rFilePath, MappedLogFile::new);
         int res = file.read(func);
         if (res == -1) {
             //切换新的文件
@@ -125,11 +125,6 @@ public class DiskQueue {
             }
         } else if (res == -2) {
             Thread.sleep(200);
-        } else {
-            //消费失败的情况下，不修改偏移量
-            if (res != -3) {
-                readOffset(res);
-            }
         }
     }
 
@@ -141,49 +136,36 @@ public class DiskQueue {
             //切换新文件
             wFileNum++;
             wFilePath = (dataPrefix + wFileNum + suffix).intern();
-            file = new MappedLogFile(wFilePath, 0, 0);
+            file = new MappedLogFile(wFilePath);
             dataMap.put(wFilePath, file);
             writeFileNum(wFileNum);
-            if (file.write(buffer) < 0) {
+            System.out.println("produce切换新文件:" + wFileNum);
+            res = file.write(buffer);
+            if (res < 0) {
                 throw new RuntimeException("内部错误!");
+            } else {
+                System.out.println("produce新的offset:" + res);
             }
         } else {
-            writeOffset(res);
+            System.out.println("produce新的offset:" + res);
         }
     }
 
 
-    private int readOffset() {
-        return metaBuffer.getInt();
-    }
-
-    private void readOffset(int offset) {
-        metaBuffer.putInt(0, offset);
-        metaBuffer.force();
-    }
-
     public int readFileNum() {
-        return metaBuffer.getInt(4);
+        return metaBuffer.getInt(0);
     }
 
     private void readFileNum(int num) {
-        metaBuffer.putInt(4, num);
+        metaBuffer.putInt(0, num);
     }
 
-    private int writeOffset() {
-        return metaBuffer.getInt(8);
-    }
-
-    private void writeOffset(int offset) {
-        metaBuffer.putInt(8, offset);
-        metaBuffer.force();
-    }
 
     private int writeFileNum() {
-        return metaBuffer.getInt(12);
+        return metaBuffer.getInt(4);
     }
 
     private void writeFileNum(int num) {
-        metaBuffer.putInt(12, num);
+        metaBuffer.putInt(4, num);
     }
 }

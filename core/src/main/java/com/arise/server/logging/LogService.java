@@ -15,7 +15,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  * @Author: wy
  * @Date: Created in 23:37 2021-06-20
- * @Description: 日志服务
+ * @Description: 日志相关
  * @Modified: By：
  */
 @Slf4j
@@ -90,7 +90,7 @@ public class LogService implements Runnable {
                         try {
                             ApiLog apiLog = unmarshaller(buffer);
                             if (apiLog != null)
-                                log.info(apiLog.getRespBodyStr());
+                                System.out.println(apiLog.getRespBodyStr());
                         } catch (IOException | ClassNotFoundException e) {
                             e.printStackTrace();
                         }
