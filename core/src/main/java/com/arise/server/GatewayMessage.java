@@ -4,13 +4,13 @@ import com.alibaba.fastjson.JSON;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static com.alibaba.nacos.common.constant.HttpHeaderConsts.CONTENT_LENGTH;
@@ -91,7 +91,7 @@ public class GatewayMessage {
         return response;
     }
 
-    public static void write2Channel(Channel channel, FullHttpResponse response) {
+    public static void writeMsg(Channel channel, FullHttpResponse response) {
         if (channel.isActive()) {
             channel.writeAndFlush(response.retainedDuplicate());
         }

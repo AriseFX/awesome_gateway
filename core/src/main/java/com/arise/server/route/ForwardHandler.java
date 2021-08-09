@@ -71,7 +71,7 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
         SocketChannel channel = (SocketChannel) ctx.channel();
         RemoteChannelPool.releaseChannel(channel);
         if (forwardChannel.isActive()) {
-            write2Channel(forwardChannel, _ConnectionClose);
+            writeMsg(forwardChannel, _ConnectionClose);
             forwardChannel.close().addListener(future -> {
                         if (future.isSuccess()) {
                             log.error("连接被关闭:{}", channel.remoteAddress().getHostName());

@@ -48,7 +48,7 @@ public class DiskQueue {
             }
         }
         //[readNum][offset]
-        this.metaBuffer = mmap(dir + "meta" + suffix, 4 << 10); //meta
+        this.metaBuffer = mmap(dir + "meta", 4 << 10); //meta
         this.rFileNum = readFileNum();
         this.wFileNum = writeFileNum();
         dataPrefix = dir + "data";

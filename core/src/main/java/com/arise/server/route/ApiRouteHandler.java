@@ -74,23 +74,23 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                 p.addListener((FutureListener<Object>) future1 -> {
                     if (!future1.isSuccess()) {
                         log.error(future1.cause().getMessage());
-                        write2Channel(inbound, _500);
+                        writeMsg(inbound, _500);
                         return;
                     }
                     MatchRes matchRes;
                     try {
                         matchRes = matcher.match(eventLoop, attr, request);
                     } catch (ServiceNotFoundException e) {
-                        write2Channel(inbound, _503);
+                        writeMsg(inbound, _503);
                         return;
                     }
                     if (matchRes == null) {
-                        write2Channel(inbound, _404);
+                        writeMsg(inbound, _404);
                     } else {
                         InetSocketAddress inetAddress = matchRes.getAddress();
                         InetAddress address = inetAddress.getAddress();
                         if (address == null) {
-                            write2Channel(inbound, _UnknownHost);
+                            writeMsg(inbound, _UnknownHost);
                             return;
                         }
                         Promise<Channel> promise = eventLoop.newPromise();
@@ -115,9 +115,9 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                             } else {
                                 Throwable cause = future2.cause();
                                 if (cause instanceof ConnectTimeoutException) {
-                                    write2Channel(inbound, _TimeOut);
+                                    writeMsg(inbound, _TimeOut);
                                 } else {
-                                    write2Channel(inbound, _500);
+                                    writeMsg(inbound, _500);
                                 }
                             }
                         });
@@ -137,6 +137,6 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
         throwable.printStackTrace();
         log.error("ApiRouteHandler:{}", throwable.toString());
         Channel channel = ctx.channel();
-        write2Channel(channel, _500);
+        writeMsg(channel, _500);
     }
 }
