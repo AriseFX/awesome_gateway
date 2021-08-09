@@ -72,7 +72,7 @@ public class UserTokenFilter extends PreRouteFilter {
                         Token token = (Token) v;
                         String accessToken = token.getAccessToken();
                         headers.set("Token", auth);//短令牌
-                        headers.set("Authorization", accessToken);//长令牌
+                        headers.set("Authorization", "Bearer " + accessToken);//长令牌
                         if (originCode[0] == null) {
                             originCode[0] = token.getOriginCode();
                         }
@@ -81,6 +81,7 @@ public class UserTokenFilter extends PreRouteFilter {
                         }
                     }
                     attr.put(OriginCode, originCode[0]);
+                    headers.set("x-originCode", originCode[0]);
                     //获取token
                     success(ctx);
                 });
