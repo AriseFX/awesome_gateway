@@ -91,7 +91,7 @@ public class RemoteChannelPool {
                     public void channelAcquired(Channel ch) {
                         ch.pipeline().addLast("reqEncoder", new HttpRequestEncoder());
                         ch.pipeline().addLast("respDecoder", new HttpResponseDecoder());
-//                        ch.pipeline().addLast(new LogStorageHandler());
+                        ch.pipeline().addLast("log", new LogStorageHandler());
                     }
                 }, maxConnections, maxPendingAcquires);
     }

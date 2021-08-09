@@ -77,31 +77,23 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                 p.addListener((FutureListener<Object>) future1 -> {
                     if (!future1.isSuccess()) {
                         log.error(future1.cause().getMessage());
-                        if (inbound.isActive()) {
-                            write2Channel(inbound, _500);
-                        }
+                        write2Channel(inbound, _500);
                         return;
                     }
                     MatchRes matchRes;
                     try {
                         matchRes = matcher.match(eventLoop, attr, request);
                     } catch (ServiceNotFoundException e) {
-                        if (inbound.isActive()) {
-                            write2Channel(inbound, _503);
-                        }
+                        write2Channel(inbound, _503);
                         return;
                     }
                     if (matchRes == null) {
-                        if (inbound.isActive()) {
-                            write2Channel(inbound, _404);
-                        }
+                        write2Channel(inbound, _404);
                     } else {
                         InetSocketAddress inetAddress = matchRes.getAddress();
                         InetAddress address = inetAddress.getAddress();
                         if (address == null) {
-                            if (inbound.isActive()) {
-                                write2Channel(inbound, _UnknownHost);
-                            }
+                            write2Channel(inbound, _UnknownHost);
                             return;
                         }
                         Promise<Channel> promise = eventLoop.newPromise();
@@ -111,18 +103,19 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                 Promise<List<HttpObject>> respPromise = eventLoop.newPromise();
                                 DefaultChannelPipeline pipeline = (DefaultChannelPipeline) outbound.pipeline();
                                 if (matchRes.isSsl()) {
+                                    String hostName = address.getHostName();
                                     SslContext context = SslContextBuilder.forClient()
                                             .trustManager(InsecureTrustManagerFactory.INSTANCE)
                                             .build();
-                                    pipeline.addFirst(new SslHandler(context.newEngine(ByteBufAllocator.DEFAULT, address.getHostName(), inetAddress.getPort())));
+                                    pipeline.addFirst(new SslHandler(context.newEngine(ByteBufAllocator.DEFAULT, hostName, inetAddress.getPort())));
+                                    //保证Host指向正确
+                                    request.headers().set("Host", hostName);
                                 }
                                 pipeline.addLast(new ForwardHandler(respPromise, inbound));
                                 new FilterContext<>(contents, respPromise, forwardFilters, eventLoop, attr, null).handleNext();
-                                System.err.println(outbound.pipeline());
                                 contents.forEach(outbound::writeAndFlush);
                             } else {
                                 Throwable cause = future2.cause();
-
                                 if (cause instanceof ConnectTimeoutException) {
                                     write2Channel(inbound, _TimeOut);
                                 } else {
@@ -146,8 +139,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
         throwable.printStackTrace();
         log.error("ApiRouteHandler:{}", throwable.toString());
         Channel channel = ctx.channel();
-        if (channel.isActive()) {
-            write2Channel(channel, _500);
-        }
+        write2Channel(channel, _500);
+
     }
 }
