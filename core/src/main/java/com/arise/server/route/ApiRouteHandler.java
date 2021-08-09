@@ -6,11 +6,8 @@ import com.arise.server.route.filter.SchedulableFilter;
 import com.arise.server.route.match.MatchRes;
 import com.arise.server.route.match.RouteMatcher;
 import com.arise.server.route.pool.RemoteChannelPool;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.*;
-import io.netty.handler.codec.http.HttpObject;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
@@ -107,9 +104,10 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                     SslContext context = SslContextBuilder.forClient()
                                             .trustManager(InsecureTrustManagerFactory.INSTANCE)
                                             .build();
-                                    pipeline.addFirst(new SslHandler(context.newEngine(ByteBufAllocator.DEFAULT, hostName, inetAddress.getPort())));
+                                    SslHandler sslHandler = context.newHandler(outbound.alloc(), hostName, inetAddress.getPort());
+                                    pipeline.addFirst(sslHandler);
                                     //保证Host指向正确
-                                    request.headers().set("Host", hostName);
+                                    request.headers().remove(HttpHeaderNames.HOST);
                                 }
                                 pipeline.addLast(new ForwardHandler(respPromise, inbound));
                                 new FilterContext<>(contents, respPromise, forwardFilters, eventLoop, attr, null).handleNext();
@@ -140,6 +138,5 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
         log.error("ApiRouteHandler:{}", throwable.toString());
         Channel channel = ctx.channel();
         write2Channel(channel, _500);
-
     }
 }

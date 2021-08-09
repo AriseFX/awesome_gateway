@@ -78,7 +78,6 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
                         }
                     }
             );
-
         }
     }
 

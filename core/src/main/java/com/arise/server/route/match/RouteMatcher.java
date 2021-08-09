@@ -74,9 +74,9 @@ public class RouteMatcher {
             String scheme = remoteUri.getScheme();
             int port = remoteUri.getPort();
             String host = remoteUri.getHost();
+            request.setUri(remoteUri.getPath());
             switch (scheme) {
                 case "lb":
-                    request.setUri(remoteUri.getPath());
                     InetSocketAddress address = ServiceManager.selectService(remoteUri.getHost());
                     if (address == null) {
                         throw new ServiceNotFoundException();

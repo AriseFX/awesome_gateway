@@ -41,7 +41,8 @@ public class RemoteChannelPool {
      * 异步获取channel
      */
     public static void acquireChannel(String host, int port, EventLoop eventLoop, Promise<Channel> promise) {
-        ChannelPool channelPool = pools.computeIfAbsent(host + ":" + port,
+        //拼接eventLoop.hashCode()是为了保证连接池与eventLoop绑定
+        ChannelPool channelPool = pools.computeIfAbsent(host + eventLoop.hashCode() + port,
                 k ->
                         newFixedChannelPool(host, port, eventLoop)
         );
