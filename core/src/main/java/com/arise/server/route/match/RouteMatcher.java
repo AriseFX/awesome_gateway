@@ -37,7 +37,9 @@ public class RouteMatcher {
     public static List<SchedulableFilter<List<RouteBean>[], Object>> routeFilters;
 
     public MatchRes match(EventLoop eventLoop, Map<String, Object> attr, HttpRequest request) {
-        List<RouteBean> matched = routeManager.match(request.uri());
+        URI requestURI = (URI) attr.computeIfAbsent("RequestURI",
+                URI::create);
+        List<RouteBean> matched = routeManager.match(requestURI.getPath());
         //脚本相关
         HttpHeaders headers = request.headers();
         List<RouteBean> result = matched.stream().filter(e -> {
