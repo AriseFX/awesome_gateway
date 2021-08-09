@@ -34,7 +34,7 @@ public class RouteManager {
     public void init() throws ExecutionException, InterruptedException {
         AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);
         try {
-            client.commands().hgetall("ROUTE").get(10, TimeUnit.SECONDS).values()
+            client.commands().hgetall("ROUTE").get(20, TimeUnit.SECONDS).values()
                     .forEach(e -> {
                         //初始化路由
                         addRoute((RouteBean) e);

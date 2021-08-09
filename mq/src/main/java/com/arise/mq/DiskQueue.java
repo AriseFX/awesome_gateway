@@ -20,9 +20,6 @@ import static com.arise.mq.IOHelper.mmap;
  */
 public class DiskQueue {
 
-    //缺省值是当前目录
-    public static String dir = "./";
-
     public static final String suffix = ".awe";
 
     private final Map<String, MappedLogFile> dataMap = new ConcurrentHashMap<>();
@@ -39,7 +36,7 @@ public class DiskQueue {
 
     private final String dataPrefix;
 
-    public DiskQueue() throws IOException {
+    public DiskQueue(String dir) throws IOException {
         File dirFile = new File(dir);
         if (dirFile.exists()) {
             if (!dirFile.isDirectory()) {
@@ -62,7 +59,7 @@ public class DiskQueue {
         dataMap.computeIfAbsent(wFilePath,
                 MappedLogFile::new);
         Runnable deleteLog = new Runnable() {
-            private final File file = new File(DiskQueue.dir);
+            private final File file = new File(dir);
 
             @Override
             public void run() {
@@ -102,7 +99,7 @@ public class DiskQueue {
         };
         Executors.newScheduledThreadPool(1)
                 .scheduleAtFixedRate(deleteLog, 0,
-                        2, TimeUnit.SECONDS);
+                        5, TimeUnit.SECONDS);
     }
 
     /**

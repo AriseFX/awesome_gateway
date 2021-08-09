@@ -71,12 +71,8 @@ public class RemoteChannelPool {
                 b,
                 new AbstractChannelPoolHandler() {
 
-                    //TODO 处理连接心跳
-                    final LoggingHandler loggingHandler = new LoggingHandler(LogLevel.DEBUG);
-
                     @Override
                     public void channelCreated(Channel ch) {
-                        ch.pipeline().addLast(loggingHandler);
                         log.debug("Channel created:{}", ch);
                     }
 
@@ -87,7 +83,6 @@ public class RemoteChannelPool {
                         while (pipeline.last() != null) {
                             pipeline.removeLast();
                         }
-                        ch.pipeline().addLast(loggingHandler);
                     }
 
                     /**
@@ -98,7 +93,7 @@ public class RemoteChannelPool {
                     public void channelAcquired(Channel ch) {
                         ch.pipeline().addLast(new HttpRequestEncoder());
                         ch.pipeline().addLast(new HttpResponseDecoder());
-                        ch.pipeline().addLast(new LogStorageHandler());
+//                        ch.pipeline().addLast(new LogStorageHandler());
                     }
                 }, maxConnections, maxPendingAcquires);
     }

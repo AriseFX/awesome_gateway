@@ -1,8 +1,8 @@
 package com.arise.config;
 
 
-import com.arise.mq.DiskQueue;
 import com.arise.mq.MappedLogFile;
+import com.arise.server.logging.LogService;
 import com.arise.server.route.pool.RemoteChannelPool;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -104,7 +104,7 @@ public class ServerProperties {
         if (!storageDir.endsWith("/")) {
             storageDir = storageDir + "/";
         }
-        DiskQueue.dir = storageDir;
+        LogService.dir = storageDir;
         MappedLogFile.logFileSize = this.logFileSize;
     }
 

@@ -1,28 +1,33 @@
 package com.arise.server.route;
 
-import com.arise.server.StandardHttpMessage;
+import com.arise.internal.exception.ServiceNotFoundException;
 import com.arise.server.route.filter.FilterContext;
 import com.arise.server.route.filter.SchedulableFilter;
+import com.arise.server.route.match.MatchRes;
 import com.arise.server.route.match.RouteMatcher;
 import com.arise.server.route.pool.RemoteChannelPool;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.EventLoop;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.*;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
 import net.openhft.affinity.Affinity;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.arise.server.GatewayMessage.*;
 
 /**
  * @Author: wy
@@ -51,7 +56,6 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
         ctx.channel().close();
     }
 
-
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         log.debug("收到msg:{},this:{}", msg.getClass(), this.hashCode());
@@ -74,44 +78,59 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                     if (!future1.isSuccess()) {
                         log.error(future1.cause().getMessage());
                         if (inbound.isActive()) {
-                            StandardHttpMessage._500.toByteBuf(ctx).forEach(e ->
-                                    inbound.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
+                            write2Channel(inbound, _500);
                         }
                         return;
                     }
-                    InetSocketAddress address;
+                    MatchRes matchRes;
                     try {
-                        address = matcher.match(eventLoop, attr, request);
-                    } catch (RuntimeException e) {
+                        matchRes = matcher.match(eventLoop, attr, request);
+                    } catch (ServiceNotFoundException e) {
                         if (inbound.isActive()) {
-                            StandardHttpMessage._503.toByteBuf(ctx).forEach(x ->
-                                    inbound.writeAndFlush(((ByteBuf) x).retainedDuplicate()));
+                            write2Channel(inbound, _503);
                         }
                         return;
                     }
-                    if (address == null) {
+                    if (matchRes == null) {
                         if (inbound.isActive()) {
-                            StandardHttpMessage._404.toByteBuf(ctx).forEach(e ->
-                                    inbound.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
+                            write2Channel(inbound, _404);
                         }
                     } else {
+                        InetSocketAddress inetAddress = matchRes.getAddress();
+                        InetAddress address = inetAddress.getAddress();
+                        if (address == null) {
+                            if (inbound.isActive()) {
+                                write2Channel(inbound, _UnknownHost);
+                            }
+                            return;
+                        }
                         Promise<Channel> promise = eventLoop.newPromise();
                         promise.addListener((FutureListener<Channel>) future2 -> {
                             if (future2.isSuccess()) {
                                 outbound = future2.getNow();
                                 Promise<List<HttpObject>> respPromise = eventLoop.newPromise();
-                                outbound.pipeline().addLast(new ForwardHandler(respPromise, inbound));
+                                ChannelPipeline pipeline = outbound.pipeline();
+                                if (matchRes.isSsl()) {
+                                    SslContext context = SslContextBuilder.forClient()
+                                            .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                                            .build();
+                                    pipeline.addFirst(new SslHandler(context.newEngine(ByteBufAllocator.DEFAULT, address.getHostName(), inetAddress.getPort())));
+                                }
+                                pipeline.addLast(new ForwardHandler(respPromise, inbound));
                                 new FilterContext<>(contents, respPromise, forwardFilters, eventLoop, attr, null).handleNext();
                                 contents.forEach(outbound::writeAndFlush);
                             } else {
-                                if (inbound.isActive()) {
-                                    StandardHttpMessage._500.toByteBuf(ctx).forEach(e ->
-                                            inbound.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
+                                Throwable cause = future2.cause();
+
+                                if (cause instanceof ConnectTimeoutException) {
+                                    write2Channel(inbound, _TimeOut);
+                                } else {
+                                    write2Channel(inbound, _500);
                                 }
                             }
                         });
                         //获取连接
-                        RemoteChannelPool.acquireChannel(address.getHostName(), address.getPort(),
+                        RemoteChannelPool.acquireChannel(address.getHostAddress(), inetAddress.getPort(),
                                 eventLoop, promise);
                     }
                 });
@@ -127,8 +146,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
         log.error("ApiRouteHandler:{}", throwable.toString());
         Channel channel = ctx.channel();
         if (channel.isActive()) {
-            StandardHttpMessage._500.toByteBuf(ctx).forEach(e ->
-                    channel.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
+            write2Channel(channel, _500);
         }
     }
 }

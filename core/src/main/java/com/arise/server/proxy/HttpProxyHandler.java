@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 
-import static com.arise.server.StandardHttpMessage.Established;
+import static com.arise.server.GatewayMessage.Established;
 
 /**
  * @Author: wy
@@ -43,8 +43,9 @@ public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
                 ChannelPipeline pipeline = ctx.pipeline();
                 pipeline.remove(this);
                 ApiRouteHandler apiRouteHandler = new ApiRouteHandler();
+                pipeline.addLast(new HttpResponseEncoder());
                 pipeline.addLast(apiRouteHandler);
-                log.debug("EpollHttpProxyHandler  msg:{}", ((HttpRequest) msg).uri());
+                log.debug("HttpProxyHandler  msg:{}", ((HttpRequest) msg).uri());
                 apiRouteHandler.channelRead(ctx, msg);
             } else {
                 //http代理
@@ -101,7 +102,7 @@ public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
             }
         }
         //超时情况下，客户端会重传，导致group set already异常
-        if (b.config()!=null){
+        if (b.config() != null) {
             b.group(inbound.eventLoop())
                     .channel(OSHelper.channelType())
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)

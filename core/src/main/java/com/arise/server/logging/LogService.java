@@ -32,6 +32,9 @@ public class LogService implements Runnable {
     private static final ByteBuffer dBuffer;
     private static final byte[] heapBuffer;
 
+    //缺省值是当前目录
+    public static String dir = "./";
+
     static {
         dBuffer = ByteBuffer.allocateDirect(20 << 20);
         heapBuffer = new byte[1 << 20];
@@ -51,7 +54,7 @@ public class LogService implements Runnable {
     public LogService() {
         //消费线程
         try {
-            queue = new DiskQueue();
+            queue = new DiskQueue(dir);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -130,7 +133,7 @@ public class LogService implements Runnable {
         dBuffer.putInt(position, dBuffer.position() - position - 4);
         //响应体
         HttpContent respBody = log.getRespBody();
-        if (reqBody == null) {
+        if (respBody == null) {
             dBuffer.putInt(0);
         } else {
             ByteBuffer buffer = respBody.content().nioBuffer();

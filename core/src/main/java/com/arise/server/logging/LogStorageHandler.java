@@ -32,7 +32,7 @@ public class LogStorageHandler extends ChannelDuplexHandler {
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
         //pushLog
-        if (!skip) {
+        if (!skip && apiLog.getResp() != null) {
             logService.pushLog(apiLog);
         }
     }

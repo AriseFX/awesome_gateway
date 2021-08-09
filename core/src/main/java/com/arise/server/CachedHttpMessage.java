@@ -3,6 +3,7 @@ package com.arise.server;
 import com.alibaba.fastjson.JSON;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 
@@ -22,14 +23,16 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  * @Description:
  * @Modified: By：
  */
-public class StandardHttpMessage {
+public class CachedHttpMessage {
 
     public static DefaultHttpResponse Established =
             new DefaultHttpResponse(HTTP_1_1, new HttpResponseStatus(200, "Connection Established"));
 
     public static StandardResponse _404 = new StandardResponse(new HashMap<String, Object>() {
         {
-            put("msg", "route not found");
+            put("code", 404);
+            put("success", false);
+            put("message", "路由未找到");
         }
     }, NOT_FOUND);
 
@@ -41,13 +44,41 @@ public class StandardHttpMessage {
 
     public static StandardResponse _500 = new StandardResponse(new HashMap<String, Object>() {
         {
-            put("msg", "server error");
+            put("code", 500);
+            put("success", false);
+            put("message", "Gateway内部错误,请联系管理员");
+        }
+    }, INTERNAL_SERVER_ERROR);
+
+    public static StandardResponse _TimeOut = new StandardResponse(new HashMap<String, Object>() {
+        {
+            put("code", 500);
+            put("success", false);
+            put("message", "Gateway错误,与目标服务连接超时");
+        }
+    }, INTERNAL_SERVER_ERROR);
+
+    public static StandardResponse _UnknownHost = new StandardResponse(new HashMap<String, Object>() {
+        {
+            put("code", 500);
+            put("success", false);
+            put("message", "Gateway错误,后端地址解析失败");
         }
     }, INTERNAL_SERVER_ERROR);
 
     public static StandardResponse _503 = new StandardResponse(new HashMap<String, Object>() {
         {
-            put("msg", "server 503");
+            put("code", 503);
+            put("success", false);
+            put("message", "Gateway错误,服务未找到");
+        }
+    }, SERVICE_UNAVAILABLE);
+
+    public static StandardResponse _ConnectionClose = new StandardResponse(new HashMap<String, Object>() {
+        {
+            put("code", 500);
+            put("success", false);
+            put("message", "Gateway错误,后端服务已关闭连接");
         }
     }, SERVICE_UNAVAILABLE);
 
@@ -93,6 +124,17 @@ public class StandardHttpMessage {
                 }
             }
             return data;
+        }
+
+        /**
+         * 缓存过后的消息体
+         *
+         * @param channel 目标连接
+         * @param ctx 初始化的时候需要ChannelHandlerContext
+         */
+        public void write2Channel(Channel channel, ChannelHandlerContext ctx) {
+            toByteBuf(ctx).forEach(e ->
+                    channel.writeAndFlush(((ByteBuf) e).retainedDuplicate()));
         }
     }
 }

@@ -38,7 +38,7 @@ public enum Services implements Function<FullHttpRequest, DefaultFullHttpRespons
             RouteManager routeManager = ServerProperties.getBean(RouteManager.class);
             try {
                 routeManager.clear();
-                client.commands().hgetall("ROUTE").get(5, TimeUnit.SECONDS)
+                client.commands().hgetall("ROUTE").get(20, TimeUnit.SECONDS)
                         .values().forEach(e -> {
                     //更新路由
                     routeManager.addRoute((RouteBean) e);

@@ -1,6 +1,7 @@
 package com.arise.server.route.match;
 
 import com.alibaba.nacos.api.utils.StringUtils;
+import com.arise.internal.exception.ServiceNotFoundException;
 import com.arise.naming.registry.ServiceManager;
 import com.arise.server.route.RouteBean;
 import com.arise.server.route.filter.FilterContext;
@@ -35,7 +36,7 @@ public class RouteMatcher {
 
     public static List<SchedulableFilter<List<RouteBean>[], Object>> routeFilters;
 
-    public InetSocketAddress match(EventLoop eventLoop, Map<String, Object> attr, HttpRequest request) {
+    public MatchRes match(EventLoop eventLoop, Map<String, Object> attr, HttpRequest request) {
         List<RouteBean> matched = routeManager.match(request.uri());
         //脚本相关
         HttpHeaders headers = request.headers();
@@ -71,13 +72,22 @@ public class RouteMatcher {
             RouteBean route = result.get(0);
             URI remoteUri = URI.create(route.getService() + route.getServicePath());
             String scheme = remoteUri.getScheme();
-            if (scheme.equals("lb")) {
-                request.setUri(remoteUri.getPath());
-                InetSocketAddress address = ServiceManager.selectService(remoteUri.getHost());
-                if (address == null) {
-                    throw new RuntimeException("服务未找到");
-                }
-                return address;
+            int port = remoteUri.getPort();
+            String host = remoteUri.getHost();
+            switch (scheme) {
+                case "lb":
+                    request.setUri(remoteUri.getPath());
+                    InetSocketAddress address = ServiceManager.selectService(remoteUri.getHost());
+                    if (address == null) {
+                        throw new ServiceNotFoundException();
+                    }
+                    return new MatchRes(false, address);
+                case "http":
+                    return new MatchRes(false,
+                            new InetSocketAddress(host, port == -1 ? 80 : port));
+                case "https":
+                    return new MatchRes(true,
+                            new InetSocketAddress(host, port == -1 ? 443 : port));
             }
         }
         return null;
