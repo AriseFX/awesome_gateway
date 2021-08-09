@@ -38,7 +38,8 @@ public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
     protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) {
         if (msg instanceof HttpRequest) {
             request = (HttpRequest) msg;
-            if (request.uri().startsWith("/")) {
+            String uri = request.uri();
+            if (uri.charAt(0) == '/') {
                 //api路由
                 ChannelPipeline pipeline = ctx.pipeline();
                 pipeline.remove(this);
@@ -50,7 +51,7 @@ public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
             } else {
                 //http代理
                 request = (HttpRequest) msg;
-                String hostAndPortStr = HttpMethod.CONNECT.equals(request.method()) ? request.uri() : request.headers().get("Host");
+                String hostAndPortStr = HttpMethod.CONNECT.equals(request.method()) ? uri : request.headers().get("Host");
                 String[] hostPortArray = hostAndPortStr.split(":");
                 host = hostPortArray[0];
                 String portStr = hostPortArray.length == 2 ? hostPortArray[1] : !HttpMethod.CONNECT.equals(request.method()) ? "80" : "443";
