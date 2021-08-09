@@ -13,8 +13,6 @@ import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpRequestEncoder;
 import io.netty.handler.codec.http.HttpResponseDecoder;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.Promise;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -91,8 +89,8 @@ public class RemoteChannelPool {
                      */
                     @Override
                     public void channelAcquired(Channel ch) {
-                        ch.pipeline().addLast(new HttpRequestEncoder());
-                        ch.pipeline().addLast(new HttpResponseDecoder());
+                        ch.pipeline().addLast("reqEncoder", new HttpRequestEncoder());
+                        ch.pipeline().addLast("respDecoder", new HttpResponseDecoder());
 //                        ch.pipeline().addLast(new LogStorageHandler());
                     }
                 }, maxConnections, maxPendingAcquires);

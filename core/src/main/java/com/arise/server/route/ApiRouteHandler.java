@@ -109,7 +109,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                             if (future2.isSuccess()) {
                                 outbound = future2.getNow();
                                 Promise<List<HttpObject>> respPromise = eventLoop.newPromise();
-                                ChannelPipeline pipeline = outbound.pipeline();
+                                DefaultChannelPipeline pipeline = (DefaultChannelPipeline) outbound.pipeline();
                                 if (matchRes.isSsl()) {
                                     SslContext context = SslContextBuilder.forClient()
                                             .trustManager(InsecureTrustManagerFactory.INSTANCE)
@@ -118,6 +118,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                 }
                                 pipeline.addLast(new ForwardHandler(respPromise, inbound));
                                 new FilterContext<>(contents, respPromise, forwardFilters, eventLoop, attr, null).handleNext();
+                                System.err.println(outbound.pipeline());
                                 contents.forEach(outbound::writeAndFlush);
                             } else {
                                 Throwable cause = future2.cause();
