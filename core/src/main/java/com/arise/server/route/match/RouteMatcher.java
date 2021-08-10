@@ -80,7 +80,7 @@ public class RouteMatcher {
             String host = remoteUri.getHost();
             //重写url
             String query = requestURI.getQuery();
-            request.setUri(remoteUri.getPath() + (query == null ? "" : query));
+            request.setUri(remoteUri.getPath() + (query == null ? "" : "?" + query));
             switch (scheme) {
                 case "lb":
                     InetSocketAddress address = ServiceManager.selectService(remoteUri.getHost());
