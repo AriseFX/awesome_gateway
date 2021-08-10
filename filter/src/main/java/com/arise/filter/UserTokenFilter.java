@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.arise.internal.util.HttpUtils.parseQueryString;
+import static com.arise.server.route.ApiRouteHandler.RequestURI;
 
 /**
  * @Author: wy
@@ -37,8 +38,6 @@ public class UserTokenFilter extends PreRouteFilter {
 
     public static String HttpQueryParam = "httpQueryParam";
 
-    public static String RequestURI = "RequestURI";
-
     public static String FullToken = "FullToken";
 
     @Override
@@ -51,7 +50,7 @@ public class UserTokenFilter extends PreRouteFilter {
         Map<String, Object> attr = ctx.attr();
         HttpRequest request = (HttpRequest) ctx.getPram().get(0);
         HttpHeaders headers = request.headers();
-        URI uri = URI.create(request.uri());
+        URI uri = (URI) attr.get(RequestURI);
         //解析query参数
         Map<String, String> queryString = parseQueryString(uri.getQuery());
         //解析token

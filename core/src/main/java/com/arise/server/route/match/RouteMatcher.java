@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.arise.server.route.ApiRouteHandler.RequestURI;
+
 /**
  * @Author: wy
  * @Date: Created in 11:24 2021-06-30
@@ -37,7 +39,7 @@ public class RouteMatcher {
     public static List<SchedulableFilter<List<RouteBean>[], Object>> routeFilters;
 
     public MatchRes match(EventLoop eventLoop, Map<String, Object> attr, HttpRequest request) {
-        URI requestURI = (URI) attr.computeIfAbsent("RequestURI",
+        URI requestURI = (URI) attr.computeIfAbsent(RequestURI,
                 URI::create);
         List<RouteBean> matched = routeManager.match(requestURI.getPath());
         //脚本相关
@@ -76,7 +78,9 @@ public class RouteMatcher {
             String scheme = remoteUri.getScheme();
             int port = remoteUri.getPort();
             String host = remoteUri.getHost();
-            request.setUri(remoteUri.getPath());
+            //重写url
+            String query = requestURI.getQuery();
+            request.setUri(remoteUri.getPath() + (query == null ? "" : query));
             switch (scheme) {
                 case "lb":
                     InetSocketAddress address = ServiceManager.selectService(remoteUri.getHost());

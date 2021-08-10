@@ -19,6 +19,7 @@ import net.openhft.affinity.Affinity;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +48,8 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
     private Channel outbound;
 
+    public static String RequestURI = "RequestURI";
+
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
         log.debug("channelInactive:{}", ctx.channel().toString());
@@ -67,6 +70,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
             contents.add((HttpObject) msg);
             if (msg instanceof LastHttpContent) {
                 Map<String, Object> attr = new HashMap<>(4);
+                attr.put(RequestURI, URI.create(request.uri()));
                 //最后一个http 请求
                 log.debug("最后一个http content");
                 Promise<Object> p = ctx.executor().newPromise();
