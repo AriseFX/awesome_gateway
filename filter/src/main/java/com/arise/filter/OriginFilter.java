@@ -10,11 +10,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.arise.filter.UserTokenFilter.OriginCode;
+import static com.arise.filter.UserTokenFilter.TargetService;
 
 /**
  * @Author: wy
  * @Date: Created in 17:42 2021-07-09
- * @Description: 用户域匹配规则
+ * @Description: 用户域/targetService过滤
  * @Modified: By：
  */
 @Component
@@ -48,6 +49,19 @@ public class OriginFilter extends RouteFilter {
             if (currentRoute == null) {
                 pram[0] = topRoute;
             }
+        }
+        //匹配目标服务
+        Object service = attr.get(TargetService);
+        if (service != null) {
+            String condition = (String) service;
+            if (!condition.startsWith("http")) {
+                condition += "lb://";
+            }
+            final String finalCondition = condition;
+            //根据TargetService匹配
+            pram[0] = pram[0].stream()
+                    .filter(e -> e.getService().startsWith(finalCondition))
+                    .collect(Collectors.toList());
         }
         ctx.handleNext();
     }

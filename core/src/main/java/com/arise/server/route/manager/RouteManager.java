@@ -1,15 +1,13 @@
 package com.arise.server.route.manager;
 
-import com.alibaba.nacos.api.utils.StringUtils;
+import com.arise.config.ServerProperties;
 import com.arise.redis.AsyncRedisClient;
 import com.arise.server.route.RouteBean;
-import com.arise.config.ServerProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import javax.script.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -26,9 +24,7 @@ import java.util.concurrent.TimeoutException;
 @DependsOn(value = "redisClient")
 public class RouteManager {
 
-    private final RestRouteTrie<RouteBean> tree = new RestRouteTrie<>();
-
-    private final ScriptEngine jsEngine = new ScriptEngineManager().getEngineByName("javascript");
+    private final RestRouteTrie tree = new RestRouteTrie();
 
     @PostConstruct
     public void init() throws ExecutionException, InterruptedException {
@@ -53,15 +49,6 @@ public class RouteManager {
     }
 
     public void addRoute(RouteBean route) {
-        try {
-            String script = route.getScript();
-            if (!StringUtils.isEmpty(script)) {
-                CompiledScript compiled = ((Compilable) jsEngine).compile(route.getScript());
-                route.setCompiledScript(compiled);
-            }
-            tree.addRoute(route.getGatewayPath(), route);
-        } catch (ScriptException e) {
-            e.printStackTrace();
-        }
+        tree.addRoute(route.getGatewayPath(), route);
     }
 }

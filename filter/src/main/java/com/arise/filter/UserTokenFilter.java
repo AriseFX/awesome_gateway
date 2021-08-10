@@ -36,6 +36,8 @@ public class UserTokenFilter extends PreRouteFilter {
 
     public static String OriginCode = "x-originCode";
 
+    public static String TargetService = "TargetService";
+
     public static String HttpQueryParam = "httpQueryParam";
 
     public static String FullToken = "FullToken";
@@ -56,6 +58,8 @@ public class UserTokenFilter extends PreRouteFilter {
         //解析token
         String auth = headers.get("Authorization");
         final String[] originCode = new String[]{headers.get(OriginCode)};
+        //解析目标服务
+        attr.put(TargetService, headers.get(TargetService));
         attr.put(OriginCode, originCode[0]);
         attr.put(HttpQueryParam, queryString);
         attr.put(RequestURI, uri);

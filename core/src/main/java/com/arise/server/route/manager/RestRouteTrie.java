@@ -1,6 +1,7 @@
 package com.arise.server.route.manager;
 
 import com.alibaba.nacos.api.utils.StringUtils;
+import com.arise.server.route.RouteBean;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -19,46 +20,33 @@ import java.util.List;
  * route2:     /api/oms/**           ->  http://OMS/**
  * route2:     /api/user             ->  http://OMS/**
  */
-public class RestRouteTrie<T> {
+public class RestRouteTrie {
 
     public static final String Standard_Wildcard = "{key}";
-    public Node<T> root;
+    public Node root;
 
     public RestRouteTrie() {
-        this.root = new Node<>(null, null, new HashMap<>());
-    }
-
-    public void init() {
-        this.addRoute("test", (T) "lb://BM/test");
-        this.addRoute("bos/xtmls/search/current", (T) "lb://FDSbos/xtmls/search/current");
-        this.addRoute("addOrigin", (T) "lb://FDSaddOrigin");
-        this.addRoute("selectOriginInfo", (T) "lb://FDSselectOriginInfo");
-        this.addRoute("selectOriginInfoList", (T) "lb://FDSselectOriginInfoList");
-        this.addRoute("updateOriginInfo", (T) "lb://FDSupdateOriginInfo");
-        this.addRoute("fds/medInst/getMedInstList", (T) "lb://FDSfds/medInst/getMedInstList");
-        this.addRoute("getSqm", (T) "lb://FDS/getSqm");
-        this.addRoute("getUserName", (T) "lb://FDS/getUserName");
-        this.addRoute("verificationGrantCode", (T) "lb://FDS/verificationGrantCode");
-        this.addRoute("bos/principal", (T) "lb://FDS/bos/principal");
-        this.addRoute("fds/log/{id}/getSignSyncLogList", (T) "lb://FDS/fds/log/{id}/getSignSyncLogList");
-        this.addRoute("fds/log/signSync/getSignSyncLogInfo", (T) "lb://FDS/fds/log/signSync/getSignSyncLogInfo");
-        //System.out.println(tree);
+        this.root = newEmptyNode();
     }
 
     public void clear() {
-        this.root = new Node<>(null, null, new HashMap<>());
+        this.root = newEmptyNode();
+    }
+
+    private Node newEmptyNode() {
+        return new Node(null, null, new HashMap<>());
     }
 
     /**
      * 匹配数据
      */
-    public List<T> matching(String url) {
-        List<T> res = new LinkedList<>();
-        HashMap<CharSequence, Node<T>> child = root.child;
+    public List<RouteBean> matching(String url) {
+        List<RouteBean> res = new LinkedList<>();
+        HashMap<CharSequence, Node> child = root.child;
         String[] tokens = url.split("/");
         for (int i = 1; i < tokens.length; i++) {
             String token = tokens[i];
-            Node<T> node = child.get(token);
+            Node node = child.get(token);
             if (node == null) {
                 node = child.get(Standard_Wildcard);
                 if (node == null) {
@@ -66,7 +54,7 @@ public class RestRouteTrie<T> {
                 }
             }
             //最后一个节点
-            T route = node.getPointer();
+            RouteBean route = node.getPointer();
             if (route != null && i == tokens.length - 1) {
                 res.add(route);
                 break;
@@ -80,8 +68,8 @@ public class RestRouteTrie<T> {
     /**
      * 添加路由
      */
-    public void addRoute(String url, T pointer) {
-        HashMap<CharSequence, Node<T>> child = root.child;
+    public void addRoute(String url, RouteBean pointer) {
+        HashMap<CharSequence, Node> child = root.child;
         String[] tokens = url.split("/");
         int i = StringUtils.isEmpty(tokens[0]) ? 1 : 0;
         for (; i < tokens.length; i++) {
@@ -89,9 +77,9 @@ public class RestRouteTrie<T> {
             if (token.charAt(0) == '{' && token.charAt(token.length() - 1) == '}') {
                 token = Standard_Wildcard;
             }
-            Node<T> node = child.get(token);
+            Node node = child.get(token);
             if (node == null) {
-                child.put(token, node = new Node<>(token, null, new HashMap<>()));
+                child.put(token, node = new Node(token, null, new HashMap<>()));
             }
             child = node.child;
             //最后一位
@@ -103,10 +91,10 @@ public class RestRouteTrie<T> {
 
     @Data
     @AllArgsConstructor
-    static class Node<T> {
+    static class Node {
         private String content;
         //该节点
-        private T pointer;
-        private HashMap<CharSequence, Node<T>> child;
+        private RouteBean pointer;
+        private HashMap<CharSequence, Node> child;
     }
 }

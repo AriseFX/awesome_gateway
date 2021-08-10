@@ -2,7 +2,6 @@ package com.arise.server.route;
 
 import lombok.Data;
 
-import javax.script.CompiledScript;
 import java.io.Serializable;
 import java.util.Map;
 
@@ -10,16 +9,6 @@ import java.util.Map;
 public class RouteBean implements Serializable {
 
     private String id;
-
-    /**
-     * js脚本
-     */
-    private String script;
-
-    /**
-     * 参数名称映射
-     */
-    private Map<String, String> pramMapping;
 
     /**
      * ex:
@@ -33,6 +22,4 @@ public class RouteBean implements Serializable {
     private String servicePath;
 
     private Map<String, String> metadata;
-
-    private transient CompiledScript compiledScript;
 }
