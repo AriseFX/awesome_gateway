@@ -2,7 +2,7 @@ gateway:
   port: 1723
   address: 0.0.0.0
   storage-dir: ./data
-  log-file-size: 20480
+  log-file-size: 209715200
   pool:
     timeout: 3000 #超时时间
     max-connections: 80 #最大连接数
