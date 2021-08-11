@@ -2,6 +2,7 @@ package com.arise.server;
 
 import com.arise.config.ServerProperties;
 import com.arise.os.OSHelper;
+import com.arise.server.logging.ApiLogUtils;
 import com.arise.server.logging.LogService;
 import com.arise.server.logging.LogStorageHandler;
 import com.arise.server.proxy.HttpProxyHandler;
@@ -17,6 +18,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import lombok.extern.slf4j.Slf4j;
 import net.openhft.affinity.AffinityLock;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
@@ -41,6 +44,14 @@ public class ServerRunner implements CommandLineRunner {
 
     @Resource(name = "serverProperties")
     private ServerProperties prop;
+
+    @Resource
+    private RabbitTemplate rabbitTemplate;
+
+    @Bean
+    public Queue rabbitQueue() {
+        return new Queue("gateway-queue", true);
+    }
 
     @Bean(name = "filterInit")
     public Object init(List<ForwardFilter> forwardFilters, List<RouteFilter> routeFilters, List<PreRouteFilter> preRouteFilters, RouteMatcher matcher) {
@@ -98,7 +109,9 @@ public class ServerRunner implements CommandLineRunner {
                         log.debug("CPU布局如下: \r\n{}", AffinityLock.cpuLayout());
                         log.info("Server startup complete！[{}:{}]", prop.getAddress(), prop.getPort());
                         //为了让LogStorageHandler先初始化
-                        LogStorageHandler.logService = new LogService();
+                        LogService logService = new LogService();
+                        ApiLogUtils.rabbitTemplate = rabbitTemplate;
+                        LogStorageHandler.logService = logService;
                     }
                 }).sync().channel();
         channel.closeFuture().sync().addListener(

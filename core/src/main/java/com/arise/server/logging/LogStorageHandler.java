@@ -32,7 +32,7 @@ public class LogStorageHandler extends ChannelDuplexHandler {
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
         //pushLog
-        if (!skip && apiLog.getResp() != null) {
+        if (!skip && apiLog.getInfo().getResp() != null) {
             logService.pushLog(apiLog);
         }
     }
@@ -44,7 +44,7 @@ public class LogStorageHandler extends ChannelDuplexHandler {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof DefaultHttpResponse) {
             if (checkAndHandle(((DefaultHttpResponse) msg).headers(), ctx.channel().pipeline())) {
-                apiLog.setResp((DefaultHttpResponse) msg);
+                apiLog.getInfo().setResp((DefaultHttpResponse) msg);
             }
         } else if (msg instanceof DefaultHttpContent && !skip) {
             apiLog.setRespBody(((DefaultHttpContent) msg).retainedDuplicate());
@@ -59,7 +59,7 @@ public class LogStorageHandler extends ChannelDuplexHandler {
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         if (msg instanceof DefaultHttpRequest) {
             if (checkAndHandle(((DefaultHttpRequest) msg).headers(), ctx.channel().pipeline())) {
-                apiLog.setReq((DefaultHttpRequest) msg);
+                apiLog.getInfo().setReq((DefaultHttpRequest) msg);
             }
         } else if (msg instanceof DefaultHttpContent && !skip) {
             apiLog.setReqBody(((DefaultHttpContent) msg).retainedDuplicate());

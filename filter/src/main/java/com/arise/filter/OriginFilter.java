@@ -53,14 +53,9 @@ public class OriginFilter extends RouteFilter {
         //匹配目标服务
         Object service = attr.get(TargetService);
         if (service != null) {
-            String condition = (String) service;
-            if (!condition.startsWith("http")) {
-                condition += "lb://";
-            }
-            final String finalCondition = condition;
             //根据TargetService匹配
             pram[0] = pram[0].stream()
-                    .filter(e -> e.getService().startsWith(finalCondition))
+                    .filter(e -> service.equals(e.getTag()))
                     .collect(Collectors.toList());
         }
         ctx.handleNext();

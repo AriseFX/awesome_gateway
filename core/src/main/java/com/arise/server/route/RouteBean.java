@@ -17,6 +17,8 @@ public class RouteBean implements Serializable {
      */
     private String service;
 
+    private String tag;
+
     private String gatewayPath;
 
     private String servicePath;

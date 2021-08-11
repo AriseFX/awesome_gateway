@@ -16,19 +16,46 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ApiLog {
 
-    /**
-     * id结构如下:
-     * 85899345921 [1234][1234]
-     * 92233720368  5477  5807
-     * [offset][len1][len2]
-     */
-    private long id;
-    private long timestamp;
-
-    private DefaultHttpRequest req;
+    private Info info = new Info();
     private HttpContent reqBody;
-    private String reqBodyStr;
-    private DefaultHttpResponse resp;
     private HttpContent respBody;
-    private String respBodyStr;
+
+    private transient String reqBodyStr;
+    private transient String respBodyStr;
+
+
+    /**
+     * 详细信息
+     */
+    @Data
+    public static class Info {
+
+        private String logId;
+
+        private long timestamp;
+        /**
+         * 总耗时
+         */
+        private Long handleTime;
+
+        /**
+         * 网关处理耗时
+         */
+        private Long preTime;
+
+        /**
+         * 网关原始的path
+         */
+        private String path;
+
+        /**
+         * 用户名
+         */
+        private String username;
+
+        private DefaultHttpRequest req;
+
+        private DefaultHttpResponse resp;
+    }
+
 }

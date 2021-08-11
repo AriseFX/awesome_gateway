@@ -1,16 +1,21 @@
 package com.arise.server.logging;
 
+import com.alibaba.fastjson.JSON;
 import com.arise.mq.DiskQueue;
-import io.netty.handler.codec.http.DefaultHttpRequest;
-import io.netty.handler.codec.http.DefaultHttpResponse;
-import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.*;
 import io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueue;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.marshalling.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.concurrent.locks.LockSupport;
+import java.util.zip.GZIPInputStream;
 
 /**
  * @Author: wy
@@ -92,8 +97,10 @@ public class LogService implements Runnable {
                     queue.consume(buffer -> {
                         try {
                             ApiLog apiLog = unmarshaller(buffer);
-                            if (apiLog != null)
-                                System.out.println(apiLog.getRespBodyStr());
+                            if (apiLog != null) {
+                                RequestLogEntity entity = map2Entity(apiLog);
+                                ApiLogUtils.saveMsg(entity);
+                            }
                         } catch (IOException | ClassNotFoundException e) {
                             e.printStackTrace();
                         }
@@ -107,12 +114,12 @@ public class LogService implements Runnable {
     }
 
     private ByteBuffer marshaller(ApiLog log) throws IOException {
-        //请求行
+        //请求/响应行
         dBuffer.clear();
         dBuffer.position(4);
         ByteBufferOutput output = new ByteBufferOutput(dBuffer);
         marshaller.start(output);
-        marshaller.writeObject(log.getReq());
+        marshaller.writeObject(log.getInfo());
         marshaller.finish();
         dBuffer.putInt(0, dBuffer.position() - 4);
         //请求体
@@ -124,13 +131,6 @@ public class LogService implements Runnable {
             dBuffer.putInt(buffer.remaining());
             dBuffer.put(buffer);
         }
-        //响应行
-        int position = dBuffer.position();
-        dBuffer.position(position + 4);
-        marshaller.start(output);
-        marshaller.writeObject(log.getResp());
-        marshaller.finish();
-        dBuffer.putInt(position, dBuffer.position() - position - 4);
         //响应体
         HttpContent respBody = log.getRespBody();
         if (respBody == null) {
@@ -155,7 +155,10 @@ public class LogService implements Runnable {
         //反序列化
         ByteBufferInput input = new ByteBufferInput(buffer);
         unmarshaller.start(input);
-        apiLog.setReq((DefaultHttpRequest) unmarshaller.readObject());
+        ApiLog.Info info = (ApiLog.Info) unmarshaller.readObject();
+        apiLog.setInfo(info);
+        //处理gzip
+        String encoding = info.getReq().headers().get(HttpHeaderNames.CONTENT_ENCODING);
         unmarshaller.finish();
         //只有序列化阶段需要限制limit
         buffer.limit(buffer.capacity());
@@ -165,21 +168,79 @@ public class LogService implements Runnable {
             buffer.get(heapBuffer, 0, len);
             apiLog.setReqBodyStr(new String(heapBuffer, 0, len));
         }
-        len = buffer.getInt();
-        position = buffer.position();
-        buffer.limit(position + len);
-        //反序列化
-        unmarshaller.start(input);
-        apiLog.setResp((DefaultHttpResponse) unmarshaller.readObject());
-        unmarshaller.finish();
-        buffer.limit(buffer.capacity());
+        //respBody
         len = buffer.getInt();
         if (len > 0) {
             buffer.get(heapBuffer, 0, len);
-            apiLog.setRespBodyStr(new String(heapBuffer, 0, len));
+            String respBody;
+            if ("gzip".equals(encoding)) {
+                respBody = unCompressGzip(heapBuffer, len);
+            } else {
+                respBody = new String(heapBuffer, 0, len);
+            }
+            apiLog.setRespBodyStr(respBody);
         }
         return apiLog;
     }
 
+    /**
+     * 转换为运维中心需要的日志格式
+     */
+    private RequestLogEntity map2Entity(ApiLog log) {
+        ApiLog.Info info = log.getInfo();
+        DefaultHttpRequest req = info.getReq();
+        DefaultHttpResponse resp = info.getResp();
+        HttpHeaders headers = req.headers();
 
+        //构造运维中心日志
+        RequestLogEntity entity = new RequestLogEntity();
+        //req
+        URI uri = URI.create(req.uri());
+        entity.setPath(uri.getPath());
+        entity.setHeaders(req.headers());
+        entity.setResponseCode(resp.status().code() + "");
+        entity.setOrgCode(headers.get("x-originCode"));
+        entity.setTargetUri(req.uri());
+        entity.setRequestTime(new Date(info.getTimestamp()));
+        entity.setResponseBody(JSON.parseObject(log.getRespBodyStr()));
+        entity.setRequestBody(JSON.parseObject(log.getReqBodyStr()));
+        entity.setUsername(info.getUsername());
+        entity.setPreTime(info.getPreTime());
+        entity.setHandleTime(info.getHandleTime());
+        entity.setRequestParams(null);//TODO 从attr中获取
+        return entity;
+    }
+
+    public static String unCompressGzip(byte[] in, int len) {
+        ByteArrayOutputStream out = null;
+        GZIPInputStream gunzip = null;
+        try {
+            if (in == null || len == 0) {
+                return "";
+            }
+            out = new ByteArrayOutputStream();
+            gunzip = new GZIPInputStream(new ByteArrayInputStream(in, 0, len));
+            byte[] buffer = new byte[1024];
+            int n;
+            while ((n = gunzip.read(buffer)) != -1) {
+                out.write(buffer, 0, n);
+            }
+            out.flush();
+            return new String(out.toByteArray(), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return "";
+        } finally {
+            try {
+                if (out != null) {
+                    out.close();
+                }
+                if (gunzip != null) {
+                    gunzip.close();
+                }
+            } catch (Exception e) {
+                log.error(e.getMessage());
+            }
+        }
+    }
 }
