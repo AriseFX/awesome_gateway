@@ -2,11 +2,11 @@ package com.arise.server.logging;
 
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import io.netty.handler.codec.http.HttpHeaders;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * 日志记录
@@ -32,7 +32,7 @@ public class RequestLogEntity implements Serializable {
 
     private String username;
 
-    private HttpHeaders headers;
+    private Map<String,Object> headers;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date requestTime;

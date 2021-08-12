@@ -60,8 +60,13 @@ public class NetUtils {
     public static String getAddress(String interfaceName) {
         InetAddress address = netList.get(interfaceName);
         if (address == null) {
-            log.error("网卡列表:{}", netList.keySet());
-            throw new RuntimeException("无指定网卡！");
+            log.error("无指定网卡,使用默认网卡。可用网卡列表:{}", netList.keySet());
+            if (netList.size() > 0) {
+                return netList.values()
+                        .toArray(new InetAddress[]{})[0]
+                        .getHostAddress();
+            }
+            throw new RuntimeException("无可用网卡！");
         }
         return address.getHostAddress();
     }

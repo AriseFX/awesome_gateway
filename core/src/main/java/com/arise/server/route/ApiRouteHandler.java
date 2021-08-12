@@ -111,7 +111,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                     SslHandler sslHandler = context.newHandler(outbound.alloc(), hostName, inetAddress.getPort());
                                     pipeline.addFirst(sslHandler);
                                     //保证Host指向正确
-                                    request.headers().remove(HttpHeaderNames.HOST);
+                                    request.headers().set(HttpHeaderNames.HOST, hostName);
                                 }
                                 pipeline.addLast(new ForwardHandler(respPromise, inbound));
                                 new FilterContext<>(contents, respPromise, forwardFilters, eventLoop, attr, null).handleNext();

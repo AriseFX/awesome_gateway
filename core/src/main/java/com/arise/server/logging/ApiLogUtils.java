@@ -1,5 +1,6 @@
 package com.arise.server.logging;
 
+import com.alibaba.fastjson.JSON;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 /**
@@ -14,7 +15,9 @@ public class ApiLogUtils {
 
     public static void saveMsg(RequestLogEntity msg) {
         try {
-            rabbitTemplate.convertAndSend("gateway-queue", msg);
+            String s = JSON.toJSONString(msg);
+            System.out.println(s);
+//            rabbitTemplate.convertAndSend("gateway-queue", msg);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -14,6 +14,8 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.locks.LockSupport;
 import java.util.zip.GZIPInputStream;
 
@@ -98,8 +100,7 @@ public class LogService implements Runnable {
                         try {
                             ApiLog apiLog = unmarshaller(buffer);
                             if (apiLog != null) {
-                                RequestLogEntity entity = map2Entity(apiLog);
-                                ApiLogUtils.saveMsg(entity);
+                                ApiLogUtils.saveMsg(map2Entity(apiLog));
                             }
                         } catch (IOException | ClassNotFoundException e) {
                             e.printStackTrace();
@@ -191,13 +192,15 @@ public class LogService implements Runnable {
         DefaultHttpRequest req = info.getReq();
         DefaultHttpResponse resp = info.getResp();
         HttpHeaders headers = req.headers();
+        Map<String, Object> map = new HashMap<>();
+        headers.forEach(e -> map.put(e.getKey(), e.getValue()));
 
         //构造运维中心日志
         RequestLogEntity entity = new RequestLogEntity();
         //req
         URI uri = URI.create(req.uri());
         entity.setPath(uri.getPath());
-        entity.setHeaders(req.headers());
+        entity.setHeaders(map);
         entity.setResponseCode(resp.status().code() + "");
         entity.setOrgCode(headers.get("x-originCode"));
         entity.setTargetUri(req.uri());

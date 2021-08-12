@@ -135,9 +135,9 @@ public class DiskQueue {
             wFilePath = (dataPrefix + wFileNum + suffix).intern();
             file = new MappedLogFile(wFilePath);
             dataMap.put(wFilePath, file);
+            res = file.write(buffer);
             writeFileNum(wFileNum);
             System.out.println("produce切换新文件:" + wFileNum);
-            res = file.write(buffer);
             if (res < 0) {
                 throw new RuntimeException("内部错误!");
             } else {
