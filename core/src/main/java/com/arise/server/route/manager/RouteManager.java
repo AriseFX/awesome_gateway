@@ -26,6 +26,13 @@ public class RouteManager {
 
     private final RestRouteTrie tree = new RestRouteTrie();
 
+    public static void main(String[] args) {
+        RestRouteTrie tree = new RestRouteTrie();
+        tree.addRoute("fds/asd/asd", new RouteBean());
+        tree.addRoute("fds/fds/das", new RouteBean());
+        System.out.println(args);
+    }
+
     @PostConstruct
     public void init() throws ExecutionException, InterruptedException {
         AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);

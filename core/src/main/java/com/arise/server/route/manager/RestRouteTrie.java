@@ -5,6 +5,7 @@ import com.arise.server.route.RouteBean;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -54,9 +55,9 @@ public class RestRouteTrie {
                 }
             }
             //最后一个节点
-            RouteBean route = node.getPointer();
+            List<RouteBean> route = node.getPointer();
             if (route != null && i == tokens.length - 1) {
-                res.add(route);
+                res.addAll(route);
                 break;
             }
             child = node.child;
@@ -84,7 +85,7 @@ public class RestRouteTrie {
             child = node.child;
             //最后一位
             if (i == tokens.length - 1) {
-                node.setPointer(pointer);
+                node.addPointer(pointer);
             }
         }
     }
@@ -93,8 +94,14 @@ public class RestRouteTrie {
     @AllArgsConstructor
     static class Node {
         private String content;
-        //该节点
-        private RouteBean pointer;
+        private List<RouteBean> pointer;
         private HashMap<CharSequence, Node> child;
+
+        public void addPointer(RouteBean route) {
+            if (pointer == null) {
+                pointer = new ArrayList<>(1);
+            }
+            pointer.add(route);
+        }
     }
 }
