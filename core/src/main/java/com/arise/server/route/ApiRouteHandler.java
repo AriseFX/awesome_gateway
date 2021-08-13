@@ -110,6 +110,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                 pipeline.addLast(new ForwardHandler(respPromise, inbound));
                                 new FilterContext<>(contents
                                         , respPromise, forwardFilters, eventLoop, attr, null).handleNext();
+                                System.out.println("writeAndFlush:" + pipeline);
                                 contents.forEach(outbound::writeAndFlush);
                             } else {
                                 Throwable cause = future2.cause();

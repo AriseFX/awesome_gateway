@@ -44,8 +44,7 @@ public class RemoteChannelPool {
      */
     public static void acquireChannel(boolean ssl, String host, int port, EventLoop eventLoop,
                                       Promise<Channel> promise) {
-        //拼接eventLoop.hashCode()是为了保证连接池与eventLoop绑定
-        ChannelPool channelPool = pools.computeIfAbsent(host + eventLoop.hashCode() + port,
+        ChannelPool channelPool = pools.computeIfAbsent(host + ":" + port,
                 k ->
                         newFixedChannelPool(ssl, host, port, eventLoop)
         );
@@ -57,7 +56,7 @@ public class RemoteChannelPool {
         InetSocketAddress address = channel.remoteAddress();
         String host = address.getHostString();
         int port = address.getPort();
-        ChannelPool channelPool = pools.get(host + channel.eventLoop().hashCode() + port);
+        ChannelPool channelPool = pools.get(host + ":" + port);
         if (channelPool != null) {
             channelPool.release(channel);
         }
@@ -89,6 +88,7 @@ public class RemoteChannelPool {
                         while (!(pipeline.last() instanceof SslHandler)) {
                             pipeline.removeLast();
                         }
+                        System.out.println("channelReleased:" + pipeline);
                     }
 
                     /**
@@ -98,7 +98,7 @@ public class RemoteChannelPool {
                     @Override
                     public void channelAcquired(Channel ch) throws SSLException {
                         ChannelPipeline pipeline = ch.pipeline();
-                        if (ssl && !added) {
+                        if (!added && ssl) {
                             SslContext context = SslContextBuilder.forClient()
                                     .trustManager(InsecureTrustManagerFactory.INSTANCE)
                                     .build();
