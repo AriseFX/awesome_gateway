@@ -104,29 +104,26 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                 Promise<List<HttpObject>> respPromise = eventLoop.newPromise();
                                 DefaultChannelPipeline pipeline = (DefaultChannelPipeline) outbound.pipeline();
                                 if (matchRes.isSsl()) {
-                                    String hostName = address.getHostName();
-                                    SslContext context = SslContextBuilder.forClient()
-                                            .trustManager(InsecureTrustManagerFactory.INSTANCE)
-                                            .build();
-                                    SslHandler sslHandler = context.newHandler(outbound.alloc(), hostName, inetAddress.getPort());
-                                    pipeline.addFirst(sslHandler);
                                     //保证Host指向正确
-                                    request.headers().set(HttpHeaderNames.HOST, hostName);
+                                    request.headers().set(HttpHeaderNames.HOST, address.getHostName());
                                 }
                                 pipeline.addLast(new ForwardHandler(respPromise, inbound));
-                                new FilterContext<>(contents, respPromise, forwardFilters, eventLoop, attr, null).handleNext();
+                                new FilterContext<>(contents
+                                        , respPromise, forwardFilters, eventLoop, attr, null).handleNext();
                                 contents.forEach(outbound::writeAndFlush);
                             } else {
                                 Throwable cause = future2.cause();
                                 if (cause instanceof ConnectTimeoutException) {
                                     writeMsg(inbound, _TimeOut);
                                 } else {
+                                    cause.printStackTrace();
                                     writeMsg(inbound, _500);
                                 }
                             }
                         });
                         //获取连接
-                        RemoteChannelPool.acquireChannel(address.getHostAddress(), inetAddress.getPort(),
+                        RemoteChannelPool.acquireChannel(matchRes.isSsl(),
+                                address.getHostAddress(), inetAddress.getPort(),
                                 eventLoop, promise);
                     }
                 });

@@ -16,7 +16,6 @@ public class ApiLogUtils {
     public static void saveMsg(RequestLogEntity msg) {
         try {
             String s = JSON.toJSONString(msg);
-            System.out.println(s);
 //            rabbitTemplate.convertAndSend("gateway-queue", msg);
         } catch (Exception e) {
             e.printStackTrace();

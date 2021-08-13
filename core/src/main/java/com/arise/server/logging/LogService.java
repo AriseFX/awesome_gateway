@@ -159,7 +159,7 @@ public class LogService implements Runnable {
         ApiLog.Info info = (ApiLog.Info) unmarshaller.readObject();
         apiLog.setInfo(info);
         //处理gzip
-        String encoding = info.getReq().headers().get(HttpHeaderNames.CONTENT_ENCODING);
+        String encoding = info.getResp().headers().get(HttpHeaderNames.CONTENT_ENCODING);
         unmarshaller.finish();
         //只有序列化阶段需要限制limit
         buffer.limit(buffer.capacity());
