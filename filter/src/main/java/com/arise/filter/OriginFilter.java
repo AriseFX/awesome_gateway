@@ -48,16 +48,18 @@ public class OriginFilter extends RouteFilter {
             List<RouteBean> currentRoute = group.get(currentOriginCode);
             if (currentRoute == null) {
                 pram[0] = topRoute;
+            } else {
+                pram[0] = currentRoute;
             }
         }
         //匹配目标服务
-        Object service = attr.get(TargetService);
+       /* Object service = attr.get(TargetService);
         if (service != null) {
             //根据TargetService匹配
             pram[0] = pram[0].stream()
                     .filter(e -> service.equals(e.getTag()))
                     .collect(Collectors.toList());
-        }
+        }*/
         ctx.handleNext();
     }
 }

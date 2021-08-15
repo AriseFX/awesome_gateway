@@ -69,8 +69,8 @@ public enum Services implements Function<FullHttpRequest, DefaultFullHttpRespons
             try {
                 AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);
                 String s = JsonUtils.toJson(request.content());
-                log.info("route_put:{}", s);
                 RouteDto dto = JSON.parseObject(s, RouteDto.class);
+                log.info("route_put,数目:{}", dto.getRoutes().size());
                 Map<String, Object> map = dto.getRoutes().stream()
                         .collect(Collectors.toMap(RouteBean::getId, v -> v, (v1, v2) -> v1));
                 client.commands().hset("ROUTE", map);

@@ -14,6 +14,7 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.Promise;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,8 @@ public class RemoteChannelPool {
     private static int maxConnections;
     @Setter
     private static int maxPendingAcquires;
+
+    private static final AttributeKey<Boolean> added = AttributeKey.valueOf("added");
 
     /**
      * 异步获取channel
@@ -73,8 +76,6 @@ public class RemoteChannelPool {
                 b,
                 new AbstractChannelPoolHandler() {
 
-                    private boolean added;
-
                     @Override
                     public void channelCreated(Channel ch) {
                         log.debug("Channel created:{}", ch);
@@ -98,14 +99,14 @@ public class RemoteChannelPool {
                     @Override
                     public void channelAcquired(Channel ch) throws SSLException {
                         ChannelPipeline pipeline = ch.pipeline();
-                        if (!added && ssl) {
+                        if (!ch.hasAttr(added) && ssl) {
                             SslContext context = SslContextBuilder.forClient()
                                     .trustManager(InsecureTrustManagerFactory.INSTANCE)
                                     .build();
                             InetSocketAddress address = (InetSocketAddress) ch.remoteAddress();
                             SslHandler sslHandler = context.newHandler(ch.alloc(), address.getHostString(), address.getPort());
                             ch.pipeline().addFirst(sslHandler);
-                            added = true;
+                            ch.attr(added);
                         }
                         pipeline.addLast("reqEncoder", new HttpRequestEncoder());
                         pipeline.addLast("respDecoder", new HttpResponseDecoder());
