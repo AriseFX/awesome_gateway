@@ -44,7 +44,7 @@ public class RouteMatcher {
         new FilterContext<>(pointer, routeFilters, eventLoop, attr).handleNext();
         if (pointer[0] != null && pointer[0].size() > 0) {
             //默认取第一个
-            RouteBean route = matched.get(0);
+            RouteBean route = pointer[0].get(0);
             URI remoteUri = URI.create(route.getService() + route.getServicePath());
             String scheme = remoteUri.getScheme();
             int port = remoteUri.getPort();
