@@ -7,11 +7,10 @@ import com.arise.server.route.match.MatchRes;
 import com.arise.server.route.match.RouteMatcher;
 import com.arise.server.route.pool.RemoteChannelPool;
 import io.netty.channel.*;
-import io.netty.handler.codec.http.*;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
@@ -86,6 +85,10 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                         matchRes = matcher.match(eventLoop, attr, request);
                     } catch (ServiceNotFoundException e) {
                         writeMsg(inbound, _503);
+                        return;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        writeMsg(inbound, _500);
                         return;
                     }
                     if (matchRes == null) {

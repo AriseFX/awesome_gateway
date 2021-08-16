@@ -5,10 +5,7 @@ import com.arise.server.route.RouteBean;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @Author: wy
@@ -42,7 +39,8 @@ public class RestRouteTrie {
      * 匹配数据
      */
     public List<RouteBean> matching(String url) {
-        List<RouteBean> res = new LinkedList<>();
+        Queue<String> prams = new ArrayDeque<>(1);
+        List<RouteBean> res = new ArrayList<>();
         HashMap<CharSequence, Node> child = root.child;
         String[] tokens = url.split("/");
         for (int i = 1; i < tokens.length; i++) {
@@ -53,10 +51,29 @@ public class RestRouteTrie {
                 if (node == null) {
                     break;
                 }
+                prams.add(token);
             }
             //最后一个节点
             List<RouteBean> route = node.getPointer();
             if (route != null && i == tokens.length - 1) {
+                if (prams.size() > 0) {
+                    //解析url参数，如: /user/{id}
+                    for (RouteBean e : route) {
+                        StringBuilder rewriteUrl = new StringBuilder();
+                        String servicePath = e.getServicePath();
+                        String[] split = servicePath.split("/");
+                        for (int j = 1; j < split.length; j++) {
+                            String s = split[j];
+                            if (s.charAt(0) == '{' && s.charAt(s.length() - 1) == '}') {
+                                rewriteUrl.append("/").append(prams.poll());
+                            } else {
+                                rewriteUrl.append("/").append(s);
+                            }
+                        }
+                        e.setServicePath(rewriteUrl.toString());
+                    }
+
+                }
                 res.addAll(route);
                 break;
             }
