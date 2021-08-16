@@ -20,6 +20,7 @@ import java.util.*;
  */
 public class RestRouteTrie {
 
+    public static final String PathPram = "PathPram";
     public static final String Standard_Wildcard = "{key}";
     public Node root;
 
@@ -38,8 +39,8 @@ public class RestRouteTrie {
     /**
      * 匹配数据
      */
-    public List<RouteBean> matching(String url) {
-        Queue<String> prams = new ArrayDeque<>(1);
+    public List<RouteBean> matching(String url, Map<String, Object> attr) {
+        Queue<String> pathPram = null;
         List<RouteBean> res = new ArrayList<>();
         HashMap<CharSequence, Node> child = root.child;
         String[] tokens = url.split("/");
@@ -51,33 +52,21 @@ public class RestRouteTrie {
                 if (node == null) {
                     break;
                 }
-                prams.add(token);
+                if (pathPram == null) {
+                    pathPram = new ArrayDeque<>(1);
+                }
+                pathPram.add(token);
             }
             //最后一个节点
             List<RouteBean> route = node.getPointer();
             if (route != null && i == tokens.length - 1) {
-                if (prams.size() > 0) {
-                    //解析url参数，如: /user/{id}
-                    for (RouteBean e : route) {
-                        StringBuilder rewriteUrl = new StringBuilder();
-                        String servicePath = e.getServicePath();
-                        String[] split = servicePath.split("/");
-                        for (int j = 1; j < split.length; j++) {
-                            String s = split[j];
-                            if (s.charAt(0) == '{' && s.charAt(s.length() - 1) == '}') {
-                                rewriteUrl.append("/").append(prams.poll());
-                            } else {
-                                rewriteUrl.append("/").append(s);
-                            }
-                        }
-                        e.setServicePath(rewriteUrl.toString());
-                    }
-
-                }
                 res.addAll(route);
                 break;
             }
             child = node.child;
+        }
+        if (pathPram != null) {
+            attr.put(PathPram, pathPram);
         }
         return res;
     }

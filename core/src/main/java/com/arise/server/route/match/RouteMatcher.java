@@ -15,8 +15,10 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 import static com.arise.server.route.ApiRouteHandler.RequestURI;
+import static com.arise.server.route.manager.RestRouteTrie.PathPram;
 
 /**
  * @Author: wy
@@ -35,7 +37,7 @@ public class RouteMatcher {
     public MatchRes match(EventLoop eventLoop, Map<String, Object> attr, HttpRequest request) {
         URI requestURI = (URI) attr.computeIfAbsent(RequestURI,
                 URI::create);
-        List<RouteBean> matched = routeManager.match(requestURI.getPath());
+        List<RouteBean> matched = routeManager.match(requestURI.getPath(), attr);
         if (matched.size() == 0) {
             return null;
         }
@@ -45,7 +47,13 @@ public class RouteMatcher {
         if (pointer[0] != null && pointer[0].size() > 0) {
             //默认取第一个
             RouteBean route = pointer[0].get(0);
-            URI remoteUri = URI.create(route.getService() + route.getServicePath());
+            String remotePath = route.getServicePath();
+            Object p = attr.get(PathPram);
+            if (p != null) {
+                //url重写
+                remotePath = rewriteUrl((Queue<String>) p, remotePath);
+            }
+            URI remoteUri = URI.create(route.getService() + remotePath);
             String scheme = remoteUri.getScheme();
             int port = remoteUri.getPort();
             String host = remoteUri.getHost();
@@ -69,4 +77,20 @@ public class RouteMatcher {
         }
         return null;
     }
+
+    private String rewriteUrl(Queue<String> prams, String url) {
+        //解析url参数，如: /user/{id}
+        StringBuilder rewriteUrl = new StringBuilder();
+        String[] split = url.split("/");
+        for (int j = 1; j < split.length; j++) {
+            String s = split[j];
+            if (s.charAt(0) == '{' && s.charAt(s.length() - 1) == '}') {
+                rewriteUrl.append("/").append(prams.poll());
+            } else {
+                rewriteUrl.append("/").append(s);
+            }
+        }
+        return rewriteUrl.toString();
+    }
+
 }

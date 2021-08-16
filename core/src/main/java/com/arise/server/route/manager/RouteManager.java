@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -47,8 +48,8 @@ public class RouteManager {
         }
     }
 
-    public List<RouteBean> match(String url) {
-        return tree.matching(url);
+    public List<RouteBean> match(String url, Map<String, Object> attr) {
+        return tree.matching(url, attr);
     }
 
     public void clear() {
