@@ -176,6 +176,7 @@ public class LogService implements Runnable {
             buffer.get(heapBuffer, 0, len);
             String respBody;
             if ("gzip".equals(encoding)) {
+                log.info("解析gip响应体，长度:{}", len);
                 respBody = unCompressGzip(heapBuffer, len);
             } else {
                 respBody = new String(heapBuffer, 0, len);
