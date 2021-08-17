@@ -3,7 +3,7 @@ package com.arise.config;
 
 import com.arise.mq.MappedLogFile;
 import com.arise.server.logging.LogService;
-import com.arise.server.route.pool.RemoteChannelPool;
+import com.arise.server.route.pool.AsyncChannelPool;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -98,9 +98,9 @@ public class ServerProperties {
     @PostConstruct
     private void after() {
         Pool pool = this.getPool();
-        RemoteChannelPool.setConnectTimeout(pool.timeout);
-        RemoteChannelPool.setMaxPendingAcquires(pool.maxPendingAcquires);
-        RemoteChannelPool.setMaxConnections(pool.maxConnections);
+        AsyncChannelPool.setConnectTimeout(pool.timeout);
+        AsyncChannelPool.setMaxPendingAcquires(pool.maxPendingAcquires);
+        AsyncChannelPool.setMaxConnections(pool.maxConnections);
         if (!storageDir.endsWith("/")) {
             storageDir = storageDir + "/";
         }

@@ -5,7 +5,7 @@ import com.arise.server.route.filter.FilterContext;
 import com.arise.server.route.filter.SchedulableFilter;
 import com.arise.server.route.match.MatchRes;
 import com.arise.server.route.match.RouteMatcher;
-import com.arise.server.route.pool.RemoteChannelPool;
+import com.arise.server.route.pool.AsyncChannelPool;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpObject;
@@ -113,7 +113,6 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                 pipeline.addLast(new ForwardHandler(respPromise, inbound));
                                 new FilterContext<>(contents
                                         , respPromise, forwardFilters, eventLoop, attr, null).handleNext();
-                                System.out.println("writeAndFlush:" + pipeline);
                                 contents.forEach(outbound::writeAndFlush);
                             } else {
                                 Throwable cause = future2.cause();
@@ -126,7 +125,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                             }
                         });
                         //获取连接
-                        RemoteChannelPool.acquireChannel(matchRes.isSsl(),
+                        AsyncChannelPool.acquireChannel(matchRes.isSsl(),
                                 address.getHostAddress(), inetAddress.getPort(),
                                 eventLoop, promise);
                     }

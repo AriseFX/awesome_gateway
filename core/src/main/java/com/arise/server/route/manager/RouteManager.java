@@ -10,9 +10,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @Author: wy
@@ -27,25 +24,21 @@ public class RouteManager {
 
     private final RestRouteTrie tree = new RestRouteTrie();
 
-    public static void main(String[] args) {
-        RestRouteTrie tree = new RestRouteTrie();
-        tree.addRoute("fds/asd/asd", new RouteBean());
-        tree.addRoute("fds/fds/das", new RouteBean());
-        System.out.println(args);
-    }
-
     @PostConstruct
-    public void init() throws ExecutionException, InterruptedException {
+    public void init() {
         AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);
-        try {
-            client.commands().hgetall("ROUTE").get(20, TimeUnit.SECONDS).values()
-                    .forEach(e -> {
-                        //初始化路由
-                        addRoute((RouteBean) e);
-                    });
-        } catch (TimeoutException e) {
-            log.error("初始化路由超时:{}", e.getMessage());
-        }
+        client.asyncExec( e ->
+                e.hgetall("ROUTE")
+                        .whenComplete((v, ex) -> {
+                                    if (ex != null) {
+                                        log.error("路由初始化失败，JVM退出!:{}", ex.getMessage());
+                                        System.exit(0);
+                                    }
+                                    v.values().forEach(x -> addRoute((RouteBean) x));
+                                    log.info("路由初始化成功，数目:{}", v.size());
+                                }
+                        ));
+
     }
 
     public List<RouteBean> match(String url, Map<String, Object> attr) {

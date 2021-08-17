@@ -1,6 +1,6 @@
 package com.arise.server.route;
 
-import com.arise.server.route.pool.RemoteChannelPool;
+import com.arise.server.route.pool.AsyncChannelPool;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
@@ -55,13 +55,13 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
                 payloads.forEach(forwardChannel::writeAndFlush);
                 forwardChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(future -> {
                     if (future.isDone()) {
-                        RemoteChannelPool.releaseChannel(channel);
+                        AsyncChannelPool.releaseChannel(channel);
                         log.debug("释放连接：{}", ctx.channel().toString());
                     }
                 });
             }
         } else {
-            RemoteChannelPool.releaseChannel(channel);
+            AsyncChannelPool.releaseChannel(channel);
             log.debug("inbound关闭,释放连接：{}", ctx.channel().toString());
         }
     }
@@ -69,7 +69,7 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
         SocketChannel channel = (SocketChannel) ctx.channel();
-        RemoteChannelPool.releaseChannel(channel);
+        AsyncChannelPool.releaseChannel(channel);
         if (forwardChannel.isActive()) {
             writeMsg(forwardChannel, _ConnectionClose);
             forwardChannel.close().addListener(future -> {
@@ -84,7 +84,7 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
-        RemoteChannelPool.releaseChannel((SocketChannel) ctx.channel());
+        AsyncChannelPool.releaseChannel((SocketChannel) ctx.channel());
         ctx.close();
         forwardChannel.close().addListener(future -> {
             if (future.isSuccess()) {

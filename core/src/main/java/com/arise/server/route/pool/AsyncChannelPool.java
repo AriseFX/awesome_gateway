@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Modified: By：
  */
 @Slf4j
-public class RemoteChannelPool {
+public class AsyncChannelPool {
 
     private static final ConcurrentHashMap<String, ChannelPool> pools = new ConcurrentHashMap<>();
     @Setter
@@ -89,7 +89,6 @@ public class RemoteChannelPool {
                         while (!(pipeline.last() instanceof SslHandler)) {
                             pipeline.removeLast();
                         }
-                        System.out.println("channelReleased:" + pipeline);
                     }
 
                     /**
