@@ -38,6 +38,7 @@ public enum Services implements BiConsumer<FullHttpRequest, Channel> {
                     channel.writeAndFlush(standJsonResp(new EndpointResponse(ex.getMessage()), INTERNAL_SERVER_ERROR));
                     return;
                 }
+                routeManager.clear();
                 v.values().forEach(x -> {
                     //更新路由
                     routeManager.addRoute((RouteBean) x);
