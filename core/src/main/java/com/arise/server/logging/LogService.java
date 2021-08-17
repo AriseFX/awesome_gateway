@@ -15,6 +15,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.LockSupport;
 import java.util.zip.GZIPInputStream;
@@ -124,22 +125,22 @@ public class LogService implements Runnable {
         marshaller.finish();
         dBuffer.putInt(0, dBuffer.position() - 4);
         //请求体
-        HttpContent reqBody = log.getReqBody();
+        List<HttpContent> reqBody = log.getReqBody();
         if (reqBody == null) {
             dBuffer.putInt(0);
         } else {
-            ByteBuffer buffer = reqBody.content().nioBuffer();
-            dBuffer.putInt(buffer.remaining());
-            dBuffer.put(buffer);
+            dBuffer.putInt(log.getReqBodyLen());
+            reqBody.forEach(e ->
+                    dBuffer.put(e.content().nioBuffer()));
         }
         //响应体
-        HttpContent respBody = log.getRespBody();
+        List<HttpContent> respBody = log.getRespBody();
         if (respBody == null) {
             dBuffer.putInt(0);
         } else {
-            ByteBuffer buffer = respBody.content().nioBuffer();
-            dBuffer.putInt(buffer.remaining());
-            dBuffer.put(buffer);
+            dBuffer.putInt(log.getRespBodyLen());
+            respBody.forEach(e ->
+                    dBuffer.put(e.content().nioBuffer()));
         }
         dBuffer.flip();
         return dBuffer;

@@ -6,6 +6,9 @@ import io.netty.handler.codec.http.HttpContent;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * @Author: wy
  * @Date: Created in 22:56 2021-06-16
@@ -17,11 +20,27 @@ import lombok.NoArgsConstructor;
 public class ApiLog {
 
     private Info info = new Info();
-    private HttpContent reqBody;
-    private HttpContent respBody;
+    private List<HttpContent> reqBody;
+    private List<HttpContent> respBody = new LinkedList<>();
 
     private transient String reqBodyStr;
     private transient String respBodyStr;
+
+    private int reqBodyLen;
+    private int respBodyLen;
+
+    public void addReqBody(HttpContent body) {
+        if (reqBody == null) {
+            reqBody = new LinkedList<>();
+        }
+        reqBodyLen += body.content().readableBytes();
+        reqBody.add(body);
+    }
+
+    public void addRespBody(HttpContent body) {
+        respBodyLen += body.content().readableBytes();
+        respBody.add(body);
+    }
 
 
     /**

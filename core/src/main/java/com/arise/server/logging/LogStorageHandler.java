@@ -47,7 +47,7 @@ public class LogStorageHandler extends ChannelDuplexHandler {
                 apiLog.getInfo().setResp((DefaultHttpResponse) msg);
             }
         } else if (msg instanceof DefaultHttpContent && !skip) {
-            apiLog.setRespBody(((DefaultHttpContent) msg).retainedDuplicate());
+            apiLog.addRespBody(((DefaultHttpContent) msg).retainedDuplicate());
         }
         super.channelRead(ctx, msg);
     }
@@ -62,7 +62,7 @@ public class LogStorageHandler extends ChannelDuplexHandler {
                 apiLog.getInfo().setReq((DefaultHttpRequest) msg);
             }
         } else if (msg instanceof DefaultHttpContent && !skip) {
-            apiLog.setReqBody(((DefaultHttpContent) msg).retainedDuplicate());
+            apiLog.addReqBody(((DefaultHttpContent) msg).retainedDuplicate());
         }
         super.write(ctx, msg, promise);
     }
