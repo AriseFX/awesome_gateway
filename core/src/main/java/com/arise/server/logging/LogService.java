@@ -3,6 +3,7 @@ package com.arise.server.logging;
 import com.alibaba.fastjson.JSON;
 import com.arise.mq.DiskQueue;
 import io.netty.handler.codec.http.*;
+import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueue;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.marshalling.*;
@@ -130,8 +131,10 @@ public class LogService implements Runnable {
             dBuffer.putInt(0);
         } else {
             dBuffer.putInt(log.getReqBodyLen());
-            reqBody.forEach(e ->
-                    dBuffer.put(e.content().nioBuffer()));
+            reqBody.forEach(e -> {
+                dBuffer.put(e.content().nioBuffer());
+                ReferenceCountUtil.release(e);
+            });
         }
         //响应体
         List<HttpContent> respBody = log.getRespBody();
@@ -139,8 +142,10 @@ public class LogService implements Runnable {
             dBuffer.putInt(0);
         } else {
             dBuffer.putInt(log.getRespBodyLen());
-            respBody.forEach(e ->
-                    dBuffer.put(e.content().nioBuffer()));
+            respBody.forEach(e -> {
+                dBuffer.put(e.content().nioBuffer());
+                ReferenceCountUtil.release(e);
+            });
         }
         dBuffer.flip();
         return dBuffer;
@@ -176,7 +181,7 @@ public class LogService implements Runnable {
             buffer.get(heapBuffer, 0, len);
             String respBody;
             if ("gzip".equals(encoding)) {
-                log.info("解析gip响应体，长度:{}", len);
+                log.debug("解析gip响应体，长度:{}", len);
                 respBody = unCompressGzip(heapBuffer, len);
             } else {
                 respBody = new String(heapBuffer, 0, len);
