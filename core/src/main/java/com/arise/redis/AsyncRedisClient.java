@@ -15,9 +15,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.time.Duration;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * @Author: wy
@@ -43,21 +42,20 @@ public class AsyncRedisClient {
         this.pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
                 () -> client.connectAsync(new JdkSerializableRedisCodec(), uri),
                 // 使用默认的连接池配置
-                BoundedPoolConfig.create());
+                BoundedPoolConfig.builder().minIdle(3).maxTotal(4000).maxIdle(4000).build());
     }
 
-    public void asyncExec(Function<RedisAsyncCommands<String, Object>, CompletionStage<?>> func) {
-        pool.acquire()
-                .thenApply(conn -> {
-                    RedisAsyncCommands<String, Object> async = conn.async();
-                    async.setTimeout(Duration.ofSeconds(10));
-                    return func.apply(async)
-                            .whenComplete((e, ex) -> {
-                                        log.info("释放redis连接");
-                                        pool.release(conn);
-                                    }
-                            );
-                });
+    public void asyncExec(BiFunction<RedisAsyncCommands<String, Object>, ? super Throwable, CompletionStage<?>> func) {
+        pool.acquire().whenComplete((conn, ex) -> {
+            func.apply(conn.async(), ex)
+                    .whenComplete((e, ex1) -> {
+                                if (ex1 != null) {
+                                    ex1.printStackTrace();
+                                }
+                                pool.release(conn);
+                            }
+                    );
 
+        });
     }
 }

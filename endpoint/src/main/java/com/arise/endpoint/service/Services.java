@@ -33,7 +33,7 @@ public enum Services implements BiConsumer<FullHttpRequest, Channel> {
         public void accept(FullHttpRequest request, Channel channel) {
             AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);
             RouteManager routeManager = ServerProperties.getBean(RouteManager.class);
-            client.asyncExec(e -> e.hgetall("ROUTE").whenComplete((v, ex) -> {
+            client.asyncExec((e, throwable) -> e.hgetall("ROUTE").whenComplete((v, ex) -> {
                 if (ex != null) {
                     channel.writeAndFlush(standJsonResp(new EndpointResponse(ex.getMessage()), INTERNAL_SERVER_ERROR));
                     return;
@@ -51,7 +51,7 @@ public enum Services implements BiConsumer<FullHttpRequest, Channel> {
         @Override
         public void accept(FullHttpRequest request, Channel channel) {
             AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);
-            client.asyncExec(e -> e.hgetall("ROUTE").whenComplete((v, ex) -> {
+            client.asyncExec((e, throwable) -> e.hgetall("ROUTE").whenComplete((v, ex) -> {
                 if (ex != null) {
                     channel.writeAndFlush(standJsonResp(new EndpointResponse("route get fail"), INTERNAL_SERVER_ERROR));
                     return;
@@ -70,7 +70,7 @@ public enum Services implements BiConsumer<FullHttpRequest, Channel> {
             log.info("route_put,数目:{}", dto.getRoutes().size());
             Map<String, Object> map = dto.getRoutes().stream()
                     .collect(Collectors.toMap(RouteBean::getId, v -> v, (v1, v2) -> v1));
-            client.asyncExec(e ->
+            client.asyncExec((e, throwable) ->
                     e.hset("ROUTE", map).whenComplete((v, ex) -> {
                                 if (ex != null) {
                                     channel.writeAndFlush(standJsonResp(new EndpointResponse("server error"), INTERNAL_SERVER_ERROR));

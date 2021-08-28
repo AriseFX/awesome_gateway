@@ -109,7 +109,7 @@ public class AsyncChannelPool {
                         }
                         pipeline.addLast("reqEncoder", new HttpRequestEncoder());
                         pipeline.addLast("respDecoder", new HttpResponseDecoder());
-                        pipeline.addLast("log", new LogStorageHandler());
+//                        pipeline.addLast("log", new LogStorageHandler());
                     }
                 }, maxConnections, maxPendingAcquires);
     }

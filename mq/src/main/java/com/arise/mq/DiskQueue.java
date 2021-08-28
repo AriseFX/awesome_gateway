@@ -140,11 +140,7 @@ public class DiskQueue {
             System.out.println("produce切换新文件:" + wFileNum);
             if (res < 0) {
                 throw new RuntimeException("内部错误!");
-            } else {
-                System.out.println("produce新的offset:" + res);
             }
-        } else {
-            System.out.println("produce新的offset:" + res);
         }
     }
 

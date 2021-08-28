@@ -66,29 +66,35 @@ public class UserTokenFilter extends PreRouteFilter {
         if (StringUtils.hasLength(auth)) {
             RandomToken wrapToken = parseShortToken(auth);
             if (wrapToken != null) {
-                redisClient.asyncExec(e ->
-                        e.get(wrapToken.getRedisKey()).whenCompleteAsync((v, ex) -> {
-                            if (ex != null) {
-                                fail(ctx, ex);
-                                return;
+                redisClient.asyncExec((e, throwable) -> {
+                            if (throwable != null) {
+                                fail(ctx, throwable);
                             }
-                            if (v != null) {
-                                Token token = (Token) v;
-                                String accessToken = token.getAccessToken();
-                                headers.set("Token", auth);//短令牌
-                                headers.set("Authorization", "Bearer " + accessToken);//长令牌
-                                if (originCode[0] == null) {
-                                    originCode[0] = token.getOriginCode();
+                            return e.get(wrapToken.getRedisKey()).whenComplete((v, ex) -> {
+                                if (ex != null) {
+                                    ex.printStackTrace();
+                                    fail(ctx, ex);
+                                    return;
                                 }
-                                if (originCode[0] == null) {
-                                    originCode[0] = queryString.get(OriginCode);
+                                if (v != null) {
+                                    Token token = (Token) v;
+                                    String accessToken = token.getAccessToken();
+                                    headers.set("Token", auth);//短令牌
+                                    headers.set("Authorization", "Bearer " + accessToken);//长令牌
+                                    if (originCode[0] == null) {
+                                        originCode[0] = token.getOriginCode();
+                                    }
+                                    if (originCode[0] == null) {
+                                        originCode[0] = queryString.get(OriginCode);
+                                    }
                                 }
-                            }
-                            attr.put(OriginCode, originCode[0]);
-                            headers.set("x-originCode", originCode[0]);
-                            //获取token
-                            success(ctx);
-                        }));
+                                attr.put(OriginCode, originCode[0]);
+                                headers.set("x-originCode", originCode[0]);
+                                //获取token
+                                success(ctx);
+                            });
+                        }
+                );
             } else {
                 success(ctx);
             }

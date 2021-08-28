@@ -27,7 +27,7 @@ public class RouteManager {
     @PostConstruct
     public void init() {
         AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);
-        client.asyncExec( e ->
+        client.asyncExec( (e, throwable) ->
                 e.hgetall("ROUTE")
                         .whenComplete((v, ex) -> {
                                     if (ex != null) {

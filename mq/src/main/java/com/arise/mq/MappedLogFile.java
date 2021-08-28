@@ -82,7 +82,6 @@ public class MappedLogFile {
             }
             //设置读偏移
             ridx(ridx = buffer.position());
-            System.out.println("消费成功,offset：" + ridx);
             return ridx;
         } else {
             if (full.get()) {
