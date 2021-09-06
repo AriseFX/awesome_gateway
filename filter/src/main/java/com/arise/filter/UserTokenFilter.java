@@ -97,9 +97,15 @@ public class UserTokenFilter implements Filter {
                         }
                 );
             } else {
+                if (originCode[0] == null) {
+                    originCode[0] = queryString.get(OriginCode);
+                }
                 success(ctx);
             }
         } else {
+            if (originCode[0] == null) {
+                originCode[0] = queryString.get(OriginCode);
+            }
             success(ctx);
         }
     }
