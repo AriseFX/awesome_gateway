@@ -99,12 +99,16 @@ public class UserTokenFilter implements Filter {
             } else {
                 if (originCode[0] == null) {
                     originCode[0] = queryString.get(OriginCode);
+                    attr.put(OriginCode, originCode[0]);
+                    headers.set("x-originCode", originCode[0]);
                 }
                 success(ctx);
             }
         } else {
             if (originCode[0] == null) {
                 originCode[0] = queryString.get(OriginCode);
+                attr.put(OriginCode, originCode[0]);
+                headers.set("x-originCode", originCode[0]);
             }
             success(ctx);
         }
