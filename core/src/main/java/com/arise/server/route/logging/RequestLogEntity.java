@@ -1,10 +1,8 @@
 package com.arise.server.route.logging;
 
-import com.alibaba.fastjson.JSONObject;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.Map;
 
 /**
@@ -17,7 +15,7 @@ import java.util.Map;
 public class RequestLogEntity implements Serializable {
     private String logId;
     private String path;
-    private JSONObject requestParams;
+    private Map<String, String> requestParams;
     private String orgCode;
     private String ip;
     /**

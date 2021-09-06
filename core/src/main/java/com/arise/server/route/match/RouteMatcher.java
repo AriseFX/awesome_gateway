@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-import static com.arise.server.route.ApiRouteHandler.RequestURI;
+import static com.arise.base.config.Constant.*;
 import static com.arise.server.route.manager.RestRouteTrie.PathPram;
 
 /**

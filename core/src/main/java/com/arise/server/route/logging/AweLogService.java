@@ -64,7 +64,7 @@ public class AweLogService {
                     RequestLogEntity entity = map2Entity(polled);
                     try {
                         channel.basicPublish("", "gateway-queue", null,
-                                JSON.toJSONString(entity).getBytes(StandardCharsets.UTF_8));
+                                JSON.toJSONString(entity).getBytes());
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -104,7 +104,7 @@ public class AweLogService {
         ByteBuf body_resp = log.getBody_resp();
         if (body_req != null) {
             int len = body_req.readableBytes();
-            body_req.getBytes(0, body_resp, 0, body_req.readableBytes());
+            body_req.getBytes(0, heapBuffer, 0, len);
             body_req.release();
             entity.setRequestBody(JSON.parseObject(new String(heapBuffer, 0, len)));
         }
@@ -124,7 +124,7 @@ public class AweLogService {
         entity.setUsername(info.getUsername());
         entity.setPreTime(info.getPreTime());
         entity.setHandleTime(info.getHandleTime());
-        entity.setRequestParams(null);//TODO 从attr中获取
+        entity.setRequestParams(info.getQueryPram());//TODO 从attr中获取
         return entity;
     }
 

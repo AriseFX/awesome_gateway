@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.arise.filter.UserTokenFilter.OriginCode;
+import static com.arise.base.config.Constant.*;
 import static com.arise.server.route.filter.Lifecycle.Route;
 
 /**

@@ -6,6 +6,8 @@ import io.netty.handler.codec.http.DefaultHttpResponse;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 /**
  * @Author: wy
  * @Date: Created in 22:56 2021-06-16
@@ -58,6 +60,11 @@ public class ApiLog {
          * 用户名
          */
         private String username;
+
+        /**
+         * query
+         */
+        private Map<String,String> queryPram;
 
         private DefaultHttpRequest req;
 

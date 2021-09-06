@@ -4,8 +4,6 @@ import com.arise.base.config.Components;
 import com.arise.base.exception.ServiceNotFoundException;
 import com.arise.server.route.filter.Filter;
 import com.arise.server.route.filter.FilterContext;
-import com.arise.server.route.logging.ApiLog;
-import com.arise.server.route.logging.LogStorageHandler;
 import com.arise.server.route.match.MatchRes;
 import com.arise.server.route.match.RouteMatcher;
 import com.arise.server.route.pool.AsyncChannelPool;
@@ -28,8 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.arise.base.config.Constant.*;
 import static com.arise.server.route.GatewayMessage.*;
-
 /**
  * @Author: wy
  * @Date: Created in 12:51 2021-06-05
@@ -53,11 +51,6 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
     private Channel outbound;
 
-    public static String RequestURI = "RequestURI";
-
-    public static String Timestamp = "Timestamp";
-
-    public static String WrittenTimestamp = "WrittenTimestamp";
 
     public static AttributeKey<Map<String, Object>> Attr = AttributeKey.newInstance("attr");
 

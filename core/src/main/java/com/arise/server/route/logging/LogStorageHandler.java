@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.net.URI;
 import java.util.Map;
 
-import static com.arise.server.route.ApiRouteHandler.*;
+import static com.arise.base.config.Constant.*;
 
 /**
  * @Author: wy
@@ -38,6 +38,7 @@ public class LogStorageHandler extends ChannelDuplexHandler {
         this.apiLog = new ApiLog();
     }
 
+
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
         ApiLog.Info info = apiLog.getInfo();
@@ -52,6 +53,8 @@ public class LogStorageHandler extends ChannelDuplexHandler {
             info.setTimestamp(timestamp);
             info.setHandleTime(System.currentTimeMillis() - timestamp);
             info.setPreTime(writtenTimestamp - timestamp);
+            info.setQueryPram((Map<String, String>) attr.get("httpQueryParam"));
+            info.setUsername((String) attr.get(Username));
             AweLogService.pushLog(apiLog);
         }
     }

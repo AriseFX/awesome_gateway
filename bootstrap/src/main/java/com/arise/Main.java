@@ -12,16 +12,12 @@ import com.arise.server.route.filter.FilterFactory;
 import com.arise.server.route.manager.RouteManager;
 import com.arise.server.route.pool.AsyncChannelPool;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-
 /**
  * @Author: wy
  * @Description: 启动类
  * @Modified: By：
  */
 public class Main {
-    static ScheduledExecutorService e = Executors.newScheduledThreadPool(1);
 
     public static void main(String[] args) throws Exception {
         //内存统计

@@ -19,8 +19,8 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
+import static com.arise.base.config.Constant.*;
 import static com.arise.base.util.HttpUtils.parseQueryString;
-import static com.arise.server.route.ApiRouteHandler.RequestURI;
 import static com.arise.server.route.filter.Lifecycle.PreRoute;
 
 /**
@@ -33,14 +33,6 @@ import static com.arise.server.route.filter.Lifecycle.PreRoute;
 public class UserTokenFilter implements Filter {
 
     private final AsyncRedisClient redisClient = Components.get(AsyncRedisClient.class);
-
-    public static String OriginCode = "x-originCode";
-
-    public static String TargetService = "TargetService";
-
-    public static String HttpQueryParam = "httpQueryParam";
-
-    public static String FullToken = "FullToken";
 
     @Override
     public int order() {
@@ -72,6 +64,9 @@ public class UserTokenFilter implements Filter {
         if (auth != null && auth.length() > 0) {
             RandomToken wrapToken = parseShortToken(auth);
             if (wrapToken != null) {
+                //解密出用户名
+                String username = wrapToken.getUsernameKey().split("-")[0];
+                attr.put(Username, username);
                 redisClient.asyncExec((e, throwable) -> {
                             if (throwable != null) {
                                 fail(ctx, throwable);
