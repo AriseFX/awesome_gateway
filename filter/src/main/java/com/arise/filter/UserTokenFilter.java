@@ -1,26 +1,27 @@
 package com.arise.filter;
 
+import com.arise.base.config.Components;
 import com.arise.redis.AsyncRedisClient;
+import com.arise.server.route.filter.Filter;
 import com.arise.server.route.filter.FilterContext;
-import com.arise.server.route.filter.PreRouteFilter;
+import com.arise.server.route.filter.Lifecycle;
+import com.arise.spi.Join;
 import com.xcewell.esb.common.Token;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
-import javax.annotation.Resource;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
-import static com.arise.internal.util.HttpUtils.parseQueryString;
+import static com.arise.base.util.HttpUtils.parseQueryString;
 import static com.arise.server.route.ApiRouteHandler.RequestURI;
+import static com.arise.server.route.filter.Lifecycle.PreRoute;
 
 /**
  * @Author: wy
@@ -28,11 +29,10 @@ import static com.arise.server.route.ApiRouteHandler.RequestURI;
  * @Description: 处理用户域
  * @Modified: By：
  */
-@Component
-public class UserTokenFilter extends PreRouteFilter {
+@Join
+public class UserTokenFilter implements Filter {
 
-    @Resource
-    private AsyncRedisClient redisClient;
+    private final AsyncRedisClient redisClient = Components.get(AsyncRedisClient.class);
 
     public static String OriginCode = "x-originCode";
 
@@ -43,14 +43,20 @@ public class UserTokenFilter extends PreRouteFilter {
     public static String FullToken = "FullToken";
 
     @Override
-    public int getOrder() {
+    public int order() {
         return 0;
     }
 
     @Override
-    public void doFilter(FilterContext<List<HttpObject>, Object> ctx) {
+    public Lifecycle lifecycle() {
+        return PreRoute;
+    }
+
+    @Override
+    public void doFilter(FilterContext ctx) {
         Map<String, Object> attr = ctx.attr();
-        HttpRequest request = (HttpRequest) ctx.getPram().get(0);
+        List<HttpObject> p = (List<HttpObject>) ctx.getPram();
+        HttpRequest request = (HttpRequest) p.get(0);
         HttpHeaders headers = request.headers();
         URI uri = (URI) attr.get(RequestURI);
         //解析query参数
@@ -63,7 +69,7 @@ public class UserTokenFilter extends PreRouteFilter {
         attr.put(OriginCode, originCode[0]);
         attr.put(HttpQueryParam, queryString);
         attr.put(RequestURI, uri);
-        if (StringUtils.hasLength(auth)) {
+        if (auth != null && auth.length() > 0) {
             RandomToken wrapToken = parseShortToken(auth);
             if (wrapToken != null) {
                 redisClient.asyncExec((e, throwable) -> {
@@ -103,18 +109,18 @@ public class UserTokenFilter extends PreRouteFilter {
         }
     }
 
-    private static void success(FilterContext<List<HttpObject>, Object> ctx) {
+    private static void success(FilterContext ctx) {
         ctx.getCallback().setSuccess(null);
     }
 
-    private static void fail(FilterContext<List<HttpObject>, Object> ctx, Throwable cause) {
+    private static void fail(FilterContext ctx, Throwable cause) {
         ctx.getCallback().setFailure(cause);
     }
 
     public static RandomToken parseShortToken(String shortToken) {
         try {
             String usernameShortToken = new String(Base64.getDecoder().decode(shortToken), StandardCharsets.UTF_8);
-            if (StringUtils.hasLength(usernameShortToken)) {
+            if (usernameShortToken.length() > 0) {
                 String[] split = usernameShortToken.split(":");
                 if (split.length == 4 && "EWELL".equals(split[0])) {
                     return new RandomToken(split[1], split[2], split[3]);

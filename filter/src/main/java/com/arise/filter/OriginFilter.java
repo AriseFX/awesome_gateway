@@ -1,16 +1,17 @@
 package com.arise.filter;
 
 import com.arise.server.route.RouteBean;
+import com.arise.server.route.filter.Filter;
 import com.arise.server.route.filter.FilterContext;
-import com.arise.server.route.filter.RouteFilter;
-import org.springframework.stereotype.Component;
+import com.arise.server.route.filter.Lifecycle;
+import com.arise.spi.Join;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.arise.filter.UserTokenFilter.OriginCode;
-import static com.arise.filter.UserTokenFilter.TargetService;
+import static com.arise.server.route.filter.Lifecycle.Route;
 
 /**
  * @Author: wy
@@ -18,20 +19,25 @@ import static com.arise.filter.UserTokenFilter.TargetService;
  * @Description: 用户域/targetService过滤
  * @Modified: By：
  */
-@Component
-public class OriginFilter extends RouteFilter {
+@Join
+public class OriginFilter implements Filter {
 
     private static final String TopLevelDomain = "0";
 
     @Override
-    public int getOrder() {
+    public int order() {
         return 0;
     }
 
     @Override
-    public void doFilter(FilterContext<List<RouteBean>[], Object> ctx) {
+    public Lifecycle lifecycle() {
+        return Route;
+    }
+
+    @Override
+    public void doFilter(FilterContext ctx) {
         Map<String, Object> attr = ctx.attr();
-        List<RouteBean>[] pram = ctx.getPram();
+        List<RouteBean>[] pram = (List<RouteBean>[]) ctx.getPram();
         Map<String, List<RouteBean>> group =
                 pram[0].stream().collect(Collectors.groupingBy(e -> {
                     String originCode = e.getMetadata().get("originCode");

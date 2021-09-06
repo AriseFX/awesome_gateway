@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+<!-- %d时间，%-5level日志级别，[${dubbo.application.id}微服务名称]，[%thread线程名]，%logger{36}:%line日志所在类及行号 - %m日志内容%n换行-->
+<!-- appender是configuration的子节点，是负责写日志的组件。 -->
+<!-- ConsoleAppender：把日志输出到控制台 -->
+<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+<encoder>
+<pattern>%d %-5level  [%thread] [%logger{36}:%line] - %m%n</pattern>
+<!-- 控制台也要使用UTF-8，不要使用GBK，否则会中文乱码 -->
+<charset>UTF-8</charset>
+</encoder>
+<!-- 生产环境只打印错误日志 -->
+<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+<level>info</level>
+</filter>
+</appender>
+<!-- 定义日志文件 输入位置 -->
+<property name="syslog_dir" value="var/log/ewell" />
+<!-- hostname为容器的主机名，用于区分同一微服务多个副本的输出的日志文件 -->
+<!-- RollingFileAppender：滚动记录文件，先将日志记录到指定文件，当符合某个条件时，将日志记录到其他文件 -->
+<!-- 以下的大概意思是：1.先按日期存日志，日期变了，将前一天的日志文件名重命名为XXX%日期%索引，新的日志仍然是demo.log -->
+<!--             2.如果日期没有发生变化，但是当前日志的文件大小超过100M时，对当前日志进行分割 重命名-->
+<!-- 业务日志输出到文件，微服务自己写的日志（默认是cc.ewell包名下输出的日志）归为业务日志 -->
+<appender name="BUSINESS_LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+<File>${syslog_dir}/${hostname}.log</File>
+<!-- rollingPolicy:当发生滚动时，决定 RollingFileAppender 的行为，涉及文件移动和重命名。 -->
+<!-- TimeBasedRollingPolicy： 最常用的滚动策略，它根据时间来制定滚动策略，既负责滚动也负责出发滚动 -->
+<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+<!-- 活动文件的名字会根据fileNamePattern的值，每隔一段时间改变一次 -->
+<!-- 文件名：log/demo.2017-12-05.0.log -->
+<fileNamePattern>${syslog_dir}/${hostname}.%d.%i.log</fileNamePattern>
+<!-- 每产生一个日志文件，该日志文件的保存期限为15天 -->
+<maxHistory>15</maxHistory>
+<timeBasedFileNamingAndTriggeringPolicy  class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+<!-- maxFileSize:这是活动文件的大小，默认值是10MB -->
+<maxFileSize>500MB</maxFileSize>
+</timeBasedFileNamingAndTriggeringPolicy>
+</rollingPolicy>
+<encoder>
+<!-- pattern节点，用来设置日志的输入格式 -->
+<pattern>%d %-5level  [%thread] [%logger{36}:%line] - %m%n</pattern>
+<!-- 记录日志的编码:此处设置字符集 - -->
+<charset>UTF-8</charset>
+</encoder>
+</appender>
+<!-- 系统日志输出到文件，除了业务日志之外的日志 -->
+<appender name="SYSTEM_LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+<File>${syslog_dir}/${hostname}.sys</File>
+<!-- rollingPolicy:当发生滚动时，决定 RollingFileAppender 的行为，涉及文件移动和重命名。 -->
+<!-- TimeBasedRollingPolicy： 最常用的滚动策略，它根据时间来制定滚动策略，既负责滚动也负责出发滚动 -->
+<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+<!-- 活动文件的名字会根据fileNamePattern的值，每隔一段时间改变一次 -->
+<!-- 文件名：log/demo.2017-12-05.0.log -->
+<fileNamePattern>${syslog_dir}/${hostname}.%d.%i.sys</fileNamePattern>
+<!-- 每产生一个日志文件，该日志文件的保存期限为15天 -->
+<maxHistory>15</maxHistory>
+<timeBasedFileNamingAndTriggeringPolicy  class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+<!-- maxFileSize:这是活动文件的大小，默认值是10MB -->
+<maxFileSize>500MB</maxFileSize>
+</timeBasedFileNamingAndTriggeringPolicy>
+</rollingPolicy>
+<encoder>
+<!-- pattern节点，用来设置日志的输入格式 -->
+<pattern>%d %-5level  [%thread] [%logger{36}:%line] - %m%n</pattern>
+<!-- 记录日志的编码:此处设置字符集 - -->
+<charset>UTF-8</charset>
+</encoder>
+</appender>
+
+<!-- 控制台输出日志级别（系统日志） -->
+<root level="info">
+<appender-ref ref="STDOUT" />
+<appender-ref ref="SYSTEM_LOG_FILE" />
+</root>
+
+<!-- 配置微服务根包下输出的日志保存到文件（业务日志） -->
+<!-- 指定项目中某个包，当有日志操作行为时的日志记录级别 -->
+<!-- cc.ewell为根包，也就是只要是发生在这个根包下面的所有日志操作行为的权限都是INFO -->
+<!-- 级别依次为【从高到低】：ERROR > WARN > INFO > DEBUG  -->
+<logger name="cc.ewell" level="debug" additivity="false">
+<appender-ref ref="STDOUT" />
+<appender-ref ref="BUSINESS_LOG_FILE" />
+</logger>
+
+</configuration>

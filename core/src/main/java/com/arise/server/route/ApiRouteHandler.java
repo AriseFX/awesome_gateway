@@ -1,8 +1,11 @@
 package com.arise.server.route;
 
-import com.arise.internal.exception.ServiceNotFoundException;
+import com.arise.base.config.Components;
+import com.arise.base.exception.ServiceNotFoundException;
+import com.arise.server.route.filter.Filter;
 import com.arise.server.route.filter.FilterContext;
-import com.arise.server.route.filter.SchedulableFilter;
+import com.arise.server.route.logging.ApiLog;
+import com.arise.server.route.logging.LogStorageHandler;
 import com.arise.server.route.match.MatchRes;
 import com.arise.server.route.match.RouteMatcher;
 import com.arise.server.route.pool.AsyncChannelPool;
@@ -11,6 +14,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.arise.server.GatewayMessage.*;
+import static com.arise.server.route.GatewayMessage.*;
 
 /**
  * @Author: wy
@@ -35,11 +39,13 @@ import static com.arise.server.GatewayMessage.*;
 @Slf4j
 public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
-    public static List<SchedulableFilter<List<HttpObject>, List<HttpObject>>> forwardFilters;
+    public static List<Filter> forwardFilters;
 
-    public static List<SchedulableFilter<List<HttpObject>, Object>> preRouteFilters;
+    public static List<Filter> preRouteFilters;
 
-    public static RouteMatcher matcher;
+    public static AsyncChannelPool asyncChannelPool = Components.get(AsyncChannelPool.class);
+
+    public static RouteMatcher matcher = new RouteMatcher();
 
     private List<HttpObject> contents;
 
@@ -48,6 +54,12 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
     private Channel outbound;
 
     public static String RequestURI = "RequestURI";
+
+    public static String Timestamp = "Timestamp";
+
+    public static String WrittenTimestamp = "WrittenTimestamp";
+
+    public static AttributeKey<Map<String, Object>> Attr = AttributeKey.newInstance("attr");
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
@@ -70,6 +82,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
             if (msg instanceof LastHttpContent) {
                 Map<String, Object> attr = new HashMap<>(4);
                 attr.put(RequestURI, URI.create(request.uri()));
+                attr.put(Timestamp, System.currentTimeMillis());
                 //最后一个http 请求
                 log.debug("最后一个http content");
                 Promise<Object> p = ctx.executor().newPromise();
@@ -111,9 +124,11 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                     request.headers().set(HttpHeaderNames.HOST, address.getHostName());
                                 }
                                 pipeline.addLast(new ForwardHandler(respPromise, inbound));
-                                new FilterContext<>(contents
+                                new FilterContext(contents
                                         , respPromise, forwardFilters, eventLoop, attr, null).handleNext();
+                                outbound.attr(Attr).set(attr);
                                 contents.forEach(outbound::writeAndFlush);
+                                attr.put(WrittenTimestamp, System.currentTimeMillis());
                             } else {
                                 Throwable cause = future2.cause();
                                 if (cause instanceof ConnectTimeoutException) {
@@ -125,12 +140,12 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                             }
                         });
                         //获取连接
-                        AsyncChannelPool.acquireChannel(matchRes.isSsl(),
+                        asyncChannelPool.acquireChannel(matchRes.isSsl(),
                                 address.getHostAddress(), inetAddress.getPort(),
                                 eventLoop, promise);
                     }
                 });
-                new FilterContext<>(contents, preRouteFilters, eventLoop, attr, p)
+                new FilterContext(contents, preRouteFilters, eventLoop, attr, p)
                         .handleNext();
             }
         }

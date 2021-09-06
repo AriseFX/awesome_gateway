@@ -1,9 +1,9 @@
 package com.arise.server.route.manager;
 
-import com.alibaba.nacos.api.utils.StringUtils;
 import com.arise.server.route.RouteBean;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 

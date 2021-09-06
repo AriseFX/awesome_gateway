@@ -1,0 +1,21 @@
+port: 1723
+address: 0.0.0.0
+storageDir: ./data
+logFileSize: 209715200
+pool:
+  timeout: 3000 #超时时间
+  maxConnections: 80 #最大连接数
+  maxPendingAcquires: 0x7fffffff #最大pending数
+registry:
+  naming: nacos
+  serverAddr: 123.60.29.248:8848
+  namespace: 06b72914-e3e0-452c-bac6-9b22af6213cd
+  serviceName: AsGateway
+  networkInterface: eth0
+redis:
+  uri: redis://XCwjj%40xcewell123@124.71.195.67:6379/2?timeout=10s
+rabbitmq:
+  uri: amqp://admin:admin@123.60.29.248:5672/dev
+endpoint:
+  port: 9876
+  address: 0.0.0.0

@@ -1,10 +1,10 @@
 package com.arise.endpoint.service;
 
 import com.alibaba.fastjson.JSON;
-import com.arise.config.ServerProperties;
+import com.arise.base.config.Components;
+import com.arise.endpoint.JsonUtils;
 import com.arise.endpoint.service.dto.EndpointResponse;
 import com.arise.endpoint.service.dto.RouteDto;
-import com.arise.internal.util.JsonUtils;
 import com.arise.redis.AsyncRedisClient;
 import com.arise.server.route.RouteBean;
 import com.arise.server.route.manager.RouteManager;
@@ -31,8 +31,8 @@ public enum Services implements BiConsumer<FullHttpRequest, Channel> {
     route_refresh {
         @Override
         public void accept(FullHttpRequest request, Channel channel) {
-            AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);
-            RouteManager routeManager = ServerProperties.getBean(RouteManager.class);
+            AsyncRedisClient client = Components.get(AsyncRedisClient.class);
+            RouteManager routeManager = Components.get(RouteManager.class);
             client.asyncExec((e, throwable) -> e.hgetall("ROUTE").whenComplete((v, ex) -> {
                 if (ex != null) {
                     channel.writeAndFlush(standJsonResp(new EndpointResponse(ex.getMessage()), INTERNAL_SERVER_ERROR));
@@ -50,7 +50,7 @@ public enum Services implements BiConsumer<FullHttpRequest, Channel> {
     route_get {
         @Override
         public void accept(FullHttpRequest request, Channel channel) {
-            AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);
+            AsyncRedisClient client = Components.get(AsyncRedisClient.class);
             client.asyncExec((e, throwable) -> e.hgetall("ROUTE").whenComplete((v, ex) -> {
                 if (ex != null) {
                     channel.writeAndFlush(standJsonResp(new EndpointResponse("route get fail"), INTERNAL_SERVER_ERROR));
@@ -63,8 +63,7 @@ public enum Services implements BiConsumer<FullHttpRequest, Channel> {
     route_put {
         @Override
         public void accept(FullHttpRequest request, Channel channel) {
-
-            AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);
+            AsyncRedisClient client = Components.get(AsyncRedisClient.class);
             String s = JsonUtils.toJson(request.content());
             RouteDto dto = JSON.parseObject(s, RouteDto.class);
             log.info("route_put,数目:{}", dto.getRoutes().size());

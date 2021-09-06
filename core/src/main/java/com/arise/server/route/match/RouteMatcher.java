@@ -1,16 +1,15 @@
 package com.arise.server.route.match;
 
-import com.arise.internal.exception.ServiceNotFoundException;
-import com.arise.naming.registry.ServiceManager;
+import com.arise.base.config.Components;
+import com.arise.base.exception.ServiceNotFoundException;
+import com.arise.naming.ServiceManager;
 import com.arise.server.route.RouteBean;
+import com.arise.server.route.filter.Filter;
 import com.arise.server.route.filter.FilterContext;
-import com.arise.server.route.filter.SchedulableFilter;
 import com.arise.server.route.manager.RouteManager;
 import io.netty.channel.EventLoop;
 import io.netty.handler.codec.http.HttpRequest;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.List;
@@ -26,13 +25,11 @@ import static com.arise.server.route.manager.RestRouteTrie.PathPram;
  * @Description:
  * @Modified: By：
  */
-@Component
 public class RouteMatcher {
 
-    @Resource
-    private RouteManager routeManager;
+    private final RouteManager routeManager = Components.get(RouteManager.class);
 
-    public static List<SchedulableFilter<List<RouteBean>[], Object>> routeFilters;
+    public static List<Filter> routeFilters;
 
     public MatchRes match(EventLoop eventLoop, Map<String, Object> attr, HttpRequest request) {
         URI requestURI = (URI) attr.computeIfAbsent(RequestURI,
@@ -43,7 +40,7 @@ public class RouteMatcher {
         }
         //路由过滤
         List<RouteBean>[] pointer = new List[]{matched};
-        new FilterContext<>(pointer, routeFilters, eventLoop, attr).handleNext();
+        new FilterContext(pointer, routeFilters, eventLoop, attr).handleNext();
         if (pointer[0] != null && pointer[0].size() > 0) {
             //默认取第一个
             RouteBean route = pointer[0].get(0);

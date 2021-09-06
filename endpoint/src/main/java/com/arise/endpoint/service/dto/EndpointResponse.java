@@ -1,15 +1,15 @@
 package com.arise.endpoint.service.dto;
 
 import com.alibaba.fastjson.JSON;
-import com.arise.internal.util.JsonUtils;
+import com.arise.endpoint.JsonUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import static com.alibaba.nacos.common.constant.HttpHeaderConsts.CONTENT_LENGTH;
-import static com.alibaba.nacos.common.constant.HttpHeaderConsts.CONTENT_TYPE;
+import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
+import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**

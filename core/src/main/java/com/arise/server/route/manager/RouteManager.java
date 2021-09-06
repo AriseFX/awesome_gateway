@@ -1,11 +1,10 @@
 package com.arise.server.route.manager;
 
-import com.arise.config.ServerProperties;
+
+import com.arise.base.config.Components;
 import com.arise.redis.AsyncRedisClient;
 import com.arise.server.route.RouteBean;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
@@ -18,16 +17,13 @@ import java.util.Map;
  * @Modified: By：
  */
 @Slf4j
-@Component
-@DependsOn(value = "redisClient")
 public class RouteManager {
 
     private final RestRouteTrie tree = new RestRouteTrie();
 
-    @PostConstruct
-    public void init() {
-        AsyncRedisClient client = ServerProperties.getBean(AsyncRedisClient.class);
-        client.asyncExec( (e, throwable) ->
+    public RouteManager() {
+        AsyncRedisClient client = Components.get(AsyncRedisClient.class);
+        client.asyncExec((e, throwable) ->
                 e.hgetall("ROUTE")
                         .whenComplete((v, ex) -> {
                                     if (ex != null) {

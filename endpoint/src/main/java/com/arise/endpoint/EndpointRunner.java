@@ -1,6 +1,7 @@
 package com.arise.endpoint;
 
-import com.arise.config.ServerProperties;
+import com.arise.base.config.GatewayConfig;
+import com.arise.base.config.ServerProperties;
 import com.arise.os.OSHelper;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
@@ -11,11 +12,6 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
 
 
 /**
@@ -25,15 +21,10 @@ import javax.annotation.Resource;
  * @Modified: By：
  */
 @Slf4j
-@Component
-@Order(1)
-public class EndpointRunner implements CommandLineRunner {
-
-    @Resource
-    private ServerProperties serverProperties;
+public class EndpointRunner implements Runnable {
 
     @Override
-    public void run(String... args) {
+    public void run() {
         EventLoopGroup bossGroup = OSHelper.eventLoopGroup(1);
         EventLoopGroup workerGroup = OSHelper.eventLoopGroup(1);
         try {
@@ -50,10 +41,17 @@ public class EndpointRunner implements CommandLineRunner {
                         }
                     }).option(ChannelOption.SO_BACKLOG, 128)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
-            ServerProperties.Endpoint endpoint = serverProperties.getEndpoint();
+            GatewayConfig.Endpoint endpoint = ServerProperties.gatewayConfig.getEndpoint();
             b.bind(endpoint.getAddress(), endpoint.getPort()).sync()
-                    .addListener(e ->
-                            log.info("Endpoint startup complete！[{}:{}]", endpoint.getAddress(), endpoint.getPort()))
+                    .addListener(e -> {
+                        if (e.isSuccess()) {
+                            log.info("Endpoint startup complete！[{}:{}]", endpoint.getAddress(),
+                                    endpoint.getPort());
+                        } else {
+                            log.info("Endpoint startup fail!");
+                        }
+
+                    })
                     .channel().closeFuture()
                     .addListener(e ->
                             log.info("Endpoint Stopped！"));

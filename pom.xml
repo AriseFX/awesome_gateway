@@ -10,9 +10,15 @@
     <modules>
         <module>core</module>
         <module>filter</module>
-        <module>app</module>
+        <module>bootstrap</module>
         <module>endpoint</module>
-        <module>mq</module>
+        <module>queue</module>
+        <module>base</module>
+        <module>spi</module>
+        <module>redis</module>
+        <module>naming-nacos</module>
+        <module>naming</module>
+        <module>rabbitmq</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -47,7 +53,7 @@
             </dependency>
             <dependency>
                 <groupId>com.arise</groupId>
-                <artifactId>gateway-mq</artifactId>
+                <artifactId>gateway-disk-queue</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -57,23 +63,38 @@
             </dependency>
             <dependency>
                 <groupId>com.arise</groupId>
+                <artifactId>gateway-base</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.arise</groupId>
+                <artifactId>gateway-redis</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.arise</groupId>
+                <artifactId>gateway-spi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.arise</groupId>
                 <artifactId>awesome_gateway</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-configuration-processor</artifactId>
-                <version>2.4.1</version>
+                <groupId>com.arise</groupId>
+                <artifactId>gateway-naming</artifactId>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter</artifactId>
-                <version>2.4.1</version>
+                <groupId>com.arise</groupId>
+                <artifactId>gateway-naming-nacos</artifactId>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-log4j2</artifactId>
-                <version>2.4.1</version>
+                <groupId>com.arise</groupId>
+                <artifactId>gateway-rabbitmq</artifactId>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
@@ -127,14 +148,39 @@
                 <version>2.0.12.Final</version>
             </dependency>
             <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-logging</artifactId>
-                <version>2.4.1</version>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>1.17</version>
             </dependency>
             <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-amqp</artifactId>
-                <version>2.4.1</version>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.7.7</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>1.1.7</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-access</artifactId>
+                <version>1.1.7</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>1.1.7</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.9</version>
+            </dependency>
+            <dependency>
+                <groupId>com.rabbitmq</groupId>
+                <artifactId>amqp-client</artifactId>
+                <version>5.13.1</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

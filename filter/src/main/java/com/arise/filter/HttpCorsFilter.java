@@ -1,47 +1,60 @@
 package com.arise.filter;
 
-import com.arise.server.route.filter.ForwardFilter;
+import com.arise.server.route.filter.Filter;
 import com.arise.server.route.filter.FilterContext;
+import com.arise.server.route.filter.Lifecycle;
+import com.arise.spi.Join;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.concurrent.FutureListener;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @Author: wy
  * @Date: Created in 16:17 2021-06-29
- * @Description: 处理跨域
+ * @Description: 处理跨域/生成追踪id
  * @Modified: By：
  */
-@Component
-public class HttpCorsFilter extends ForwardFilter {
+@Join
+public class HttpCorsFilter implements Filter {
 
     @Override
-    public int getOrder() {
+    public int order() {
         return 0;
     }
 
     @Override
-    public void doFilter(FilterContext<List<HttpObject>, List<HttpObject>> ctx) {
-        HttpRequest request = (HttpRequest) (ctx.getPram().get(0));
-        if (request.headers().get("Origin") != null) {
-            ctx.getPromise().addListener((FutureListener<List<HttpObject>>) future -> {
-                if (future.isSuccess()) {
-                    List<HttpObject> object = future.get();
-                    HttpResponse response = (HttpResponse) object.get(0);
-                    HttpHeaders headers = response.headers();
+    public Lifecycle lifecycle() {
+        return Lifecycle.Forward;
+    }
+
+    @Override
+    public void doFilter(FilterContext ctx) {
+        //生成唯一追踪id
+        String traceId = UUID.randomUUID().toString();
+        List<HttpObject> p = (List<HttpObject>) ctx.getPram();
+        HttpRequest request = (HttpRequest) (p.get(0));
+        request.headers().set("x-trace-id", traceId);
+        ctx.getPromise().addListener((FutureListener<Object>) future -> {
+            if (future.isSuccess()) {
+                List<HttpObject> object = (List<HttpObject>) future.get();
+                HttpHeaders headers = ((HttpResponse) object.get(0)).headers();
+                ctx.attr().put("x-trace-id", traceId);
+                headers.set("x-trace-id", traceId);
+                if (request.headers().get("Origin") != null) {
                     headers.set("Access-Control-Allow-Origin", "*");
                     headers.set("Access-Control-Allow-Methods", "*");
                     headers.set("Access-Control-Max-Age", "3600");
                     headers.set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Connection, User-Agent, Cookie");
                     headers.set("Access-Control-Allow-Credentials", "true");
-                    ctx.handleNext();
                 }
-            });
-        }
+                ctx.handleNext();
+            }
+        });
+
     }
 }

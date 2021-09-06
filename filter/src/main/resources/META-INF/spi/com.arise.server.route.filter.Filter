@@ -1,0 +1,3 @@
+cors=com.arise.filter.HttpCorsFilter
+token=com.arise.filter.UserTokenFilter
+origin=com.arise.filter.OriginFilter

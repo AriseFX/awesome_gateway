@@ -4,7 +4,6 @@ import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.Promise;
 import lombok.Getter;
 
-import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -12,32 +11,32 @@ import java.util.Map;
 /**
  * @Author: wy
  * @Date: Created in 19:05 2021-06-28
- * @Description: 能够跳转下一个filter，能够
+ * @Description: 能够跳转下一个filter
  * @Modified: By：
  */
-public class FilterContext<P1, P2> {
+public class FilterContext {
 
-    private final Iterator<SchedulableFilter<P1, P2>> iterator;
+    private final Iterator<Filter> iterator;
     @Getter
-    private final Promise<P2> promise;
+    private final Promise<?> promise;
     @Getter
     private final Promise<Object> callback;
     @Getter
     private final EventLoop eventLoop;
     @Getter
-    private final P1 pram;
+    private final Object pram;
 
     private final Map<String, Object> attr;
 
-    public FilterContext(P1 pram, List<SchedulableFilter<P1, P2>> filters, EventLoop eventLoop, Map<String, Object> attr) {
+    public FilterContext(Object pram, List<Filter> filters, EventLoop eventLoop, Map<String, Object> attr) {
         this(pram, filters, eventLoop, attr, null);
     }
 
-    public FilterContext(P1 pram, List<SchedulableFilter<P1, P2>> filters, EventLoop eventLoop, Map<String, Object> attr, @Nullable Promise<Object> callback) {
+    public FilterContext(Object pram, List<Filter> filters, EventLoop eventLoop, Map<String, Object> attr, Promise<Object> callback) {
         this(pram, null, filters, eventLoop, attr, callback);
     }
 
-    public FilterContext(P1 pram, @Nullable Promise<P2> promise, List<SchedulableFilter<P1, P2>> filters, EventLoop eventLoop, Map<String, Object> attr, Promise<Object> callback) {
+    public FilterContext(Object pram, Promise<?> promise, List<Filter> filters, EventLoop eventLoop, Map<String, Object> attr, Promise<Object> callback) {
         this.promise = promise;
         this.callback = callback;
         this.pram = pram;

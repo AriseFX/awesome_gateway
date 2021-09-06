@@ -1,7 +1,8 @@
 package com.arise.server.route.pool;
 
+import com.arise.base.config.GatewayConfig;
 import com.arise.os.OSHelper;
-import com.arise.server.logging.LogStorageHandler;
+import com.arise.server.route.logging.LogStorageHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.pool.AbstractChannelPoolHandler;
@@ -32,40 +33,46 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class AsyncChannelPool {
 
-    private static final ConcurrentHashMap<String, ChannelPool> pools = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ChannelPool> pools = new ConcurrentHashMap<>();
     @Setter
-    private static int connectTimeout;
+    private int connectTimeout;
     @Setter
-    private static int maxConnections;
+    private int maxConnections;
     @Setter
-    private static int maxPendingAcquires;
+    private int maxPendingAcquires;
 
-    private static final AttributeKey<Boolean> added = AttributeKey.valueOf("added");
+    private final AttributeKey<Boolean> added = AttributeKey.valueOf("added");
+
+    public AsyncChannelPool(GatewayConfig.Pool pool) {
+        this.connectTimeout = pool.getTimeout();
+        this.maxConnections = pool.getMaxConnections();
+        this.maxPendingAcquires = pool.getMaxPendingAcquires();
+    }
 
     /**
      * 异步获取channel
      */
-    public static void acquireChannel(boolean ssl, String host, int port, EventLoop eventLoop,
-                                      Promise<Channel> promise) {
-        ChannelPool channelPool = pools.computeIfAbsent(host + ":" + port,
+    public void acquireChannel(boolean ssl, String host, int port, EventLoop eventLoop,
+                               Promise<Channel> promise) {
+        ChannelPool channelPool = pools.computeIfAbsent(host + eventLoop.hashCode() + port,
                 k ->
                         newFixedChannelPool(ssl, host, port, eventLoop)
         );
         channelPool.acquire(promise);
     }
 
-    public static void releaseChannel(SocketChannel channel) {
+    public void releaseChannel(SocketChannel channel) {
         log.debug("channel pool:{}", "releaseChannel");
         InetSocketAddress address = channel.remoteAddress();
         String host = address.getHostString();
         int port = address.getPort();
-        ChannelPool channelPool = pools.get(host + ":" + port);
+        ChannelPool channelPool = pools.get(host + channel.eventLoop().hashCode() + port);
         if (channelPool != null) {
             channelPool.release(channel);
         }
     }
 
-    private static ChannelPool newFixedChannelPool(boolean ssl, String host, int port, EventLoop eventLoop) {
+    private ChannelPool newFixedChannelPool(boolean ssl, String host, int port, EventLoop eventLoop) {
 
         Bootstrap b = new Bootstrap().group(eventLoop)
                 .channel(OSHelper.channelType())
@@ -109,7 +116,7 @@ public class AsyncChannelPool {
                         }
                         pipeline.addLast("reqEncoder", new HttpRequestEncoder());
                         pipeline.addLast("respDecoder", new HttpResponseDecoder());
-//                        pipeline.addLast("log", new LogStorageHandler());
+                        pipeline.addLast("log", new LogStorageHandler());
                     }
                 }, maxConnections, maxPendingAcquires);
     }

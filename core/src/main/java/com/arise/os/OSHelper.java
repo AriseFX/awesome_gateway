@@ -13,6 +13,10 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import net.openhft.chronicle.core.OS;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @Author: wy
@@ -48,12 +52,22 @@ public class OSHelper {
     }
 
     public static EventLoopGroup eventLoopGroup(int num) {
+
         if (OS.isLinux()) {
-            return new EpollEventLoopGroup(num);
+            return new EpollEventLoopGroup(num, factory);
         } else if (OS.isMacOSX()) {
-            return new KQueueEventLoopGroup(num);
+            return new KQueueEventLoopGroup(num, factory);
         } else {
-            return new NioEventLoopGroup(num);
+            return new NioEventLoopGroup(num, factory);
         }
     }
+
+    public static ThreadFactory factory = new ThreadFactory() {
+        private final AtomicInteger counter = new AtomicInteger(0);
+
+        @Override
+        public Thread newThread(@NotNull Runnable r) {
+            return new Thread(r, "awe_" + counter.getAndIncrement());
+        }
+    };
 }

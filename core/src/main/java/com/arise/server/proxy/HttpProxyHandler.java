@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 
-import static com.arise.server.GatewayMessage.Established;
+import static com.arise.server.route.GatewayMessage.Established;
 
 /**
  * @Author: wy
@@ -40,7 +40,7 @@ public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
             request = (HttpRequest) msg;
             String uri = request.uri();
             if (uri.charAt(0) == '/') {
-                //api路由
+                //反向代理
                 ChannelPipeline pipeline = ctx.pipeline();
                 pipeline.remove(this);
                 ApiRouteHandler apiRouteHandler = new ApiRouteHandler();
@@ -49,7 +49,7 @@ public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
                 log.debug("HttpProxyHandler  msg:{}", ((HttpRequest) msg).uri());
                 apiRouteHandler.channelRead(ctx, msg);
             } else {
-                //http代理
+                //正向代理
                 request = (HttpRequest) msg;
                 String hostAndPortStr = HttpMethod.CONNECT.equals(request.method()) ? uri : request.headers().get("Host");
                 String[] hostPortArray = hostAndPortStr.split(":");
