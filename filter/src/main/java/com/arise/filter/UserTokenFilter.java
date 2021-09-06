@@ -61,7 +61,7 @@ public class UserTokenFilter implements Filter {
         attr.put(OriginCode, originCode[0]);
         attr.put(HttpQueryParam, queryString);
         attr.put(RequestURI, uri);
-        if (auth != null && auth.length() > 0) {
+        if (auth != null && auth.length() > 0 && !auth.startsWith("Basic")) {
             RandomToken wrapToken = parseShortToken(auth);
             if (wrapToken != null) {
                 //解密出用户名
