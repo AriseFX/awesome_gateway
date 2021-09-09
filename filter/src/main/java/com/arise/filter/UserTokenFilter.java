@@ -86,7 +86,7 @@ public class UserTokenFilter implements Filter {
                                     if (originCode[0] == null) {
                                         originCode[0] = token.getOriginCode();
                                     }
-                                    if (originCode[0] == null) {
+                                    if (originCode[0] == null && queryString != null) {
                                         originCode[0] = queryString.get(OriginCode);
                                     }
                                 }
@@ -100,7 +100,7 @@ public class UserTokenFilter implements Filter {
                 return;
             }
         }
-        if (originCode[0] == null) {
+        if (originCode[0] == null && queryString != null) {
             originCode[0] = queryString.get(OriginCode);
             attr.put(OriginCode, originCode[0]);
             headers.set("x-originCode", originCode[0]);
