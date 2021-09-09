@@ -50,7 +50,6 @@ public class EndpointRunner implements Runnable {
                         } else {
                             log.info("Endpoint startup fail!");
                         }
-
                     })
                     .channel().closeFuture()
                     .addListener(e ->

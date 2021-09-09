@@ -24,4 +24,5 @@ public interface Constant {
 
     String Username = "Username";
 
+    String Header = "Header";
 }

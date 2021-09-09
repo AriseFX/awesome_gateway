@@ -6,12 +6,14 @@ import com.arise.endpoint.JsonUtils;
 import com.arise.endpoint.service.dto.EndpointResponse;
 import com.arise.endpoint.service.dto.RouteDto;
 import com.arise.redis.AsyncRedisClient;
+import com.arise.server.route.PluginBean;
 import com.arise.server.route.RouteBean;
 import com.arise.server.route.manager.RouteManager;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.FullHttpRequest;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;

@@ -3,6 +3,7 @@ package com.arise.server.route;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -24,4 +25,7 @@ public class RouteBean implements Serializable {
     private String servicePath;
 
     private Map<String, String> metadata;
+
+    private List<PluginBean> plugins;
+
 }

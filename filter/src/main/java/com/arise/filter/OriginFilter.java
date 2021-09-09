@@ -1,16 +1,22 @@
 package com.arise.filter;
 
+import com.arise.server.route.PluginBean;
 import com.arise.server.route.RouteBean;
 import com.arise.server.route.filter.Filter;
 import com.arise.server.route.filter.FilterContext;
 import com.arise.server.route.filter.Lifecycle;
 import com.arise.spi.Join;
+import io.netty.handler.codec.http.HttpHeaders;
+import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.arise.base.config.Constant.*;
+import static com.arise.base.config.Constant.Header;
+import static com.arise.base.config.Constant.OriginCode;
 import static com.arise.server.route.filter.Lifecycle.Route;
 
 /**
@@ -57,6 +63,29 @@ public class OriginFilter implements Filter {
             } else {
                 pram[0] = currentRoute;
             }
+        }
+        //插件,TODO 为了适配旧系统，后面要去掉！
+        if (pram[0] != null && pram[0].size() > 0) {
+            HttpHeaders headers = (HttpHeaders) attr.get(Header);
+            pram[0] = pram[0].stream().filter(x -> {
+                List<PluginBean> plugins = x.getPlugins();
+                if (plugins == null || plugins.size() == 0) {
+                    return true;
+                }
+                return plugins.stream().allMatch(e -> {
+                    EvaluationContext context = new StandardEvaluationContext();
+                    //设置变量值
+                    headers.forEach(entry -> {
+                                context.setVariable(entry.getKey() != null ? entry.getKey().toUpperCase() : "",
+                                        entry.getValue() != null ? entry.getValue().toUpperCase() : "");
+                            }
+                    );
+                    //执行脚本
+                    return new SpelExpressionParser()
+                            .parseExpression(e.getScript())
+                            .getValue(context, Boolean.class);
+                });
+            }).collect(Collectors.toList());
         }
         //匹配目标服务
        /* Object service = attr.get(TargetService);

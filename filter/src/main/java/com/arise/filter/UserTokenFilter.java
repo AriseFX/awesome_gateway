@@ -61,6 +61,7 @@ public class UserTokenFilter implements Filter {
         attr.put(OriginCode, originCode[0]);
         attr.put(HttpQueryParam, queryString);
         attr.put(RequestURI, uri);
+        attr.put(Header, headers);
         if (auth != null && auth.length() > 0 && !auth.startsWith("Basic")) {
             RandomToken wrapToken = parseShortToken(auth);
             if (wrapToken != null) {
