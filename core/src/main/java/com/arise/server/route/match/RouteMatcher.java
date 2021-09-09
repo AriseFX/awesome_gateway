@@ -9,6 +9,7 @@ import com.arise.server.route.filter.FilterContext;
 import com.arise.server.route.manager.RouteManager;
 import io.netty.channel.EventLoop;
 import io.netty.handler.codec.http.HttpRequest;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -25,6 +26,7 @@ import static com.arise.server.route.manager.RestRouteTrie.PathPram;
  * @Description:
  * @Modified: By：
  */
+@Slf4j
 public class RouteMatcher {
 
     private final RouteManager routeManager = Components.get(RouteManager.class);
@@ -44,6 +46,7 @@ public class RouteMatcher {
         if (pointer[0] != null && pointer[0].size() > 0) {
             //默认取第一个
             RouteBean route = pointer[0].get(0);
+            log.info("路由网关路由:{},后端地址:{},后端路由:{}", route.getGatewayPath(), route.getService(), route.getServicePath());
             String remotePath = route.getServicePath();
             Object p = attr.get(PathPram);
             if (p != null) {
