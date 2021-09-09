@@ -77,7 +77,7 @@ public class AweLogService {
         consumer.start();
     }
 
-    private static final byte[] heapBuffer = new byte[20480];
+    private static final byte[] heapBuffer = new byte[20971520];
 
     /**
      * 转换为运维中心需要的日志格式

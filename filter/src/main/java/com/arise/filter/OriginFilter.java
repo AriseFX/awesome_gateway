@@ -7,6 +7,7 @@ import com.arise.server.route.filter.FilterContext;
 import com.arise.server.route.filter.Lifecycle;
 import com.arise.spi.Join;
 import io.netty.handler.codec.http.HttpHeaders;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
@@ -25,6 +26,7 @@ import static com.arise.server.route.filter.Lifecycle.Route;
  * @Description: 用户域/targetService过滤
  * @Modified: By：
  */
+@Slf4j
 @Join
 public class OriginFilter implements Filter {
 
@@ -80,6 +82,7 @@ public class OriginFilter implements Filter {
                                         entry.getValue() != null ? entry.getValue().toUpperCase() : "");
                             }
                     );
+                    log.info("网关路由[{}]开始执行插件逻辑:{}", x.getGatewayPath(), e.getName());
                     //执行脚本
                     return new SpelExpressionParser()
                             .parseExpression(e.getScript())

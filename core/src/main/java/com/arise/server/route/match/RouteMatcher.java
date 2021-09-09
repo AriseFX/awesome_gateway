@@ -46,7 +46,7 @@ public class RouteMatcher {
         if (pointer[0] != null && pointer[0].size() > 0) {
             //默认取第一个
             RouteBean route = pointer[0].get(0);
-            log.info("路由网关路由:{},后端地址:{},后端路由:{}", route.getGatewayPath(), route.getService(), route.getServicePath());
+            log.info("网关路由:{},后端地址:{},后端路由:{}", route.getGatewayPath(), route.getService(), route.getServicePath());
             String remotePath = route.getServicePath();
             Object p = attr.get(PathPram);
             if (p != null) {
