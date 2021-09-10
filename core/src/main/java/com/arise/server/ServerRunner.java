@@ -46,8 +46,8 @@ public class ServerRunner implements Runnable {
                                            +------------+
 
          */
-        EventLoopGroup boss = OSHelper.eventLoopGroup(1);
-        EventLoopGroup worker = OSHelper.eventLoopGroup(0);
+        EventLoopGroup boss = OSHelper.eventLoopGroup(1, "gateway-boss");
+        EventLoopGroup worker = OSHelper.eventLoopGroup(0, "gateway-worker");
         ServerBootstrap b = new ServerBootstrap();
         b.option(ChannelOption.SO_BACKLOG, 4096);
         b.group(boss, worker)

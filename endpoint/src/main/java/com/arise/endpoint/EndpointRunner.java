@@ -25,8 +25,8 @@ public class EndpointRunner implements Runnable {
 
     @Override
     public void run() {
-        EventLoopGroup bossGroup = OSHelper.eventLoopGroup(1);
-        EventLoopGroup workerGroup = OSHelper.eventLoopGroup(1);
+        EventLoopGroup bossGroup = OSHelper.eventLoopGroup(1, "endpoint-boss");
+        EventLoopGroup workerGroup = OSHelper.eventLoopGroup(1, "endpoint-worker");
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)

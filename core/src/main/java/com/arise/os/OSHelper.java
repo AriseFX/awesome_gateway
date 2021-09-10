@@ -51,23 +51,27 @@ public class OSHelper {
         return acceptChannelType;
     }
 
-    public static EventLoopGroup eventLoopGroup(int num) {
+    public static EventLoopGroup eventLoopGroup(int num, String name) {
 
         if (OS.isLinux()) {
-            return new EpollEventLoopGroup(num, factory);
+            return new EpollEventLoopGroup(num, newFactory(name));
         } else if (OS.isMacOSX()) {
-            return new KQueueEventLoopGroup(num, factory);
+            return new KQueueEventLoopGroup(num, newFactory(name));
         } else {
-            return new NioEventLoopGroup(num, factory);
+            return new NioEventLoopGroup(num, newFactory(name));
         }
     }
 
-    public static ThreadFactory factory = new ThreadFactory() {
-        private final AtomicInteger counter = new AtomicInteger(0);
+    public static ThreadFactory newFactory(String name) {
 
-        @Override
-        public Thread newThread(@NotNull Runnable r) {
-            return new Thread(r, "awe_" + counter.getAndIncrement());
-        }
-    };
+        return new ThreadFactory() {
+            private final AtomicInteger counter = new AtomicInteger(0);
+
+            @Override
+            public Thread newThread(@NotNull Runnable r) {
+                return new Thread(r, name + "-" + counter.getAndIncrement());
+            }
+        };
+    }
+
 }
