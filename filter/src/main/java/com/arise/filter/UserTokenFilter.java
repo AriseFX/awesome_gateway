@@ -90,8 +90,10 @@ public class UserTokenFilter implements Filter {
                                         originCode[0] = queryString.get(OriginCode);
                                     }
                                 }
-                                attr.put(OriginCode, originCode[0]);
-                                headers.set("x-originCode", originCode[0]);
+                                if (originCode[0] != null) {
+                                    attr.put(OriginCode, originCode[0]);
+                                    headers.set("x-originCode", originCode[0]);
+                                }
                                 //获取token
                                 success(ctx);
                             });
@@ -102,8 +104,10 @@ public class UserTokenFilter implements Filter {
         }
         if (originCode[0] == null && queryString != null) {
             originCode[0] = queryString.get(OriginCode);
-            attr.put(OriginCode, originCode[0]);
-            headers.set("x-originCode", originCode[0]);
+            if (originCode[0] != null) {
+                attr.put(OriginCode, originCode[0]);
+                headers.set("x-originCode", originCode[0]);
+            }
         }
         success(ctx);
     }
