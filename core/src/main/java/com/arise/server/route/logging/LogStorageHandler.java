@@ -1,10 +1,11 @@
 package com.arise.server.route.logging;
 
+import com.arise.base.config.GatewayConfig;
+import com.arise.base.config.ServerProperties;
 import com.arise.server.route.ApiRouteHandler;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.DefaultHttpRequest;
@@ -14,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.function.Function;
 
 import static com.arise.base.config.Constant.*;
 
@@ -30,14 +32,36 @@ import static com.arise.base.config.Constant.*;
 @Slf4j
 public class LogStorageHandler extends ChannelDuplexHandler {
 
-    private final ApiLog apiLog;
+    private static final GatewayConfig.Logging config = ServerProperties.gatewayConfig.getLogging();
+
+    private static final Function<String, Boolean> pathFilter;
+
+    private static final Function<HttpHeaders, Boolean> reqFilter;
+
+    private static final Function<HttpHeaders, Boolean> respFilter;
+
+    static {
+        pathFilter = x -> config.getExcludePath().contains(x);
+
+        reqFilter = x -> config.getReqHeader().entrySet()
+                .stream().anyMatch(f ->
+                        f.getValue().contains(x.get(f.getKey())));
+        respFilter = x -> config.getRespHeader().entrySet()
+                .stream().anyMatch(f ->
+                        f.getValue().contains(x.get(f.getKey())));
+    }
+
+    private HttpHeaders reqHeader;
+
+    private HttpHeaders respHeader;
 
     private boolean skip = false;
+
+    private final ApiLog apiLog;
 
     public LogStorageHandler() {
         this.apiLog = new ApiLog();
     }
-
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
@@ -56,6 +80,8 @@ public class LogStorageHandler extends ChannelDuplexHandler {
             info.setQueryPram((Map<String, String>) attr.get("httpQueryParam"));
             info.setUsername((String) attr.get(Username));
             AweLogService.pushLog(apiLog);
+        } else {
+            apiLog.free();
         }
     }
 
@@ -72,10 +98,10 @@ public class LogStorageHandler extends ChannelDuplexHandler {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof DefaultHttpResponse) {
-            if (checkAndHandle(((DefaultHttpResponse) msg).headers(), ctx.channel().pipeline())) {
-                apiLog.getInfo().setResp((DefaultHttpResponse) msg);
-            }
-        } else if (msg instanceof DefaultHttpContent && !skip) {
+            DefaultHttpResponse response = (DefaultHttpResponse) msg;
+            respHeader = response.headers();
+            apiLog.getInfo().setResp(response);
+        } else if (msg instanceof DefaultHttpContent && !skip && respFilter.apply(respHeader)) {
             ByteBuf msg_buf = ((DefaultHttpContent) msg).content().duplicate();
             ByteBuf buf = apiLog.getBody_resp();
             if (buf == null) {
@@ -94,10 +120,17 @@ public class LogStorageHandler extends ChannelDuplexHandler {
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         if (msg instanceof DefaultHttpRequest) {
-            if (checkAndHandle(((DefaultHttpRequest) msg).headers(), ctx.channel().pipeline())) {
-                apiLog.getInfo().setReq((DefaultHttpRequest) msg);
+            DefaultHttpRequest request = (DefaultHttpRequest) msg;
+            URI uri = (URI) ctx.channel().attr(ApiRouteHandler.Attr).get().get(RequestURI);
+            if (pathFilter.apply(uri.getPath())) {
+                skip = true;
+                ctx.pipeline().remove(this);
+                super.write(ctx, msg, promise);
+                return;
             }
-        } else if (msg instanceof DefaultHttpContent && !skip) {
+            reqHeader = request.headers();
+            apiLog.getInfo().setReq(request);
+        } else if (msg instanceof DefaultHttpContent && !skip && reqFilter.apply(reqHeader)) {
             ByteBuf msg_buf = ((DefaultHttpContent) msg).content().duplicate();
             ByteBuf buf = apiLog.getBody_req();
             if (buf == null) {
@@ -108,18 +141,5 @@ public class LogStorageHandler extends ChannelDuplexHandler {
             }
         }
         super.write(ctx, msg, promise);
-    }
-
-    /**
-     * 排除非json日志
-     */
-    private boolean checkAndHandle(HttpHeaders headers, ChannelPipeline pipeline) {
-        String type = headers.get("Content-Type");
-        if (type != null && !type.contains("application/json")) {
-            skip = true;
-            pipeline.remove(this);
-            return false;
-        }
-        return true;
     }
 }

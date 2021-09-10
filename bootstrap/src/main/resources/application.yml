@@ -12,6 +12,10 @@ registry:
   namespace: 06b72914-e3e0-452c-bac6-9b22af6213cd
   serviceName: AsGateway
   networkInterface: eth0
+logging:
+  excludePath: [ "/selectLogByCondition" ]
+  reqHeader: { "Content-Type": [ "application/json","application/json;charset=utf-8","text/xml" ,"text/xml; charset=utf-8" ] }
+  respHeader: { "Content-Type": [ "application/json","application/json;charset=utf-8","text/xml","text/xml; charset=utf-8" ] }
 redis:
   uri: redis://XCwjj%40xcewell123@192.168.0.176:6379/2?timeout=10s
 rabbitmq:

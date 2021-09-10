@@ -1,6 +1,7 @@
 package com.arise.server.route.logging;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.arise.base.config.Components;
 import com.arise.rabbitmq.RabbitmqClient;
 import com.rabbitmq.client.Channel;
@@ -106,25 +107,41 @@ public class AweLogService {
             int len = body_req.readableBytes();
             body_req.getBytes(0, heapBuffer, 0, len);
             body_req.release();
-            entity.setRequestBody(JSON.parseObject(new String(heapBuffer, 0, len)));
+            String type = headers.get(HttpHeaderNames.CONTENT_TYPE);
+            //TODO抽取逻辑
+            if (type != null && type.contains("application/json")) {
+                entity.setRequestBody(JSON.parseObject(new String(heapBuffer, 0, len)));
+            } else if (type != null && type.contains("text/xml")) {
+                JSONObject json = new JSONObject();
+                json.put("data", new String(heapBuffer, 0, len));
+                entity.setRequestBody(json);
+            }
         }
         if (body_resp != null) {
             int len = body_resp.readableBytes();
-            String encoding = resp.headers().get(HttpHeaderNames.CONTENT_ENCODING);
+            HttpHeaders respHeader = resp.headers();
+            String encoding = respHeader.get(HttpHeaderNames.CONTENT_ENCODING);
+            String type = headers.get(HttpHeaderNames.CONTENT_TYPE);
             body_resp.getBytes(0, heapBuffer, 0, len);
             body_resp.release();
             String bodyStr;
-            if ("gzip".equals(encoding)) {
+            if (encoding != null && encoding.contains("gzip")) {
                 bodyStr = unCompressGzip(heapBuffer, len);
             } else {
                 bodyStr = new String(heapBuffer, 0, len);
             }
-            entity.setResponseBody(JSON.parseObject(bodyStr));
+            if (type != null && type.contains("application/json")) {
+                entity.setResponseBody(JSON.parseObject(bodyStr));
+            } else if (type != null && type.contains("text/xml")) {
+                JSONObject json = new JSONObject();
+                json.put("data", bodyStr);
+                entity.setResponseBody(json);
+            }
         }
         entity.setUsername(info.getUsername());
         entity.setPreTime(info.getPreTime());
         entity.setHandleTime(info.getHandleTime());
-        entity.setRequestParams(info.getQueryPram());//TODO 从attr中获取
+        entity.setRequestParams(info.getQueryPram());
         return entity;
     }
 

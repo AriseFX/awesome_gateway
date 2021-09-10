@@ -4,6 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+
 /**
  * @Author: wy
  * @Date: Created in 10:38 2020-12-25
@@ -28,8 +33,38 @@ public class GatewayConfig {
     private Rabbitmq rabbitmq;
     //endpint
     private Endpoint endpoint;
+    //logging
+    private Logging logging;
     //byte
     private int logFileSize;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Logging {
+        //排除
+        private Set<String> excludePath;
+        //只记录某些header的日志
+        private Map<String, Set<String>> reqHeader;
+        private Map<String, Set<String>> respHeader;
+
+        public void setReqHeader(Map<String, Set<String>> reqHeader) {
+            reqHeader.entrySet().forEach(e -> e.setValue(toTreeSet(e.getValue())));
+            this.reqHeader = reqHeader;
+        }
+
+        public void setRespHeader(Map<String, Set<String>> respHeader) {
+            respHeader.entrySet().forEach(e -> e.setValue(toTreeSet(e.getValue())));
+            this.respHeader = respHeader;
+        }
+
+        private TreeSet<String> toTreeSet(Set<String> in) {
+            return in.stream().collect(Collectors
+                    .toCollection(() ->
+                            new TreeSet<>(String.CASE_INSENSITIVE_ORDER)));
+        }
+    }
+
 
     @Data
     @NoArgsConstructor
