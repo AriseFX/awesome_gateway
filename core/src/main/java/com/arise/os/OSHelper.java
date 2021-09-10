@@ -54,11 +54,11 @@ public class OSHelper {
     public static EventLoopGroup eventLoopGroup(int num, String name) {
 
         if (OS.isLinux()) {
-            return new EpollEventLoopGroup(num, newFactory(name));
+            return new EpollEventLoopGroup(num, newFactory(name + "-epoll-"));
         } else if (OS.isMacOSX()) {
-            return new KQueueEventLoopGroup(num, newFactory(name));
+            return new KQueueEventLoopGroup(num, newFactory(name + "-kqueue-"));
         } else {
-            return new NioEventLoopGroup(num, newFactory(name));
+            return new NioEventLoopGroup(num, newFactory(name + "-nio-"));
         }
     }
 
