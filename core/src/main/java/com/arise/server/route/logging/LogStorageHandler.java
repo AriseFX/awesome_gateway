@@ -44,11 +44,22 @@ public class LogStorageHandler extends ChannelDuplexHandler {
         pathFilter = x -> config.getExcludePath().contains(x);
 
         reqFilter = x -> config.getReqHeader().entrySet()
-                .stream().anyMatch(f ->
-                        f.getValue().contains(x.get(f.getKey())));
+                .stream().anyMatch(f -> {
+                    String s = x.get(f.getKey());
+                    if (s == null) {
+                        return false;
+                    }
+                    return f.getValue().contains(s);
+                });
+
         respFilter = x -> config.getRespHeader().entrySet()
-                .stream().anyMatch(f ->
-                        f.getValue().contains(x.get(f.getKey())));
+                .stream().anyMatch(f -> {
+                    String s = x.get(f.getKey());
+                    if (s == null) {
+                        return false;
+                    }
+                    return f.getValue().contains(s);
+                });
     }
 
     private HttpHeaders reqHeader;

@@ -1,4 +1,4 @@
-port: 1723
+port: 8099
 address: 0.0.0.0
 storageDir: ./data
 logFileSize: 209715200
