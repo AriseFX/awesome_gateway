@@ -9,16 +9,15 @@ import com.arise.server.route.filter.FilterContext;
 import com.arise.server.route.manager.RouteManager;
 import io.netty.channel.EventLoop;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.util.collection.IntObjectHashMap;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 
-import static com.arise.base.config.Constant.*;
-import static com.arise.server.route.manager.RestRouteTrie.PathPram;
+import static com.arise.base.config.IntMapConstant.*;
 
 /**
  * @Author: wy
@@ -33,9 +32,8 @@ public class RouteMatcher {
 
     public static List<Filter> routeFilters;
 
-    public MatchRes match(EventLoop eventLoop, Map<String, Object> attr, HttpRequest request) {
-        URI requestURI = (URI) attr.computeIfAbsent(RequestURI,
-                URI::create);
+    public MatchRes match(EventLoop eventLoop, IntObjectHashMap<Object> attr, HttpRequest request) {
+        URI requestURI = (URI) attr.get(RequestURI);
         List<RouteBean> matched = routeManager.match(requestURI.getPath(), attr);
         if (matched.size() == 0) {
             return null;

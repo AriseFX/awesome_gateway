@@ -7,6 +7,7 @@ import com.arise.server.route.filter.FilterContext;
 import com.arise.server.route.filter.Lifecycle;
 import com.arise.spi.Join;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.util.collection.IntObjectHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -16,8 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.arise.base.config.Constant.Header;
-import static com.arise.base.config.Constant.OriginCode;
+import static com.arise.base.config.IntMapConstant.Header;
+import static com.arise.base.config.IntMapConstant.OriginCode;
 import static com.arise.server.route.filter.Lifecycle.Route;
 
 /**
@@ -44,7 +45,7 @@ public class OriginFilter implements Filter {
 
     @Override
     public void doFilter(FilterContext ctx) {
-        Map<String, Object> attr = ctx.attr();
+        IntObjectHashMap<Object> attr = ctx.attr();
         List<RouteBean>[] pram = (List<RouteBean>[]) ctx.getPram();
         Map<String, List<RouteBean>> group =
                 pram[0].stream().collect(Collectors.groupingBy(e -> {

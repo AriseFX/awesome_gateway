@@ -147,6 +147,7 @@ public class AweLogService {
         entity.setPreTime(info.getPreTime());
         entity.setHandleTime(info.getHandleTime());
         entity.setRequestParams(info.getQueryPram());
+        entity.setToken(info.getToken());
         return entity;
     }
 

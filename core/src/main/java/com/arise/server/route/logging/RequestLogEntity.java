@@ -43,4 +43,9 @@ public class RequestLogEntity implements Serializable {
      * 前置处理时间
      */
     private Long preTime;
+
+    /**
+     * 短令牌
+     */
+    private String token;
 }

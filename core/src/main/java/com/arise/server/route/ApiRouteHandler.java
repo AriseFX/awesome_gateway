@@ -13,6 +13,7 @@ import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.AttributeKey;
+import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
@@ -22,12 +23,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import static com.arise.base.config.Constant.*;
+import static com.arise.base.config.IntMapConstant.*;
 import static com.arise.server.route.GatewayMessage.*;
+
 /**
  * @Author: wy
  * @Date: Created in 12:51 2021-06-05
@@ -51,8 +51,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
     private Channel outbound;
 
-
-    public static AttributeKey<Map<String, Object>> Attr = AttributeKey.newInstance("attr");
+    public static AttributeKey<IntObjectHashMap<Object>> Attr = AttributeKey.newInstance("attr");
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
@@ -73,9 +72,9 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
         } else {
             contents.add((HttpObject) msg);
             if (msg instanceof LastHttpContent) {
-                Map<String, Object> attr = new HashMap<>(4);
+                IntObjectHashMap<Object> attr = new IntObjectHashMap<>(4);
                 attr.put(RequestURI, URI.create(request.uri()));
-                attr.put(Timestamp, System.currentTimeMillis());
+                attr.put(Timestamp, Long.valueOf(System.currentTimeMillis()));
                 //最后一个http 请求
                 log.debug("最后一个http content");
                 Promise<Object> p = ctx.executor().newPromise();
@@ -121,7 +120,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                         , respPromise, forwardFilters, eventLoop, attr, null).handleNext();
                                 outbound.attr(Attr).set(attr);
                                 contents.forEach(outbound::writeAndFlush);
-                                attr.put(WrittenTimestamp, System.currentTimeMillis());
+                                attr.put(WrittenTimestamp, Long.valueOf(System.currentTimeMillis()));
                             } else {
                                 Throwable cause = future2.cause();
                                 if (cause instanceof ConnectTimeoutException) {

@@ -64,11 +64,16 @@ public class ApiLog {
         /**
          * query
          */
-        private Map<String,String> queryPram;
+        private Map<String, String> queryPram;
 
         private DefaultHttpRequest req;
 
         private DefaultHttpResponse resp;
+
+        /**
+         * 短令牌
+         */
+        private String token;
     }
 
 }

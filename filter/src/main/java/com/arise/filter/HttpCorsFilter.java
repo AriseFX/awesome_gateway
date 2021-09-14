@@ -1,5 +1,6 @@
 package com.arise.filter;
 
+import com.arise.base.config.Headers;
 import com.arise.server.route.filter.Filter;
 import com.arise.server.route.filter.FilterContext;
 import com.arise.server.route.filter.Lifecycle;
@@ -12,6 +13,9 @@ import io.netty.util.concurrent.FutureListener;
 
 import java.util.List;
 import java.util.UUID;
+
+import static com.arise.base.config.IntMapConstant.Header;
+import static com.arise.base.config.IntMapConstant.TraceId;
 
 /**
  * @Author: wy
@@ -43,8 +47,8 @@ public class HttpCorsFilter implements Filter {
             if (future.isSuccess()) {
                 List<HttpObject> object = (List<HttpObject>) future.get();
                 HttpHeaders headers = ((HttpResponse) object.get(0)).headers();
-                ctx.attr().put("x-trace-id", traceId);
-                headers.set("x-trace-id", traceId);
+                ctx.attr().put(TraceId, traceId);
+                headers.set(Headers.TraceId, traceId);
                 if (request.headers().get("Origin") != null) {
                     headers.set("Access-Control-Allow-Origin", "*");
                     headers.set("Access-Control-Allow-Methods", "*");

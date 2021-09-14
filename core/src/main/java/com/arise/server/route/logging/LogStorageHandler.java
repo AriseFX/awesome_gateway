@@ -11,13 +11,14 @@ import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.util.collection.IntObjectHashMap;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.util.Map;
 import java.util.function.Function;
 
-import static com.arise.base.config.Constant.*;
+import static com.arise.base.config.IntMapConstant.*;
 
 /**
  * @Author: wy
@@ -79,17 +80,18 @@ public class LogStorageHandler extends ChannelDuplexHandler {
         ApiLog.Info info = apiLog.getInfo();
         //pushLog
         if (!skip && info.getResp() != null) {
-            Map<String, Object> attr = ctx.channel().attr(ApiRouteHandler.Attr).get();
+            IntObjectHashMap<Object> attr = ctx.channel().attr(ApiRouteHandler.Attr).get();
             URI uri = (URI) attr.get(RequestURI);
             Long timestamp = (Long) attr.get(Timestamp);
             Long writtenTimestamp = (Long) attr.get(WrittenTimestamp);
-            info.setLogId((String) attr.get("x-trace-id"));
+            info.setLogId((String) attr.get(TraceId));
             info.setPath(uri.getPath());
             info.setTimestamp(timestamp);
             info.setHandleTime(System.currentTimeMillis() - timestamp);
             info.setPreTime(writtenTimestamp - timestamp);
-            info.setQueryPram((Map<String, String>) attr.get("httpQueryParam"));
+            info.setQueryPram((Map<String, String>) attr.get(HttpQueryParam));
             info.setUsername((String) attr.get(Username));
+            info.setToken((String) attr.get(ShortToken));
             AweLogService.pushLog(apiLog);
         } else {
             apiLog.free();

@@ -1,6 +1,7 @@
 package com.arise.filter;
 
 import com.arise.base.config.Components;
+import com.arise.base.config.Headers;
 import com.arise.redis.AsyncRedisClient;
 import com.arise.server.route.filter.Filter;
 import com.arise.server.route.filter.FilterContext;
@@ -10,6 +11,7 @@ import com.xcewell.esb.common.Token;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.util.collection.IntObjectHashMap;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -19,7 +21,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
-import static com.arise.base.config.Constant.*;
+import static com.arise.base.config.IntMapConstant.*;
 import static com.arise.base.util.HttpUtils.parseQueryString;
 import static com.arise.server.route.filter.Lifecycle.PreRoute;
 
@@ -46,7 +48,7 @@ public class UserTokenFilter implements Filter {
 
     @Override
     public void doFilter(FilterContext ctx) {
-        Map<String, Object> attr = ctx.attr();
+        IntObjectHashMap<Object> attr = ctx.attr();
         List<HttpObject> p = (List<HttpObject>) ctx.getPram();
         HttpRequest request = (HttpRequest) p.get(0);
         HttpHeaders headers = request.headers();
@@ -55,9 +57,9 @@ public class UserTokenFilter implements Filter {
         Map<String, String> queryString = parseQueryString(uri.getQuery());
         //解析token
         String auth = headers.get("Authorization");
-        final String[] originCode = new String[]{headers.get(OriginCode)};
+        final String[] originCode = new String[]{headers.get(Headers.OriginCode)};
         //解析目标服务
-        attr.put(TargetService, headers.get(TargetService));
+        attr.put(TargetService, headers.get(Headers.TargetService));
         attr.put(OriginCode, originCode[0]);
         attr.put(HttpQueryParam, queryString);
         attr.put(RequestURI, uri);
@@ -82,12 +84,13 @@ public class UserTokenFilter implements Filter {
                                     Token token = (Token) v;
                                     String accessToken = token.getAccessToken();
                                     headers.set("Token", auth);//短令牌
+                                    attr.put(ShortToken, auth);
                                     headers.set("Authorization", "Bearer " + accessToken);//长令牌
                                     if (originCode[0] == null) {
                                         originCode[0] = token.getOriginCode();
                                     }
                                     if (originCode[0] == null && queryString != null) {
-                                        originCode[0] = queryString.get(OriginCode);
+                                        originCode[0] = queryString.get(Headers.OriginCode);
                                     }
                                 }
                                 if (originCode[0] != null) {
@@ -103,7 +106,7 @@ public class UserTokenFilter implements Filter {
             }
         }
         if (originCode[0] == null && queryString != null) {
-            originCode[0] = queryString.get(OriginCode);
+            originCode[0] = queryString.get(Headers.OriginCode);
             if (originCode[0] != null) {
                 attr.put(OriginCode, originCode[0]);
                 headers.set("x-originCode", originCode[0]);

@@ -1,11 +1,14 @@
 package com.arise.server.route.manager;
 
 import com.arise.server.route.RouteBean;
+import io.netty.util.collection.IntObjectHashMap;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
+
+import static com.arise.base.config.IntMapConstant.PathPram;
 
 /**
  * @Author: wy
@@ -20,7 +23,6 @@ import java.util.*;
  */
 public class RestRouteTrie {
 
-    public static final String PathPram = "PathPram";
     public static final String Standard_Wildcard = "{key}";
     public Node root;
 
@@ -39,7 +41,7 @@ public class RestRouteTrie {
     /**
      * 匹配数据
      */
-    public List<RouteBean> matching(String url, Map<String, Object> attr) {
+    public List<RouteBean> matching(String url, IntObjectHashMap<Object> attr) {
         Queue<String> pathPram = null;
         List<RouteBean> res = new ArrayList<>();
         HashMap<CharSequence, Node> child = root.child;

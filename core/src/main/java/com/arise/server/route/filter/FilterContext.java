@@ -1,12 +1,12 @@
 package com.arise.server.route.filter;
 
 import io.netty.channel.EventLoop;
+import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.concurrent.Promise;
 import lombok.Getter;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Author: wy
@@ -26,17 +26,17 @@ public class FilterContext {
     @Getter
     private final Object pram;
 
-    private final Map<String, Object> attr;
+    private final IntObjectHashMap<Object> attr;
 
-    public FilterContext(Object pram, List<Filter> filters, EventLoop eventLoop, Map<String, Object> attr) {
+    public FilterContext(Object pram, List<Filter> filters, EventLoop eventLoop, IntObjectHashMap<Object> attr) {
         this(pram, filters, eventLoop, attr, null);
     }
 
-    public FilterContext(Object pram, List<Filter> filters, EventLoop eventLoop, Map<String, Object> attr, Promise<Object> callback) {
+    public FilterContext(Object pram, List<Filter> filters, EventLoop eventLoop, IntObjectHashMap<Object> attr, Promise<Object> callback) {
         this(pram, null, filters, eventLoop, attr, callback);
     }
 
-    public FilterContext(Object pram, Promise<?> promise, List<Filter> filters, EventLoop eventLoop, Map<String, Object> attr, Promise<Object> callback) {
+    public FilterContext(Object pram, Promise<?> promise, List<Filter> filters, EventLoop eventLoop, IntObjectHashMap<Object> attr, Promise<Object> callback) {
         this.promise = promise;
         this.callback = callback;
         this.pram = pram;
@@ -45,7 +45,7 @@ public class FilterContext {
         this.iterator = filters.iterator();
     }
 
-    public Map<String, Object> attr() {
+    public IntObjectHashMap<Object> attr() {
         return this.attr;
     }
 

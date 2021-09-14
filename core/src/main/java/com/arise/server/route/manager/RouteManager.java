@@ -4,10 +4,10 @@ package com.arise.server.route.manager;
 import com.arise.base.config.Components;
 import com.arise.redis.AsyncRedisClient;
 import com.arise.server.route.RouteBean;
+import io.netty.util.collection.IntObjectHashMap;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Author: wy
@@ -36,7 +36,7 @@ public class RouteManager {
 
     }
 
-    public List<RouteBean> match(String url, Map<String, Object> attr) {
+    public List<RouteBean> match(String url, IntObjectHashMap<Object> attr) {
         return tree.matching(url, attr);
     }
 
