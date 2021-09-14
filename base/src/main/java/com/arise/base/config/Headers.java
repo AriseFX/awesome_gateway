@@ -9,6 +9,6 @@ package com.arise.base.config;
 public interface Headers {
 
     String TargetService = "TargetService";
-    String OriginCode = "x-OriginCode";
+    String OriginCode = "x-originCode";
     String TraceId = "x-trace-id";
 }
