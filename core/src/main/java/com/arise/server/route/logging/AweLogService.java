@@ -59,16 +59,21 @@ public class AweLogService {
         public void run() {
             while (true) {
                 ApiLog polled = logQueue.relaxedPoll();
-                if (polled == null) {
-                    LockSupport.parkNanos(pause);
-                } else {
-                    RequestLogEntity entity = map2Entity(polled);
-                    try {
-                        channel.basicPublish("", "gateway-queue", null,
-                                JSON.toJSONString(entity).getBytes());
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                try {
+                    if (polled == null) {
+                        LockSupport.parkNanos(pause);
+                    } else {
+                        RequestLogEntity entity = map2Entity(polled);
+                        try {
+                            channel.basicPublish("", "gateway-queue", null,
+                                    JSON.toJSONString(entity).getBytes());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
+                } catch (Exception e) {
+                    log.error("消费日志发生异常:{}", e.getMessage());
+                    e.printStackTrace();
                 }
             }
         }
@@ -110,8 +115,8 @@ public class AweLogService {
             String type = headers.get(HttpHeaderNames.CONTENT_TYPE);
             //TODO抽取逻辑
             if (type != null && type.contains("application/json")) {
-                entity.setRequestBody(JSON.parseObject(new String(heapBuffer, 0, len)));
-            } else if (type != null && type.contains("text/xml")) {
+                entity.setRequestBody(JSON.parse(new String(heapBuffer, 0, len)));
+            } else {
                 JSONObject json = new JSONObject();
                 json.put("data", new String(heapBuffer, 0, len));
                 entity.setRequestBody(json);
@@ -131,8 +136,8 @@ public class AweLogService {
                 bodyStr = new String(heapBuffer, 0, len);
             }
             if (type != null && type.contains("application/json")) {
-                entity.setResponseBody(JSON.parseObject(bodyStr));
-            } else if (type != null && type.contains("text/xml")) {
+                entity.setResponseBody(JSON.parse(bodyStr));
+            } else {
                 JSONObject json = new JSONObject();
                 json.put("data", bodyStr);
                 entity.setResponseBody(json);
