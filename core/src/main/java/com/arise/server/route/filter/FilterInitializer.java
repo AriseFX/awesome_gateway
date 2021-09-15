@@ -18,23 +18,22 @@ import static com.arise.server.route.filter.Lifecycle.*;
  * @Description:
  * @Modified: By：
  */
-@SuppressWarnings("all")
-public class FilterFactory {
+public class FilterInitializer {
 
     public static void init() {
         ExtensionLoader<Filter> extensionLoader = ExtensionLoader.getExtensionLoader(Filter.class);
         List<Filter> allJoin = extensionLoader.getAllJoin();
         Map<Lifecycle, List<Filter>> collect =
                 allJoin.stream().collect(Collectors.groupingBy(Filter::lifecycle));
-        ApiRouteHandler.preRouteFilters =
-                sort(collect.getOrDefault(PreRoute, Collections.emptyList()));
-        ApiRouteHandler.forwardFilters =
-                sort(collect.getOrDefault(Forward, Collections.emptyList()));
-        RouteMatcher.routeFilters =
-                sort(collect.getOrDefault(Route, Collections.emptyList()));
+        ApiRouteHandler.preRouteFilters = sort(collect.get(PreRoute));
+        ApiRouteHandler.forwardFilters = sort(collect.get(Forward));
+        RouteMatcher.routeFilters = sort(collect.get(Route));
     }
 
     private static List<Filter> sort(List<Filter> filters) {
+        if (filters == null) {
+            return Collections.emptyList();
+        }
         return filters.stream()
                 .sorted(Comparator.comparing(Filter::order))
                 .collect(Collectors.toList());

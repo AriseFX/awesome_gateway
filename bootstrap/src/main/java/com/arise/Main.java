@@ -8,7 +8,7 @@ import com.arise.naming.ServiceManager;
 import com.arise.rabbitmq.RabbitmqClient;
 import com.arise.redis.AsyncRedisClient;
 import com.arise.server.ServerRunner;
-import com.arise.server.route.filter.FilterFactory;
+import com.arise.server.route.filter.FilterInitializer;
 import com.arise.server.route.manager.RouteManager;
 import com.arise.server.route.pool.AsyncChannelPool;
 
@@ -39,7 +39,7 @@ public class Main {
         //加载注册中心相关SPI
         ServiceManager.init();
         //加载过滤器相关SPI
-        FilterFactory.init();
+        FilterInitializer.init();
         //服务启动
         new EndpointRunner().run();
         new ServerRunner().run();

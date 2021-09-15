@@ -9,6 +9,6 @@ package com.arise.base.exception;
 public class GatewayException extends RuntimeException {
 
     public GatewayException(String message) {
-        super("gateway error:" + message);
+        super("gateway error:{" + message + "}");
     }
 }
