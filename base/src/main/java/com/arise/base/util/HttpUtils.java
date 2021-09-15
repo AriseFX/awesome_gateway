@@ -1,5 +1,7 @@
 package com.arise.base.util;
 
+import com.arise.base.exception.GatewayException;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -29,7 +31,7 @@ public class HttpUtils {
             if (pos == -1) {
                 // XXX
                 // should give more detail about the illegal argument
-                throw new IllegalArgumentException();
+                throw new GatewayException("query参数解析出错");
             }
             String key = parseName(pair.substring(0, pos), sb);
             String val = parseName(pair.substring(pos + 1), sb);

@@ -1,6 +1,7 @@
 package com.arise.server.route;
 
 import com.arise.base.config.Components;
+import com.arise.base.exception.GatewayException;
 import com.arise.base.exception.ServiceNotFoundException;
 import com.arise.server.route.filter.Filter;
 import com.arise.server.route.filter.FilterContext;
@@ -137,8 +138,12 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                 eventLoop, promise);
                     }
                 });
-                new FilterContext(contents, preRouteFilters, eventLoop, attr, p)
-                        .handleNext();
+                try {
+                    new FilterContext(contents, preRouteFilters, eventLoop, attr, p)
+                            .handleNext();
+                } catch (GatewayException e) {
+                    writeMsg(inbound, _400(e.getMessage()));
+                }
             }
         }
     }

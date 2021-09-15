@@ -26,6 +26,16 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  */
 public class GatewayMessage {
 
+    public static FullHttpResponse _400(String msg) {
+        return build(new HashMap<String, Object>() {
+            {
+                put("code", 400);
+                put("success", false);
+                put("message", msg);
+            }
+        }, BAD_REQUEST, null);
+    }
+
     public static DefaultHttpResponse Established =
             new DefaultHttpResponse(HTTP_1_1, new HttpResponseStatus(200, "Connection Established"));
 
