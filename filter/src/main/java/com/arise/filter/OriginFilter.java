@@ -17,14 +17,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.arise.base.config.IntMapConstant.Header;
-import static com.arise.base.config.IntMapConstant.OriginCode;
+import static com.arise.base.config.IntMapConstant.*;
 import static com.arise.server.route.filter.Lifecycle.Route;
 
 /**
  * @Author: wy
  * @Date: Created in 17:42 2021-07-09
- * @Description: 用户域/targetService过滤
+ * @Description: 用户域/Backend过滤
  * @Modified: By：
  */
 @Slf4j
@@ -67,7 +66,7 @@ public class OriginFilter implements Filter {
                 pram[0] = currentRoute;
             }
         }
-        //插件,TODO 为了适配旧系统，后面要去掉！
+        //插件,TODO 插件为了适配旧系统，后面要去掉！
         if (pram[0] != null && pram[0].size() > 0) {
             HttpHeaders headers = (HttpHeaders) attr.get(Header);
             pram[0] = pram[0].stream().filter(x -> {
@@ -91,14 +90,14 @@ public class OriginFilter implements Filter {
                 });
             }).collect(Collectors.toList());
         }
-        //匹配目标服务
-       /* Object service = attr.get(TargetService);
+        //手动指定目标服务
+        Object service = attr.get(Backend);
         if (service != null) {
-            //根据TargetService匹配
+            //根据Backend匹配
             pram[0] = pram[0].stream()
                     .filter(e -> service.equals(e.getTag()))
                     .collect(Collectors.toList());
-        }*/
+        }
         ctx.handleNext();
     }
 }

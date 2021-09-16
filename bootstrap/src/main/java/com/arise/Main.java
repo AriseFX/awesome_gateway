@@ -21,7 +21,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         //内存统计
-/*        e.scheduleWithFixedDelay(() -> {
+        /*        e.scheduleWithFixedDelay(() -> {
             List<BufferPoolMXBean> bufferPoolMXBeans = ManagementFactoryHelper.getBufferPoolMXBeans();
             BufferPoolMXBean directBufferMXBean = bufferPoolMXBeans.get(0);
             String s = JSON.toJSONString(directBufferMXBean);

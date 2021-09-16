@@ -59,7 +59,7 @@ public class UserTokenFilter implements Filter {
         String auth = headers.get("Authorization");
         final String[] originCode = new String[]{headers.get(Headers.OriginCode)};
         //解析目标服务
-        attr.put(TargetService, headers.get(Headers.TargetService));
+        attr.put(Backend, headers.get(Headers.Backend));
         attr.put(OriginCode, originCode[0]);
         attr.put(HttpQueryParam, queryString);
         attr.put(RequestURI, uri);

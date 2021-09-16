@@ -10,7 +10,7 @@ public interface IntMapConstant {
 
     int OriginCode = 1;
 
-    int TargetService = 2;
+    int Backend = 2;
 
     int HttpQueryParam = 3;
 
