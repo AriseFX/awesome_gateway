@@ -81,5 +81,21 @@ public enum Services implements BiConsumer<FullHttpRequest, Channel> {
                     ));
 
         }
+    },
+    route_clear {
+        @Override
+        public void accept(FullHttpRequest request, Channel channel) {
+            AsyncRedisClient client = Components.get(AsyncRedisClient.class);
+            log.info("开始清空所有路由");
+            client.asyncExec((e, throwable) ->
+                    e.del("ROUTE").whenComplete((v, ex) -> {
+                                if (ex != null) {
+                                    channel.writeAndFlush(standJsonResp(new EndpointResponse("server error"), INTERNAL_SERVER_ERROR));
+                                }
+                                channel.writeAndFlush(standJsonResp(new EndpointResponse("route clear successful"), OK));
+                            }
+                    ));
+
+        }
     }
 }

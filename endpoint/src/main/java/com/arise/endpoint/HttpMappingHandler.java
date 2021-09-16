@@ -30,6 +30,7 @@ public class HttpMappingHandler extends SimpleChannelInboundHandler<FullHttpRequ
         mapping.put("/route/get", route_get);
         mapping.put("/route/put", route_put);
         mapping.put("/route/refresh", route_refresh);
+        mapping.put("/route/clear", route_clear);
     }
 
     @Override
