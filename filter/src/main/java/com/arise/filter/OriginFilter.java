@@ -66,30 +66,6 @@ public class OriginFilter implements Filter {
                 pram[0] = currentRoute;
             }
         }
-        //插件,TODO 插件为了适配旧系统，后面要去掉！
-        if (pram[0] != null && pram[0].size() > 0) {
-            HttpHeaders headers = (HttpHeaders) attr.get(Header);
-            pram[0] = pram[0].stream().filter(x -> {
-                List<PluginBean> plugins = x.getPlugins();
-                if (plugins == null || plugins.size() == 0) {
-                    return true;
-                }
-                return plugins.stream().allMatch(e -> {
-                    EvaluationContext context = new StandardEvaluationContext();
-                    //设置变量值
-                    headers.forEach(entry -> {
-                                context.setVariable(entry.getKey() != null ? entry.getKey().toUpperCase() : "",
-                                        entry.getValue() != null ? entry.getValue().toUpperCase() : "");
-                            }
-                    );
-                    log.info("网关路由[{}]开始执行插件逻辑:{}", x.getGatewayPath(), e.getName());
-                    //执行脚本
-                    return new SpelExpressionParser()
-                            .parseExpression(e.getScript())
-                            .getValue(context, Boolean.class);
-                });
-            }).collect(Collectors.toList());
-        }
         //手动指定目标服务
         Object service = attr.get(Backend);
         if (service != null) {
@@ -97,6 +73,31 @@ public class OriginFilter implements Filter {
             pram[0] = pram[0].stream()
                     .filter(e -> service.equals(e.getTag()))
                     .collect(Collectors.toList());
+        } else {
+            //插件,TODO 插件为了适配旧系统，后面要去掉！
+            if (pram[0] != null && pram[0].size() > 0) {
+                HttpHeaders headers = (HttpHeaders) attr.get(Header);
+                pram[0] = pram[0].stream().filter(x -> {
+                    List<PluginBean> plugins = x.getPlugins();
+                    if (plugins == null || plugins.size() == 0) {
+                        return true;
+                    }
+                    return plugins.stream().allMatch(e -> {
+                        EvaluationContext context = new StandardEvaluationContext();
+                        //设置变量值
+                        headers.forEach(entry -> {
+                                    context.setVariable(entry.getKey() != null ? entry.getKey().toUpperCase() : "",
+                                            entry.getValue() != null ? entry.getValue().toUpperCase() : "");
+                                }
+                        );
+                        log.info("网关路由[{}]开始执行插件逻辑:{}", x.getGatewayPath(), e.getName());
+                        //执行脚本
+                        return new SpelExpressionParser()
+                                .parseExpression(e.getScript())
+                                .getValue(context, Boolean.class);
+                    });
+                }).collect(Collectors.toList());
+            }
         }
         ctx.handleNext();
     }
