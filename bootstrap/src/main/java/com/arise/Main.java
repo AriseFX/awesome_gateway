@@ -20,14 +20,6 @@ import com.arise.server.route.pool.AsyncChannelPool;
 public class Main {
 
     public static void main(String[] args) throws Exception {
-        //内存统计
-        /*        e.scheduleWithFixedDelay(() -> {
-            List<BufferPoolMXBean> bufferPoolMXBeans = ManagementFactoryHelper.getBufferPoolMXBeans();
-            BufferPoolMXBean directBufferMXBean = bufferPoolMXBeans.get(0);
-            String s = JSON.toJSONString(directBufferMXBean);
-            System.out.println("hasCleaner内存使用:"+s);
-            System.out.println("noCleaner内存使用:"+PlatformDependent.usedDirectMemory());
-        }, 0, 5, TimeUnit.SECONDS);*/
         //初始化配置
         ServerProperties.init();
         //初始化组件
