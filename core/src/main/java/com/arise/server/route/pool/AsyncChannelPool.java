@@ -2,6 +2,7 @@ package com.arise.server.route.pool;
 
 import com.arise.base.config.GatewayConfig;
 import com.arise.os.OSHelper;
+import com.arise.server.NettyBootstrapFactory;
 import com.arise.server.route.logging.LogStorageHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -73,9 +74,7 @@ public class AsyncChannelPool {
     }
 
     private ChannelPool newFixedChannelPool(boolean ssl, String host, int port, EventLoop eventLoop) {
-
-        Bootstrap b = new Bootstrap().group(eventLoop)
-                .channel(OSHelper.channelType())
+        Bootstrap b = NettyBootstrapFactory.getBootstrap().group(eventLoop)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .remoteAddress(host, port);

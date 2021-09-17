@@ -1,6 +1,8 @@
 package com.arise.server.proxy;
 
 import com.arise.os.OSHelper;
+import com.arise.os.PassThroughStrategy;
+import com.arise.server.NettyBootstrapFactory;
 import com.arise.server.route.ApiRouteHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -16,13 +18,15 @@ import static com.arise.server.route.GatewayMessage.Established;
 /**
  * @Author: wy
  * @Date: Created in 23:54 2021-05-31
- * @Description: 处理http代理
+ * @Description: 处理http正向代理
  * @Modified: By：
  */
 @Slf4j
 public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
 
-    private final Bootstrap b = new Bootstrap();
+    private final Bootstrap b = NettyBootstrapFactory.getBootstrap();
+
+    private static final PassThroughStrategy passThrough = OSHelper.nativePassThrough();
 
     private HttpRequest request;
     private String host;
@@ -71,6 +75,8 @@ public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
                 //直到连接远程服务器成功
                 Channel outbound = future.getNow();
                 inbound.pipeline().addLast(new HttpResponseEncoder());
+                //重要
+                inbound.config().setAutoRead(false);
                 inbound.writeAndFlush(Established)
                         .addListener(res -> {
                             if (res.isSuccess()) {
@@ -79,8 +85,9 @@ public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
                                 while (pipeline.last() != null) {
                                     pipeline.removeLast();
                                 }
-                                ctx.pipeline().addLast(new ProxyForwardHandler(outbound));
-                                outbound.pipeline().addLast(new ProxyForwardHandler(inbound));
+                                //流量透传
+                                passThrough.accept(inbound, outbound);
+                                inbound.config().setAutoRead(true);
                             }
                         });
             });
@@ -105,11 +112,10 @@ public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
         //超时情况下，客户端会重传，导致group set already异常
         if (b.config() != null) {
             b.group(inbound.eventLoop())
-                    .channel(OSHelper.channelType())
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                     .option(ChannelOption.SO_KEEPALIVE, true)
-                    .handler(new RemoteChannelActiveHandler(promise))
-                    .connect(host, port);
+                    .handler(new RemoteChannelActiveHandler(promise));
+            b.connect(host, port);
         }
     }
 }

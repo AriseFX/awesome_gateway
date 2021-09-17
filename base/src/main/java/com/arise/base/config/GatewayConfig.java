@@ -37,6 +37,8 @@ public class GatewayConfig {
     private Logging logging;
     //byte
     private int logFileSize;
+    //native特性
+    private boolean splice;
 
     @Data
     @NoArgsConstructor
