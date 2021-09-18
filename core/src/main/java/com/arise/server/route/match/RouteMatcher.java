@@ -58,7 +58,6 @@ public class RouteMatcher {
             //重写url
             String query = requestURI.getRawQuery();
             request.setUri(remoteUri.getPath() + (query == null ? "" : "?" + query));
-            log.info("query:{}", remoteUri.getPath() + (query == null ? "" : "?" + query));
             switch (scheme) {
                 case "lb":
                     InetSocketAddress address = ServiceManager.selectService(remoteUri.getHost());
