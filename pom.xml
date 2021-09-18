@@ -12,7 +12,6 @@
         <module>filter</module>
         <module>bootstrap</module>
         <module>endpoint</module>
-        <module>queue</module>
         <module>base</module>
         <module>spi</module>
         <module>redis</module>
@@ -49,11 +48,6 @@
             <dependency>
                 <groupId>com.arise</groupId>
                 <artifactId>gateway-filter</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.arise</groupId>
-                <artifactId>gateway-disk-queue</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -99,19 +93,19 @@
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
-                <version>4.1.53.Final</version>
+                <version>4.1.68.Final</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-transport-native-epoll</artifactId>
-                <version>4.1.53.Final</version>
+                <version>4.1.68.Final</version>
             </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-transport-native-epoll</artifactId>
-                <version>4.1.53.Final</version>
-                <classifier>linux-aarch64</classifier>
-            </dependency>
+            <!-- <dependency>
+                 <groupId>io.netty</groupId>
+                 <artifactId>netty-transport-native-epoll</artifactId>
+                 <version>4.1.68.Final</version>
+                 <classifier>linux-aarch64</classifier>
+             </dependency>-->
             <dependency>
                 <groupId>com.alibaba.nacos</groupId>
                 <artifactId>nacos-client</artifactId>

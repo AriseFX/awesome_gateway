@@ -56,7 +56,7 @@ public class RouteMatcher {
             int port = remoteUri.getPort();
             String host = remoteUri.getHost();
             //重写url
-            String query = requestURI.getQuery();
+            String query = requestURI.getRawQuery();
             request.setUri(remoteUri.getPath() + (query == null ? "" : "?" + query));
             switch (scheme) {
                 case "lb":

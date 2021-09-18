@@ -72,7 +72,7 @@ public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
         //处理https代理
         if (request.method().equals(HttpMethod.CONNECT)) {
             promise.addListener((FutureListener<Channel>) future -> {
-                //直到连接远程服务器成功
+                //连接远程服务器成功
                 Channel outbound = future.getNow();
                 inbound.pipeline().addLast(new HttpResponseEncoder());
                 //重要
