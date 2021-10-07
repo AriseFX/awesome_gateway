@@ -14,7 +14,6 @@ import io.netty.util.concurrent.FutureListener;
 import java.util.List;
 import java.util.UUID;
 
-import static com.arise.base.config.IntMapConstant.Header;
 import static com.arise.base.config.IntMapConstant.TraceId;
 
 /**
@@ -42,13 +41,13 @@ public class HttpCorsFilter implements Filter {
         String traceId = UUID.randomUUID().toString();
         List<HttpObject> p = (List<HttpObject>) ctx.getPram();
         HttpRequest request = (HttpRequest) (p.get(0));
-        request.headers().set("x-trace-id", traceId);
+        request.headers().set(Headers.LogId, traceId);
         ctx.getPromise().addListener((FutureListener<Object>) future -> {
             if (future.isSuccess()) {
                 List<HttpObject> object = (List<HttpObject>) future.get();
                 HttpHeaders headers = ((HttpResponse) object.get(0)).headers();
                 ctx.attr().put(TraceId, traceId);
-                headers.set(Headers.TraceId, traceId);
+                headers.set(Headers.LogId, traceId);
                 if (request.headers().get("Origin") != null) {
                     headers.set("Access-Control-Allow-Origin", "*");
                     headers.set("Access-Control-Allow-Methods", "*");
