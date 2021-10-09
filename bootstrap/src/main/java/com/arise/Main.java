@@ -32,8 +32,9 @@ public class Main {
         ServiceManager.init();
         //加载过滤器相关SPI
         FilterInitializer.init();
-        //服务启动
+        //暴露endpoint
         new EndpointRunner().run();
+        //服务启动
         new ServerRunner().run();
     }
 }
