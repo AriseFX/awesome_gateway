@@ -9,10 +9,7 @@ import com.arise.server.route.match.MatchRes;
 import com.arise.server.route.match.RouteMatcher;
 import com.arise.server.route.pool.AsyncChannelPool;
 import io.netty.channel.*;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpObject;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.codec.http.*;
 import io.netty.util.AttributeKey;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.concurrent.FutureListener;
@@ -20,6 +17,7 @@ import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
 import net.openhft.affinity.Affinity;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -112,9 +110,11 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                 outbound = future2.getNow();
                                 Promise<List<HttpObject>> respPromise = eventLoop.newPromise();
                                 DefaultChannelPipeline pipeline = (DefaultChannelPipeline) outbound.pipeline();
+                                HttpHeaders headers = request.headers();
+                                headers.set(HttpHeaderNames.CONNECTION, "keep-alive");
                                 if (matchRes.isSsl()) {
                                     //保证Host指向正确
-                                    request.headers().set(HttpHeaderNames.HOST, address.getHostName());
+                                    headers.set(HttpHeaderNames.HOST, address.getHostName());
                                 }
                                 pipeline.addLast(new ForwardHandler(respPromise, inbound));
                                 new FilterContext(contents
@@ -150,9 +150,12 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable throwable) {
-        throwable.printStackTrace();
-        log.error("ApiRouteHandler:{}", throwable.toString());
-        Channel channel = ctx.channel();
-        writeMsg(channel, _500);
+        if (throwable instanceof IOException) {
+            ctx.channel().close();
+        } else {
+            log.error("ApiRouteHandler:{},channel:{},alive:{}", throwable.toString(), ctx.channel(), ctx.channel().isActive());
+            Channel channel = ctx.channel();
+            writeMsg(channel, _500);
+        }
     }
 }

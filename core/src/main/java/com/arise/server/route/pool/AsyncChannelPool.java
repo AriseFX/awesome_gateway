@@ -92,7 +92,8 @@ public class AsyncChannelPool {
                         //清空状态
                         DefaultChannelPipeline pipeline = (DefaultChannelPipeline) ch.pipeline();
                         //连接复用时SSL会话保持
-                        while (!(pipeline.last() instanceof SslHandler)) {
+                        ChannelHandler handler;
+                        while ((handler = pipeline.last()) != null && !(handler instanceof SslHandler)) {
                             pipeline.removeLast();
                         }
                     }

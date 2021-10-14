@@ -23,8 +23,6 @@ public class GatewayConfig {
     private String address;
     //连接池
     private Pool pool;
-    //存储dir
-    private String storageDir;
     //注册中心相关
     private Registry registry;
     //redis
@@ -35,8 +33,6 @@ public class GatewayConfig {
     private Endpoint endpoint;
     //logging
     private Logging logging;
-    //byte
-    private int logFileSize;
     //native特性
     private boolean splice;
 

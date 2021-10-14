@@ -5,6 +5,8 @@ import com.arise.server.route.filter.Filter;
 import com.arise.server.route.filter.FilterContext;
 import com.arise.server.route.filter.Lifecycle;
 import com.arise.spi.Join;
+import com.fasterxml.uuid.Generators;
+import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
@@ -12,7 +14,6 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.concurrent.FutureListener;
 
 import java.util.List;
-import java.util.UUID;
 
 import static com.arise.base.config.IntMapConstant.TraceId;
 
@@ -24,6 +25,8 @@ import static com.arise.base.config.IntMapConstant.TraceId;
  */
 @Join
 public class HttpCorsFilter implements Filter {
+
+    private static final TimeBasedGenerator idGen = Generators.timeBasedGenerator();
 
     @Override
     public int order() {
@@ -38,7 +41,7 @@ public class HttpCorsFilter implements Filter {
     @Override
     public void doFilter(FilterContext ctx) {
         //生成唯一追踪id
-        String traceId = UUID.randomUUID().toString();
+        String traceId = idGen.generate().toString();
         List<HttpObject> p = (List<HttpObject>) ctx.getPram();
         HttpRequest request = (HttpRequest) (p.get(0));
         request.headers().set(Headers.LogId, traceId);

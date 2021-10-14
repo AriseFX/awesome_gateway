@@ -43,7 +43,7 @@ public class RestRouteTrie {
      */
     public List<RouteBean> matching(String url, IntObjectHashMap<Object> attr) {
         Queue<String> pathPram = null;
-        List<RouteBean> res = new ArrayList<>();
+        List<RouteBean> res = new ArrayList<>(1);
         HashMap<CharSequence, Node> child = root.child;
         String[] tokens = url.split("/");
         for (int i = 1; i < tokens.length; i++) {
