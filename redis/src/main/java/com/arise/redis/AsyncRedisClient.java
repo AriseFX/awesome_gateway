@@ -34,6 +34,9 @@ public class AsyncRedisClient {
                 BoundedPoolConfig.builder().minIdle(3).maxTotal(4000).maxIdle(4000).build());
     }
 
+    /**
+     * 非阻塞实现redis命令
+     */
     public void asyncExec(BiFunction<RedisAsyncCommands<String, Object>, ? super Throwable, CompletionStage<?>> func) {
         pool.acquire().whenComplete((conn, ex) -> {
             func.apply(conn.async(), ex)

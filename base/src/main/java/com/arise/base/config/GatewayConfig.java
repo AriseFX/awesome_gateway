@@ -33,8 +33,11 @@ public class GatewayConfig {
     private Endpoint endpoint;
     //logging
     private Logging logging;
-    //native特性
+    /**
+     * 下面是一些native特性
+     */
     private boolean splice;
+    private boolean affinity;
 
     @Data
     @NoArgsConstructor

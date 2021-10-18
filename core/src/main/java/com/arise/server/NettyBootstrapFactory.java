@@ -20,7 +20,7 @@ public class NettyBootstrapFactory {
 
     public static ServerBootstrap getServerBootstrap() {
         EventLoopGroup boss = OSHelper.eventLoopGroup(1, "gateway-boss");
-        EventLoopGroup worker = OSHelper.eventLoopGroup(0, "gateway-worker");
+        EventLoopGroup worker = OSHelper.eventLoopGroup(8, "gateway-worker");
         ServerBootstrap b = new ServerBootstrap();
         b.option(ChannelOption.SO_BACKLOG, 4096);
         if (OS.isLinux() && ServerProperties.gatewayConfig.isSplice()) {
