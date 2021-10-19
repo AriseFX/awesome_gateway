@@ -1,7 +1,5 @@
 port: 8099
 address: 0.0.0.0
-storageDir: ./data
-logFileSize: 209715200
 pool:
   timeout: 30000 #超时时间
   maxConnections: 4000 #最大连接数
