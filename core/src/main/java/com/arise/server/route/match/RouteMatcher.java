@@ -63,7 +63,7 @@ public class RouteMatcher {
                 case "lb":
                     InetSocketAddress address = ServiceManager.selectService(remoteUri.getHost());
                     if (address == null) {
-                        throw new ServiceNotFoundException();
+                        throw new ServiceNotFoundException("服务未找到:" + remoteUri.getHost());
                     }
                     return new MatchRes(false, address);
                 case "http":

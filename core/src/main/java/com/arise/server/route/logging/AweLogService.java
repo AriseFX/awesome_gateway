@@ -3,6 +3,7 @@ package com.arise.server.route.logging;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.arise.base.config.Components;
+import com.arise.queue.GatewayExecutor;
 import com.arise.rabbitmq.RabbitmqClient;
 import com.rabbitmq.client.Channel;
 import io.netty.buffer.ByteBuf;
@@ -10,7 +11,6 @@ import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueue;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -34,53 +32,31 @@ public class AweLogService {
 
     private static final RabbitmqClient rabbitmqClient = Components.get(RabbitmqClient.class);
 
-    private static final MpscArrayQueue<ApiLog> logQueue = new MpscArrayQueue<>(4000);
+    private static final GatewayExecutor executor = new GatewayExecutor(4 << 10, 1);
+
+    private static final Channel channel = rabbitmqClient.getChannel();
 
     public static void pushLog(ApiLog log) {
-        logQueue.offer(log);
-    }
-
-    private static final long pause = TimeUnit.MILLISECONDS.toNanos(200);
-
-    public static Thread consumer = new Thread(new Runnable() {
-
-        private final Channel channel = rabbitmqClient.getChannel();
-
-        {
+        executor.execute(() -> {
+            RequestLogEntity entity = map2Entity(log);
             try {
-                channel.queueDeclare("gateway-queue", true,
-                        false, false, null);
+                channel.basicPublish("", "gateway-queue", null,
+                        JSON.toJSONString(entity).getBytes());
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
+        });
+    }
 
-        @Override
-        public void run() {
-            while (true) {
-                ApiLog polled = logQueue.relaxedPoll();
-                try {
-                    if (polled == null) {
-                        LockSupport.parkNanos(pause);
-                    } else {
-                        RequestLogEntity entity = map2Entity(polled);
-                        try {
-                            channel.basicPublish("", "gateway-queue", null,
-                                    JSON.toJSONString(entity).getBytes());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                } catch (Exception e) {
-                    log.error("消费日志发生异常:{}", e.getMessage());
-                    e.printStackTrace();
-                }
+    public static void alarm(AlarmDto dto) {
+        executor.execute(() -> {
+            try {
+                channel.basicPublish("", "gateway-alarm-queue", null,
+                        JSON.toJSONString(dto).getBytes());
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        }
-    }, "consumer");
-
-    static {
-        consumer.start();
+        });
     }
 
     private static final byte[] heapBuffer = new byte[20971520];

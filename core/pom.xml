@@ -76,6 +76,10 @@
             <groupId>com.arise</groupId>
             <artifactId>gateway-rabbitmq</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.arise</groupId>
+            <artifactId>gateway-queue</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

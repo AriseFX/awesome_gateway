@@ -7,4 +7,8 @@ package com.arise.base.exception;
  * @Modified: By：
  */
 public class ServiceNotFoundException extends RuntimeException {
+
+    public ServiceNotFoundException(String message) {
+        super(message);
+    }
 }

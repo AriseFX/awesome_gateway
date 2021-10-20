@@ -5,6 +5,8 @@ import com.arise.base.exception.GatewayException;
 import com.arise.base.exception.ServiceNotFoundException;
 import com.arise.server.route.filter.Filter;
 import com.arise.server.route.filter.FilterContext;
+import com.arise.server.route.logging.AlarmDto;
+import com.arise.server.route.logging.AweLogService;
 import com.arise.server.route.match.MatchRes;
 import com.arise.server.route.match.RouteMatcher;
 import com.arise.server.route.pool.AsyncChannelPool;
@@ -89,6 +91,9 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                         matchRes = matcher.match(eventLoop, attr, request);
                     } catch (ServiceNotFoundException e) {
                         writeMsg(inbound, _503);
+                        AweLogService.alarm(new AlarmDto(request.uri(),
+                                e.getMessage(), "GATEWAY",
+                                (String) attr.get(OriginCode)));
                         return;
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -97,6 +102,8 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                     }
                     if (matchRes == null) {
                         writeMsg(inbound, _404);
+                        AweLogService.alarm(new AlarmDto(request.uri(), "路由未找到", "GATEWAY",
+                                (String) attr.get(OriginCode)));
                     } else {
                         InetSocketAddress inetAddress = matchRes.getAddress();
                         InetAddress address = inetAddress.getAddress();

@@ -24,10 +24,6 @@ import static com.arise.base.config.IntMapConstant.*;
  * @Author: wy
  * @Date: Created in 12:51 2021-06-05
  * @Description: 日志存储相关
- * <p>
- * 1.生成日志id
- * 2.记录请求，都序列化，然后进行
- * 3.记录
  * @Modified: By：
  */
 @Slf4j

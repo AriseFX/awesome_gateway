@@ -20,9 +20,10 @@ public class RabbitmqClient {
     private final Connection connection;
 
     public RabbitmqClient(GatewayConfig.Rabbitmq config) throws Exception {
-        ConnectionFactory connectionFactory = new ConnectionFactory();
-        connectionFactory.setUri(config.getUri());
-        this.connection = connectionFactory.newConnection();
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setUri(config.getUri());
+        factory.useNio();
+        this.connection = factory.newConnection();
     }
 
     public Channel getChannel() {
