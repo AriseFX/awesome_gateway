@@ -18,6 +18,7 @@
         <module>naming-nacos</module>
         <module>naming</module>
         <module>rabbitmq</module>
+        <module>queue</module>
     </modules>
     <packaging>pom</packaging>
 
