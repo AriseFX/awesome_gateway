@@ -93,7 +93,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                         writeMsg(inbound, _503);
                         AweLogService.alarm(new AlarmDto(request.uri(),
                                 e.getMessage(), "GATEWAY",
-                                (String) attr.get(OriginCode)));
+                                (String) attr.get(OriginCode), (String) attr.get(Backend)));
                         return;
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -103,7 +103,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                     if (matchRes == null) {
                         writeMsg(inbound, _404);
                         AweLogService.alarm(new AlarmDto(request.uri(), "路由未找到", "GATEWAY",
-                                (String) attr.get(OriginCode)));
+                                (String) attr.get(OriginCode), (String) attr.get(Backend)));
                     } else {
                         InetSocketAddress inetAddress = matchRes.getAddress();
                         InetAddress address = inetAddress.getAddress();

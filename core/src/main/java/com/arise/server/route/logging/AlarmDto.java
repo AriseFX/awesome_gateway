@@ -18,4 +18,5 @@ public class AlarmDto {
     private String message;
     private String service;
     private String originCode;
+    private String backendHeader;
 }
