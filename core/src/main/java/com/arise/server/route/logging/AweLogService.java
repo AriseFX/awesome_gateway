@@ -102,7 +102,7 @@ public class AweLogService {
             int len = body_resp.readableBytes();
             HttpHeaders respHeader = resp.headers();
             String encoding = respHeader.get(HttpHeaderNames.CONTENT_ENCODING);
-            String type = headers.get(HttpHeaderNames.CONTENT_TYPE);
+            String type = respHeader.get(HttpHeaderNames.CONTENT_TYPE);
             body_resp.getBytes(0, heapBuffer, 0, len);
             body_resp.release();
             String bodyStr;
