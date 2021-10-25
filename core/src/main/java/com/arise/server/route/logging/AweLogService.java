@@ -3,13 +3,14 @@ package com.arise.server.route.logging;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.arise.base.config.Components;
-import com.arise.rabbitmq.RabbitmqClient;
+import com.arise.rabbitmq.PooledRabbitmqClient;
 import com.rabbitmq.client.Channel;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.util.concurrent.FastThreadLocal;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
@@ -29,12 +30,19 @@ import java.util.zip.GZIPInputStream;
 @Slf4j
 public class AweLogService {
 
-    private static final RabbitmqClient rabbitmqClient = Components.get(RabbitmqClient.class);
+    private static final PooledRabbitmqClient POOLED_RABBITMQ_CLIENT =
+            Components.get(PooledRabbitmqClient.class);
 
-    private static final Channel channel = rabbitmqClient.getChannel();
+    private static final FastThreadLocal<Channel> localChannel = new FastThreadLocal<Channel>() {
+        @Override
+        protected Channel initialValue() throws Exception {
+            return POOLED_RABBITMQ_CLIENT.newConnection().createChannel();
+        }
+    };
 
     public static void pushLog(ApiLog log) {
         try {
+            Channel channel = localChannel.get();
             RequestLogEntity entity = map2Entity(log);
             channel.basicPublish("", "gateway-queue", null,
                     JSON.toJSONString(entity).getBytes());
@@ -45,6 +53,7 @@ public class AweLogService {
 
     public static void alarm(AlarmDto dto) {
         try {
+            Channel channel = localChannel.get();
             channel.basicPublish("", "gateway-alarm-queue", null,
                     JSON.toJSONString(dto).getBytes());
         } catch (IOException e) {
