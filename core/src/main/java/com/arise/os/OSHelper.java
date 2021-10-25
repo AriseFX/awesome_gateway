@@ -14,7 +14,7 @@ import io.netty.channel.kqueue.KQueueSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import net.openhft.affinity.AffinityThreadFactory;
+import net.openhft.affinity.AffinityLock;
 import net.openhft.chronicle.core.OS;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,26 +70,32 @@ public class OSHelper {
     }
 
     public static ThreadFactory getFactory(String name) {
-        if (threadFactory == null) {
-            synchronized (OSHelper.class) {
-                if (threadFactory == null) {
-                    //绑核
-                    if (ServerProperties.gatewayConfig.isAffinity()) {
-                        threadFactory = new AffinityThreadFactory(name, DIFFERENT_CORE);
-                    } else {
-                        threadFactory = new ThreadFactory() {
-                            private final AtomicInteger counter = new AtomicInteger(0);
+        return new ThreadFactory() {
+            private AffinityLock lastAffinityLock = null;
+            private final AtomicInteger counter = new AtomicInteger(0);
 
-                            @Override
-                            public Thread newThread(@NotNull Runnable r) {
-                                return new Thread(r, name + "-" + counter.getAndIncrement());
-                            }
-                        };
+            @Override
+            public synchronized Thread newThread(@NotNull Runnable r) {
+                return new Thread(() -> {
+                    if (ServerProperties.gatewayConfig.isAffinity()) {
+                        try (AffinityLock ignored = acquireLockBasedOnLast()) {
+                            r.run();
+                        }
+                    } else {
+                        r.run();
                     }
-                }
+                }, name + "-" + counter.getAndIncrement());
             }
-        }
-        return threadFactory;
+
+            private synchronized AffinityLock acquireLockBasedOnLast() {
+                AffinityLock al = lastAffinityLock == null ?
+                        AffinityLock.acquireLock() : lastAffinityLock.acquireLock(DIFFERENT_CORE);
+                if (al.cpuId() >= 0)
+                    lastAffinityLock = al;
+                return al;
+            }
+        };
+
     }
 
     public static PassThroughStrategy nativePassThrough() {

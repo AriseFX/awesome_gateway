@@ -18,7 +18,6 @@
         <module>naming-nacos</module>
         <module>naming</module>
         <module>rabbitmq</module>
-        <module>queue</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -88,11 +87,6 @@
             <dependency>
                 <groupId>com.arise</groupId>
                 <artifactId>gateway-rabbitmq</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.arise</groupId>
-                <artifactId>gateway-queue</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

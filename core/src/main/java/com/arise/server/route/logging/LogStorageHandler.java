@@ -111,14 +111,12 @@ public class LogStorageHandler extends ChannelDuplexHandler {
             respHeader = response.headers();
             apiLog.getInfo().setResp(response);
         } else if (msg instanceof DefaultHttpContent && !skip && respFilter.apply(respHeader)) {
-            ByteBuf msg_buf = ((DefaultHttpContent) msg).content().duplicate();
-            ByteBuf buf = apiLog.getBody_resp();
-            if (buf == null) {
-                apiLog.setBody_resp(buf = ctx.alloc().buffer());
+            ByteBuf msg_buf = ((DefaultHttpContent) msg).content();
+            ByteBuf body_resp = apiLog.getBody_resp();
+            if (body_resp == null) {
+                apiLog.setBody_resp(body_resp = ctx.alloc().heapBuffer());
             }
-            if (msg_buf.readableBytes() > 0) {
-                buf.writeBytes(msg_buf);
-            }
+            body_resp.writeBytes(msg_buf, 0, msg_buf.readableBytes());
         }
         super.channelRead(ctx, msg);
     }
@@ -140,14 +138,12 @@ public class LogStorageHandler extends ChannelDuplexHandler {
             reqHeader = request.headers();
             apiLog.getInfo().setReq(request);
         } else if (msg instanceof DefaultHttpContent && !skip && reqFilter.apply(reqHeader)) {
-            ByteBuf msg_buf = ((DefaultHttpContent) msg).content().duplicate();
-            ByteBuf buf = apiLog.getBody_req();
-            if (buf == null) {
-                apiLog.setBody_req(buf = ctx.alloc().buffer());
+            ByteBuf msg_buf = ((DefaultHttpContent) msg).content();
+            ByteBuf body_resp = apiLog.getBody_req();
+            if (body_resp == null) {
+                apiLog.setBody_req(body_resp = ctx.alloc().heapBuffer());
             }
-            if (msg_buf.readableBytes() > 0) {
-                buf.writeBytes(msg_buf);
-            }
+            body_resp.writeBytes(msg_buf, 0, msg_buf.readableBytes());
         }
         super.write(ctx, msg, promise);
     }

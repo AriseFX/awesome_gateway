@@ -3,7 +3,6 @@ package com.arise.server.route.logging;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.arise.base.config.Components;
-import com.arise.queue.GatewayExecutor;
 import com.arise.rabbitmq.RabbitmqClient;
 import com.rabbitmq.client.Channel;
 import io.netty.buffer.ByteBuf;
@@ -32,39 +31,31 @@ public class AweLogService {
 
     private static final RabbitmqClient rabbitmqClient = Components.get(RabbitmqClient.class);
 
-    private static final GatewayExecutor executor = new GatewayExecutor(4 << 10, 1);
-
     private static final Channel channel = rabbitmqClient.getChannel();
 
     public static void pushLog(ApiLog log) {
-        executor.execute(() -> {
+        try {
             RequestLogEntity entity = map2Entity(log);
-            try {
-                channel.basicPublish("", "gateway-queue", null,
-                        JSON.toJSONString(entity).getBytes());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+            channel.basicPublish("", "gateway-queue", null,
+                    JSON.toJSONString(entity).getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void alarm(AlarmDto dto) {
-        executor.execute(() -> {
-            try {
-                channel.basicPublish("", "gateway-alarm-queue", null,
-                        JSON.toJSONString(dto).getBytes());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+        try {
+            channel.basicPublish("", "gateway-alarm-queue", null,
+                    JSON.toJSONString(dto).getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-
-    private static final byte[] heapBuffer = new byte[20971520];
 
     /**
      * 转换为运维中心需要的日志格式
      */
-    private static RequestLogEntity map2Entity(ApiLog log) {
+    public static RequestLogEntity map2Entity(ApiLog log) {
         ApiLog.Info info = log.getInfo();
         DefaultHttpRequest req = info.getReq();
         DefaultHttpResponse resp = info.getResp();
@@ -85,31 +76,36 @@ public class AweLogService {
         ByteBuf body_req = log.getBody_req();
         ByteBuf body_resp = log.getBody_resp();
         if (body_req != null) {
-            int len = body_req.readableBytes();
-            body_req.getBytes(0, heapBuffer, 0, len);
-            body_req.release();
+            byte[] array = body_req.array();
+            int offset = body_req.arrayOffset();
             String type = headers.get(HttpHeaderNames.CONTENT_TYPE);
             //TODO抽取逻辑
             if (type != null && type.contains("application/json")) {
-                entity.setRequestBody(JSON.parse(new String(heapBuffer, 0, len)));
+                entity.setRequestBody(JSON.parse(new String(array, offset,
+                        body_req.writerIndex())));
             } else {
                 JSONObject json = new JSONObject();
-                json.put("data", new String(heapBuffer, 0, len));
+                json.put("data", new String(array, offset,
+                        body_req.writerIndex()));
                 entity.setRequestBody(json);
             }
         }
         if (body_resp != null) {
-            int len = body_resp.readableBytes();
             HttpHeaders respHeader = resp.headers();
             String encoding = respHeader.get(HttpHeaderNames.CONTENT_ENCODING);
             String type = respHeader.get(HttpHeaderNames.CONTENT_TYPE);
-            body_resp.getBytes(0, heapBuffer, 0, len);
-            body_resp.release();
+            byte[] array = body_resp.array();
             String bodyStr;
-            if (encoding != null && encoding.contains("gzip")) {
-                bodyStr = unCompressGzip(heapBuffer, len);
-            } else {
-                bodyStr = new String(heapBuffer, 0, len);
+            try {
+                if (encoding != null && encoding.contains("gzip")) {
+                    bodyStr = unCompressGzip(array, body_resp.arrayOffset(),
+                            body_resp.writerIndex());
+                } else {
+                    bodyStr = new String(array, body_resp.arrayOffset(),
+                            body_resp.writerIndex());
+                }
+            } finally {
+                body_resp.release();
             }
             if (type != null && type.contains("application/json")) {
                 entity.setResponseBody(JSON.parse(bodyStr));
@@ -127,7 +123,7 @@ public class AweLogService {
         return entity;
     }
 
-    public static String unCompressGzip(byte[] in, int len) {
+    public static String unCompressGzip(byte[] in, int offset, int len) {
         ByteArrayOutputStream out = null;
         GZIPInputStream gunzip = null;
         try {
@@ -135,7 +131,7 @@ public class AweLogService {
                 return "";
             }
             out = new ByteArrayOutputStream();
-            gunzip = new GZIPInputStream(new ByteArrayInputStream(in, 0, len));
+            gunzip = new GZIPInputStream(new ByteArrayInputStream(in, offset, len));
             byte[] buffer = new byte[1024];
             int n;
             while ((n = gunzip.read(buffer)) != -1) {
