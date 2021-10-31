@@ -25,7 +25,7 @@ public class ServerProperties {
             inputStream = Thread.currentThread()
                     .getContextClassLoader().getResourceAsStream("application.yml");
         } else {
-            inputStream = new FileInputStream(path);
+            inputStream = new FileInputStream("/root/gateway.yml");
         }
         //读入文件
         gatewayConfig = yaml.loadAs(inputStream, GatewayConfig.class);
