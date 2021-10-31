@@ -58,7 +58,7 @@ public class ServerRunner implements Runnable {
         Channel channel = b.bind(gatewayConfig.getAddress(), gatewayConfig.getPort())
                 .addListener(future -> {
                     if (future.isSuccess()) {
-                        log.debug("CPU布局如下: \r\n{}", AffinityLock.cpuLayout());
+                        log.info("CPU布局如下: \r\n{}", AffinityLock.cpuLayout());
                         log.info("Server startup complete！[{}:{}]", gatewayConfig.getAddress(), gatewayConfig.getPort());
                         log.info("noCleaner策略:{}", PlatformDependent.useDirectBufferNoCleaner());
                     }

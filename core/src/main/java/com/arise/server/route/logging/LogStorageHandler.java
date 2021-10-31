@@ -59,23 +59,20 @@ public class LogStorageHandler extends ChannelDuplexHandler {
                 });
     }
 
-    private HttpHeaders reqHeader;
+    private DefaultHttpRequest request;
 
-    private HttpHeaders respHeader;
+    private DefaultHttpResponse response;
 
     private boolean skip = false;
 
-    private final ApiLog apiLog;
-
-    public LogStorageHandler() {
-        this.apiLog = new ApiLog();
-    }
+    private ApiLog apiLog;
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
-        ApiLog.Info info = apiLog.getInfo();
         //pushLog
-        if (!skip && info.getResp() != null) {
+        if (!skip) {
+            ApiLog.Info info = new ApiLog.Info(request, response);
+            apiLog.setInfo(info);
             IntObjectHashMap<Object> attr = ctx.channel().attr(ApiRouteHandler.Attr).get();
             URI uri = (URI) attr.get(RequestURI);
             Long timestamp = (Long) attr.get(Timestamp);
@@ -85,18 +82,18 @@ public class LogStorageHandler extends ChannelDuplexHandler {
             info.setTimestamp(timestamp);
             info.setHandleTime(System.currentTimeMillis() - timestamp);
             info.setPreTime(writtenTimestamp - timestamp);
-            info.setQueryPram((Map<String, String>) attr.get(HttpQueryParam));
+            info.setRequestParams((Map<String, String>) attr.get(HttpQueryParam));
             info.setUsername((String) attr.get(Username));
             info.setToken((String) attr.get(ShortToken));
             AweLogService.pushLog(apiLog);
         } else {
-            apiLog.free();
+            apiLog.destructor();
         }
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        apiLog.free();
+        apiLog.destructor();
         cause.printStackTrace();
         super.exceptionCaught(ctx, cause);
     }
@@ -107,16 +104,14 @@ public class LogStorageHandler extends ChannelDuplexHandler {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof DefaultHttpResponse) {
-            DefaultHttpResponse response = (DefaultHttpResponse) msg;
-            respHeader = response.headers();
-            apiLog.getInfo().setResp(response);
-        } else if (msg instanceof DefaultHttpContent && !skip && respFilter.apply(respHeader)) {
+            this.response = (DefaultHttpResponse) msg;
+        } else if (msg instanceof DefaultHttpContent && !skip && respFilter.apply(response.headers())) {
             ByteBuf msg_buf = ((DefaultHttpContent) msg).content();
-            ByteBuf body_resp = apiLog.getBody_resp();
-            if (body_resp == null) {
-                apiLog.setBody_resp(body_resp = ctx.alloc().heapBuffer());
-            }
-            body_resp.writeBytes(msg_buf, 0, msg_buf.readableBytes());
+            ByteBuf body = apiLog.getBuffer();
+            //复制
+            memcpy(msg_buf, body);
+            //增加长度
+            addCount(body, 4, msg_buf.readableBytes());
         }
         super.channelRead(ctx, msg);
     }
@@ -127,7 +122,7 @@ public class LogStorageHandler extends ChannelDuplexHandler {
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         if (msg instanceof DefaultHttpRequest) {
-            DefaultHttpRequest request = (DefaultHttpRequest) msg;
+            this.request = (DefaultHttpRequest) msg;
             URI uri = (URI) ctx.channel().attr(ApiRouteHandler.Attr).get().get(RequestURI);
             if (pathFilter.apply(uri.getPath())) {
                 skip = true;
@@ -135,16 +130,32 @@ public class LogStorageHandler extends ChannelDuplexHandler {
                 super.write(ctx, msg, promise);
                 return;
             }
-            reqHeader = request.headers();
-            apiLog.getInfo().setReq(request);
-        } else if (msg instanceof DefaultHttpContent && !skip && reqFilter.apply(reqHeader)) {
+            apiLog = new ApiLog();
+            //分配内存
+            ByteBuf buf = ctx.alloc().directBuffer(1024);
+            buf.writeInt(0);
+            buf.writeInt(0);
+            apiLog.setBuffer(buf);
+        } else if (msg instanceof DefaultHttpContent && !skip && reqFilter.apply(request.headers())) {
             ByteBuf msg_buf = ((DefaultHttpContent) msg).content();
-            ByteBuf body_resp = apiLog.getBody_req();
-            if (body_resp == null) {
-                apiLog.setBody_req(body_resp = ctx.alloc().heapBuffer());
-            }
-            body_resp.writeBytes(msg_buf, 0, msg_buf.readableBytes());
+            ByteBuf body = apiLog.getBuffer();
+            //复制
+            memcpy(msg_buf, body);
+            //增加长度
+            addCount(body, 0, msg_buf.readableBytes());
         }
         super.write(ctx, msg, promise);
+    }
+
+    private static void memcpy(ByteBuf src, ByteBuf dist) {
+        dist.writeBytes(src, 0, src.readableBytes());
+    }
+
+    private static void addCount(ByteBuf body, int index, int count) {
+        int cache = body.writerIndex();
+        int i = body.getInt(index);
+        body.writerIndex(index);
+        body.writeInt(i + count);
+        body.writerIndex(cache);
     }
 }

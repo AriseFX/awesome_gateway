@@ -62,7 +62,6 @@ public class AsyncChannelPool {
     }
 
     public void releaseChannel(SocketChannel channel) {
-        log.debug("channel pool:{}", "releaseChannel");
         InetSocketAddress address = channel.remoteAddress();
         String host = address.getHostString();
         int port = address.getPort();
@@ -83,7 +82,7 @@ public class AsyncChannelPool {
 
                     @Override
                     public void channelCreated(Channel ch) {
-                        log.debug("Channel created:{}", ch);
+//                        log.debug("Channel created:{}", ch);
                     }
 
                     @Override

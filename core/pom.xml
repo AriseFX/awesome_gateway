@@ -49,14 +49,6 @@
             <artifactId>commons-pool2</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.jboss.marshalling</groupId>
-            <artifactId>jboss-marshalling</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.marshalling</groupId>
-            <artifactId>jboss-marshalling-serial</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.arise</groupId>
             <artifactId>gateway-spi</artifactId>
         </dependency>
@@ -75,6 +67,14 @@
         <dependency>
             <groupId>com.arise</groupId>
             <artifactId>gateway-rabbitmq</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.arise</groupId>
+            <artifactId>gateway-disk-queue</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
         </dependency>
     </dependencies>
 

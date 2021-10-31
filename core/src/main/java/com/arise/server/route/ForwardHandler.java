@@ -63,13 +63,12 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
                 forwardChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(future -> {
                     if (future.isDone()) {
                         pool.releaseChannel(channel);
-                        log.debug("释放连接：{}", ctx.channel().toString());
+//                        log.debug("释放连接：{}", ctx.channel().toString());
                     }
                 });
             }
         } else {
             pool.releaseChannel(channel);
-            log.debug("inbound关闭,释放连接：{}", ctx.channel().toString());
         }
     }
 

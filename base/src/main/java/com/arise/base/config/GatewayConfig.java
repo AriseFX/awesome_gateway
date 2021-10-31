@@ -43,6 +43,8 @@ public class GatewayConfig {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Logging {
+        //单个磁盘队列大小(字节)
+        private int diskQueueSize;
         //排除
         private Set<String> excludePath;
         //只记录某些header的日志

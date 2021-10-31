@@ -50,7 +50,6 @@ public class HttpProxyHandler extends SimpleChannelInboundHandler<HttpObject> {
                 ApiRouteHandler apiRouteHandler = new ApiRouteHandler();
                 pipeline.addLast(new HttpResponseEncoder());
                 pipeline.addLast(apiRouteHandler);
-                log.debug("HttpProxyHandler  msg:{}", ((HttpRequest) msg).uri());
                 apiRouteHandler.channelRead(ctx, msg);
             } else {
                 //正向代理

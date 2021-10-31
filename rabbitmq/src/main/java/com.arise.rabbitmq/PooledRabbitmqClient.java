@@ -23,6 +23,7 @@ public class PooledRabbitmqClient {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setUri(config.getUri());
         factory.useNio();
+        factory.setAutomaticRecoveryEnabled(true);
         this.connectionFactory = factory;
     }
 

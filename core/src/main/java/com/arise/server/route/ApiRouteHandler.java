@@ -56,14 +56,12 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        log.debug("channelInactive:{}", ctx.channel().toString());
+//        log.debug("channelInactive:{}", ctx.channel().toString());
         ctx.channel().close();
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        log.debug("收到msg:{},this:{}", msg.getClass(), this.hashCode());
-        log.debug("当前thread id:{},cpu id:{}", Affinity.getThreadId(), Affinity.getCpu());
         Channel inbound = ctx.channel();
         EventLoop eventLoop = inbound.eventLoop();
         if (msg instanceof HttpRequest) {
@@ -77,7 +75,6 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                 attr.put(RequestURI, URI.create(request.uri()));
                 attr.put(Timestamp, Long.valueOf(System.currentTimeMillis()));
                 //最后一个http 请求
-                log.debug("最后一个http content");
                 Promise<Object> p = ctx.executor().newPromise();
                 //为了避免阻塞
                 p.addListener((FutureListener<Object>) future1 -> {
