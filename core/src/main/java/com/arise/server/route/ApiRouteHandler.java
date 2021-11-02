@@ -17,7 +17,6 @@ import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
-import net.openhft.affinity.Affinity;
 
 import java.io.IOException;
 import java.net.InetAddress;
