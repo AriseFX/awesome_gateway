@@ -115,7 +115,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                 DefaultChannelPipeline pipeline = (DefaultChannelPipeline) outbound.pipeline();
                                 HttpHeaders headers = request.headers();
                                 headers.set(HttpHeaderNames.CONNECTION, "keep-alive");
-                                headers.set(HttpHeaderNames.HOST, address.getHostName());
+                                headers.set(HttpHeaderNames.HOST, inetAddress.getHostName());
                                 pipeline.addLast(new ForwardHandler(respPromise, inbound));
                                 new FilterContext(contents
                                         , respPromise, forwardFilters, eventLoop, attr, null).handleNext();
