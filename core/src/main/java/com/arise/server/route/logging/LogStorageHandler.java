@@ -122,6 +122,7 @@ public class LogStorageHandler extends ChannelDuplexHandler {
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         if (msg instanceof DefaultHttpRequest) {
+            this.apiLog = new ApiLog();
             this.request = (DefaultHttpRequest) msg;
             URI uri = (URI) ctx.channel().attr(ApiRouteHandler.Attr).get().get(RequestURI);
             if (pathFilter.apply(uri.getPath())) {
@@ -130,7 +131,6 @@ public class LogStorageHandler extends ChannelDuplexHandler {
                 super.write(ctx, msg, promise);
                 return;
             }
-            apiLog = new ApiLog();
             //分配内存
             ByteBuf buf = ctx.alloc().directBuffer(1024);
             buf.writeInt(0);

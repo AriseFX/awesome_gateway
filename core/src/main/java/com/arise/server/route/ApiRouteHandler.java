@@ -115,10 +115,7 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
                                 DefaultChannelPipeline pipeline = (DefaultChannelPipeline) outbound.pipeline();
                                 HttpHeaders headers = request.headers();
                                 headers.set(HttpHeaderNames.CONNECTION, "keep-alive");
-                                if (matchRes.isSsl()) {
-                                    //保证Host指向正确
-                                    headers.set(HttpHeaderNames.HOST, address.getHostName());
-                                }
+                                headers.set(HttpHeaderNames.HOST, address.getHostName());
                                 pipeline.addLast(new ForwardHandler(respPromise, inbound));
                                 new FilterContext(contents
                                         , respPromise, forwardFilters, eventLoop, attr, null).handleNext();
