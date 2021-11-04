@@ -70,6 +70,10 @@ public class ApiRouteHandler extends ChannelInboundHandlerAdapter {
         } else {
             contents.add((HttpObject) msg);
             if (msg instanceof LastHttpContent) {
+                if (request.method() == HttpMethod.OPTIONS) {
+                    writeMsg(inbound, _OPTIONAL_RESP);
+                    return;
+                }
                 IntObjectHashMap<Object> attr = new IntObjectHashMap<>(4);
                 attr.put(RequestURI, URI.create(request.uri()));
                 attr.put(Timestamp, Long.valueOf(System.currentTimeMillis()));

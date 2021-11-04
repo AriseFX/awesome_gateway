@@ -51,13 +51,13 @@ public class HttpCorsFilter implements Filter {
                 HttpHeaders headers = ((HttpResponse) object.get(0)).headers();
                 ctx.attr().put(TraceId, traceId);
                 headers.set(Headers.LogId, traceId);
-//                if (request.headers().get("Origin") != null) {
+                if (request.headers().get("Origin") != null) {
                     headers.set("Access-Control-Allow-Origin", "*");
                     headers.set("Access-Control-Allow-Methods", "*");
                     headers.set("Access-Control-Max-Age", "3600");
-                    headers.set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Connection, User-Agent, Cookie");
+                    headers.set("Access-Control-Allow-Headers", "*");
                     headers.set("Access-Control-Allow-Credentials", "true");
-//                }
+                }
                 ctx.handleNext();
             }
         });

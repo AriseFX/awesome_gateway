@@ -4,10 +4,7 @@ import com.alibaba.fastjson.JSON;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.DefaultHttpResponse;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -79,6 +76,7 @@ public class GatewayMessage {
         }
     }, INTERNAL_SERVER_ERROR, null);
 
+    public static FullHttpResponse _OPTIONAL_RESP = buildOptionResp();
 
     public static FullHttpResponse _ConnectionClose = build(new HashMap<String, Object>() {
         {
@@ -96,8 +94,10 @@ public class GatewayMessage {
         ByteBuf byteBuf = allocator.directBuffer(bodyByte.length).writeBytes(bodyByte);
         FullHttpResponse response = new DefaultFullHttpResponse(
                 HTTP_1_1, status, byteBuf);
-        response.headers().set(CONTENT_TYPE, "application/json");
-        response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
+        HttpHeaders headers = response.headers();
+        headers.set(CONTENT_TYPE, "application/json");
+        headers.set(CONTENT_LENGTH, response.content().readableBytes());
+        addCorsHeader(headers);
         return response;
     }
 
@@ -105,5 +105,20 @@ public class GatewayMessage {
         if (channel.isActive()) {
             channel.writeAndFlush(response.retainedDuplicate());
         }
+    }
+
+    public static FullHttpResponse buildOptionResp() {
+        FullHttpResponse response = new DefaultFullHttpResponse(
+                HTTP_1_1, NO_CONTENT);
+        addCorsHeader(response.headers());
+        return response;
+    }
+
+    public static void addCorsHeader(HttpHeaders headers) {
+        headers.set("Access-Control-Allow-Origin", "*");
+        headers.set("Access-Control-Allow-Methods", "*");
+        headers.set("Access-Control-Max-Age", "3600");
+        headers.set("Access-Control-Allow-Headers", "*");
+        headers.set("Access-Control-Allow-Credentials", "true");
     }
 }
