@@ -115,7 +115,7 @@ public class AweLogService {
                         }
                         Channel channel = localChannel.get();
                         channel.basicPublish("", "gateway-queue", null,
-                                JSON.toJSONString(info).getBytes());
+                                JSON.toJSONString(info).getBytes(StandardCharsets.UTF_8));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
