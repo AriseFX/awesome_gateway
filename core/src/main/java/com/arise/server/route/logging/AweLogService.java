@@ -84,7 +84,7 @@ public class AweLogService {
                         if (reqBodyLen > 0) {
                             //requestBody
                             String type = headers.get("Content-Type");
-                            if (type != null && type.contains("application/json")) {
+                            if (type != null && type.toLowerCase().contains("json")) {
                                 info.setRequestBody(JSON.parse(new String(message, 8,
                                         reqBodyLen)));
                             } else {
@@ -100,12 +100,12 @@ public class AweLogService {
                             String encoding = respHeaders.get("content-encoding");
                             String type = respHeaders.get("Content-Type");
                             String bodyStr;
-                            if (encoding != null && encoding.contains("gzip")) {
+                            if (encoding != null && encoding.toLowerCase().contains("gzip")) {
                                 bodyStr = unCompressGzip(message, reqBodyLen + 8, respBodyLen);
                             } else {
                                 bodyStr = new String(message, reqBodyLen + 8, respBodyLen);
                             }
-                            if (type != null && type.contains("application/json")) {
+                            if (type != null && type.toLowerCase().contains("json")) {
                                 info.setResponseBody(JSON.parse(bodyStr));
                             } else {
                                 JSONObject json = new JSONObject();
