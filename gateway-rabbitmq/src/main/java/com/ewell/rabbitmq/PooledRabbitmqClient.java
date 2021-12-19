@@ -20,16 +20,18 @@ import java.util.concurrent.TimeoutException;
 @Singleton
 public class PooledRabbitmqClient {
 
-    private final ConnectionFactory connectionFactory;
+    private ConnectionFactory connectionFactory;
 
     @Inject
     public PooledRabbitmqClient(GatewayConfig gatewayConfig) throws Exception {
         GatewayConfig.Rabbitmq config = gatewayConfig.getRabbitmq();
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setUri(config.getUri());
-        factory.useNio();
-        factory.setAutomaticRecoveryEnabled(true);
-        this.connectionFactory = factory;
+        if (config != null) {
+            ConnectionFactory factory = new ConnectionFactory();
+            factory.setUri(config.getUri());
+            factory.useNio();
+            factory.setAutomaticRecoveryEnabled(true);
+            this.connectionFactory = factory;
+        }
     }
 
     public Connection newConnection() throws IOException, TimeoutException {

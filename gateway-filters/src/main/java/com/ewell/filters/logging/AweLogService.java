@@ -127,9 +127,9 @@ public class AweLogService {
                             }
                         }
                         rateLimiter.acquire();
-                        Channel channel = localChannel.get();
+                        /*Channel channel = localChannel.get();
                         channel.basicPublish("", "gateway-queue", null,
-                                JSON.toJSONString(info).getBytes(UTF_8));
+                                JSON.toJSONString(info).getBytes(UTF_8));*/
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -148,13 +148,13 @@ public class AweLogService {
     }
 
     public static void alarm(AlarmDto dto) {
-        try {
+       /* try {
             Channel channel = localChannel.get();
             channel.basicPublish("", "gateway-alarm-queue", null,
                     JSON.toJSONString(dto).getBytes(UTF_8));
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
 
