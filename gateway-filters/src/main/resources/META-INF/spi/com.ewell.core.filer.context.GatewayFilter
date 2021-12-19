@@ -1,0 +1,8 @@
+origin=com.ewell.filters.route.OriginFilter
+match=com.ewell.filters.route.MatchRouteFilter
+discover=com.ewell.filters.route.SelectServiceFilter
+cors=com.ewell.filters.cors.HttpCorsFilter
+logging=com.ewell.filters.logging.LoggingFilter
+encryption=com.ewell.filters.encryption.BodyEncryptionFilter
+token=com.ewell.filters.token.UserTokenFilter
+limiter=com.ewell.filters.limiter.RateLimiterFilter
