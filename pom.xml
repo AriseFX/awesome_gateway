@@ -4,21 +4,23 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.arise</groupId>
-    <artifactId>awesome_gateway</artifactId>
+    <groupId>com.ewell</groupId>
+    <artifactId>gateway</artifactId>
     <version>1.0-SNAPSHOT</version>
+
     <modules>
-        <module>core</module>
-        <module>filter</module>
-        <module>bootstrap</module>
-        <module>endpoint</module>
-        <module>base</module>
-        <module>spi</module>
-        <module>redis</module>
-        <module>naming-nacos</module>
-        <module>naming</module>
-        <module>rabbitmq</module>
-        <module>disk-queue</module>
+        <module>gateway-common</module>
+        <module>gateway-endpoint</module>
+        <module>gateway-core</module>
+        <module>gateway-bootstrap</module>
+        <module>gateway-filters</module>
+        <module>gateway-nacos-discovery</module>
+        <module>gateway-nacos-config</module>
+        <module>gateway-dynamic-route</module>
+        <module>gateway-spi</module>
+        <module>gateway-redis</module>
+        <module>gateway-disk-queue</module>
+        <module>gateway-rabbitmq</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -41,57 +43,57 @@
                 <version>2.8.1</version>
             </dependency>
             <dependency>
-                <groupId>com.arise</groupId>
+                <groupId>com.ewell</groupId>
                 <artifactId>gateway-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.arise</groupId>
-                <artifactId>gateway-filter</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.arise</groupId>
+                <groupId>com.ewell</groupId>
                 <artifactId>gateway-endpoint</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.arise</groupId>
-                <artifactId>gateway-base</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.arise</groupId>
+                <groupId>com.ewell</groupId>
                 <artifactId>gateway-redis</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.arise</groupId>
+                <groupId>com.ewell</groupId>
                 <artifactId>gateway-spi</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.arise</groupId>
-                <artifactId>awesome_gateway</artifactId>
+                <groupId>com.ewell</groupId>
+                <artifactId>gateway-filters</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.arise</groupId>
-                <artifactId>gateway-naming</artifactId>
+                <groupId>com.ewell</groupId>
+                <artifactId>gateway-nacos-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.arise</groupId>
-                <artifactId>gateway-naming-nacos</artifactId>
+                <groupId>com.ewell</groupId>
+                <artifactId>gateway-nacos-discovery</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.arise</groupId>
+                <groupId>com.ewell</groupId>
+                <artifactId>gateway-dynamic-route</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ewell</groupId>
+                <artifactId>gateway-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ewell</groupId>
                 <artifactId>gateway-rabbitmq</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.arise</groupId>
+                <groupId>com.ewell</groupId>
                 <artifactId>gateway-disk-queue</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -180,6 +182,33 @@
                 <artifactId>amqp-client</artifactId>
                 <version>5.13.1</version>
             </dependency>
+            <dependency>
+                <groupId>com.netflix.concurrency-limits</groupId>
+                <artifactId>concurrency-limits-core</artifactId>
+                <version>0.3.6</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-crypto</artifactId>
+                <version>5.7.16</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.inject</groupId>
+                <artifactId>guice</artifactId>
+                <version>5.0.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.inject.extensions</groupId>
+                <artifactId>guice-multibindings</artifactId>
+                <version>4.2.3</version>
+            </dependency>
+            <dependency>
+                <groupId>net.java.dev.jna</groupId>
+                <artifactId>jna</artifactId>
+                <version>4.2.2</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
+
 </project>
