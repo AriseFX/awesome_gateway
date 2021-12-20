@@ -82,7 +82,7 @@ curl --location --request POST 'localhost:9876/route/put' \
 }'
 ```
 启动了一个应用「TOMCAT」并注册到了Nacos上，那么可以使用`lb://`格式来配置路由，如curl中的service，
-也可以把lb换成http或https。配置中gatewayPath为网关路由，servicePath为对于的后端路由。
+也可以把lb换成http或https。配置中gatewayPath为网关路由，servicePath为后端路由。
 路由添加完成就可以使用`/route/refresh`来刷新路由了。
 
 ### 3.性能测试
