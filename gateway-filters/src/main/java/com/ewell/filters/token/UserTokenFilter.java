@@ -6,7 +6,6 @@ import com.ewell.core.filer.context.FilterContext;
 import com.ewell.redis.AsyncRedisClient;
 import com.ewell.spi.Join;
 import com.google.inject.Inject;
-import com.xcewell.esb.common.Token;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
@@ -40,7 +39,7 @@ public class UserTokenFilter extends PreRouteFilter {
 
     @Override
     public void doFilter(FilterContext ctx, Object data) {
-        IntObjectHashMap<Object> attr = ctx.getAttr();
+        /*IntObjectHashMap<Object> attr = ctx.getAttr();
         URI uri = (URI) attr.get(_RequestURI);
         List<HttpObject> objects = (List<HttpObject>) data;
         HttpRequest request = (HttpRequest) objects.get(0);
@@ -103,7 +102,7 @@ public class UserTokenFilter extends PreRouteFilter {
                 attr.put(_OriginCode, originCode[0]);
                 headers.set("x-originCode", originCode[0]);
             }
-        }
+        }*/
         ctx.doNext(data);
     }
 

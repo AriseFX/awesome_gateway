@@ -41,7 +41,7 @@
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-crypto</artifactId>
         </dependency>
-        <dependency>
+<!--        <dependency>
             <groupId>com.xcewell.esb</groupId>
             <artifactId>api</artifactId>
             <version>pp008-SNAPSHOT</version>
@@ -51,7 +51,7 @@
                     <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>com.fasterxml.uuid</groupId>
             <artifactId>java-uuid-generator</artifactId>
