@@ -37,6 +37,15 @@ curl --location --request POST 'localhost:9876/route/put' \
 }'
 ```
 
+dubbo 刷新路由案例
+----
+
+```
+curl --location --request POST 'localhost:9876/route/refresh' \
+--header 'Content-Type: application/json'
+```
+
+
 dubbo 路由案例
 ----
 
