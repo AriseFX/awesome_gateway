@@ -32,14 +32,14 @@ import java.util.concurrent.TimeUnit;
 @Singleton
 public class DubboParamsEncodeUtil {
 
-    private static final Cache<String,Pair<String[],Pair<String,DubboPathParamMetaTypeEnum>[]>> METHOD_CACHE = CacheBuilder.newBuilder()
+    private static final Cache<String,Pair<String[],String[]>> METHOD_CACHE = CacheBuilder.newBuilder()
             .expireAfterWrite(300, TimeUnit.MINUTES)
             .maximumSize(Constants.CACHE_SIZE)
             .build();
 
     private static final String[] PARAMS_EMPTY = new String[0];
 
-    private static final Pair<String[],Pair<String,DubboPathParamMetaTypeEnum>[]> PARAMS_META_EMPTY = Pair.of(null,null);
+    private static final Pair<String[],String[]> PARAMS_META_EMPTY = Pair.of(null,null);
 
     private static final Pair<String[],Object[]> EMPTY =  Pair.of(PARAMS_EMPTY,new Object[0]);
 
@@ -51,7 +51,7 @@ public class DubboParamsEncodeUtil {
      * @description:
      */
     public static Pair<String[], Object[]> buildParameters(final DubboPathMeta dubboPathMeta, final String params) throws ExecutionException {
-        Pair<String[], Pair<String, DubboPathParamMetaTypeEnum>[]> pairs = METHOD_CACHE.get(dubboPathMeta.getInterfaceName() + Constants.SPLIT + dubboPathMeta.getMethodName()
+        Pair<String[], String[]> pairs = METHOD_CACHE.get(dubboPathMeta.getInterfaceName() + Constants.SPLIT + dubboPathMeta.getMethodName()
                 , () -> {
                     List<DubboPathParamMeta> paramsMeta = dubboPathMeta.getParamsMeta();
                     if (CollectionUtils.isEmpty(paramsMeta)) {
@@ -59,16 +59,15 @@ public class DubboParamsEncodeUtil {
                     }
 
                     String[] paramsTypes = new String[paramsMeta.size()];
-                    Pair<String, DubboPathParamMetaTypeEnum>[] paramsPairs = new Pair[paramsMeta.size()];
+                    String[] paramsNames = new String[paramsMeta.size()];
                     paramsMeta.sort(Comparator.comparingInt(DubboPathParamMeta::getSort));
                     for (int i = 0; i < paramsMeta.size(); i++) {
                         DubboPathParamMeta dubboPathParamMeta = paramsMeta.get(i);
                         paramsTypes[i] = dubboPathParamMeta.getParamType();
-                        paramsPairs[i] = Pair.of(dubboPathParamMeta.getParamName(),
-                                DubboPathParamMetaTypeEnum.valueOf(dubboPathParamMeta.getMetaType()));
+                        paramsNames[i] = dubboPathParamMeta.getParamName();
                     }
 
-                            return Pair.of(paramsTypes, paramsPairs);
+                            return Pair.of(paramsTypes, paramsNames);
                 });
 
         if(ArrayUtils.isEmpty(pairs.getKey())){
@@ -76,14 +75,14 @@ public class DubboParamsEncodeUtil {
         }
 
         //赋值
-        Pair<String, DubboPathParamMetaTypeEnum>[] pairsValue = pairs.getValue();
-        Object[] paramArr = new Object[pairsValue.length];
+        String[] tmpParamsNames = pairs.getValue();
+        Object[] paramArr = new Object[tmpParamsNames.length];
 
         JSONObject jsonObject = JSON.parseObject(params);
 
-        for (int i = 0; i < pairsValue.length; i++) {
-            Pair<String, DubboPathParamMetaTypeEnum> pair = pairsValue[i];
-            Object obj = jsonObject.get(pair.getKey());
+        for (int i = 0; i < tmpParamsNames.length; i++) {
+            String value = tmpParamsNames[i];
+            Object obj = jsonObject.get(value);
             if(Objects.nonNull(obj)){
                 paramArr[i] = obj;
             }
