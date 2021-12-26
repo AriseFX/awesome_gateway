@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+
+    <!--提供方信息-->
+    <dubbo:application name="dubbo-sample-server"/>
+
+    <!--配置注册中心 "N/A"表示不需要注册中心-->
+    <dubbo:registry  address="nacos://127.0.0.1:8848"/>
+
+    <!--配置协议-->
+    <dubbo:protocol name="dubbo" port="20880"/>
+
+    <!--商品 -->
+    <dubbo:service  interface="com.ewell.sample.dubbo.api.ItemInterface" ref="itemInterfaceImpl" version="1.0.0"/>
+    <bean id="itemInterfaceImpl" class="com.ewell.sample.dubbo.server.ItemInterfaceImpl"/>
+
+</beans>

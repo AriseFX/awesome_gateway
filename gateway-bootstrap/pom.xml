@@ -42,6 +42,11 @@
             <artifactId>gateway-dynamic-route</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.ewell</groupId>
+            <artifactId>gateway-plugin-dubbo</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

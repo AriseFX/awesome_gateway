@@ -21,6 +21,8 @@
         <module>gateway-redis</module>
         <module>gateway-disk-queue</module>
         <module>gateway-rabbitmq</module>
+        <module>gateway-plugin-dubbo</module>
+        <module>sample/gateway-sample-dubbo</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -84,6 +86,12 @@
             </dependency>
             <dependency>
                 <groupId>com.ewell</groupId>
+                <artifactId>gateway-plugin-dubbo</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.ewell</groupId>
                 <artifactId>gateway-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -123,9 +131,25 @@
                 <version>1.4.1</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-spring-boot-starter</artifactId>
+                <version>3.0.2.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-registry-nacos</artifactId>
+                <version>3.0.2.1</version>
+            </dependency>
+            <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>1.18.10</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>23.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>

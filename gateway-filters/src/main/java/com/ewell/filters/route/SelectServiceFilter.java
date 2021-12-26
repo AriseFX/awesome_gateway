@@ -3,6 +3,7 @@ package com.ewell.filters.route;
 import com.ewell.common.RouteBean;
 import com.ewell.common.dto.AlarmDto;
 import com.ewell.core.discovery.ServiceManager;
+import com.ewell.core.fade.OutsidePluginRouter;
 import com.ewell.core.filer.RouteFilter;
 import com.ewell.core.filer.context.FilterContext;
 import com.ewell.core.route.MatchRes;
@@ -32,6 +33,9 @@ public class SelectServiceFilter extends RouteFilter {
 
     @Inject
     private static ServiceManager serviceManager;
+
+    @Inject
+    private static OutsidePluginRouter outsidePluginRouter;
 
     @Override
     public void doFilter(FilterContext ctx, Object data) {
@@ -74,8 +78,9 @@ public class SelectServiceFilter extends RouteFilter {
                 ctx.success(new MatchRes(true,
                         new InetSocketAddress(host, port == -1 ? 443 : port), url));
                 return;
+                default:
+                outsidePluginRouter.router(scheme,ctx,data);
         }
-        ctx.cancel(GATEWAY_ERROR("不支持该协议:" + scheme));
     }
 
     @Override

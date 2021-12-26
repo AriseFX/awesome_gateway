@@ -14,6 +14,7 @@ import com.ewell.filters.logging.LoggingFilter;
 import com.ewell.filters.route.MatchRouteFilter;
 import com.ewell.filters.route.SelectServiceFilter;
 import com.ewell.filters.token.UserTokenFilter;
+import com.ewell.plugin.dubbo.handler.ApacheDubboSchemaPlugin;
 import com.ewell.spi.ExtensionLoader;
 import com.google.inject.AbstractModule;
 
@@ -59,6 +60,7 @@ public class CoreModule extends AbstractModule {
         binder().requestStaticInjection(ProxyInboundHandler.class, ProxyReadTimeoutHandler.class);
         binder().requestStaticInjection(ForwardHandler.class);
         binder().requestStaticInjection(RouteServicesConsumer.class);
+        binder().requestStaticInjection(ApacheDubboSchemaPlugin.class);
 
     }
 }

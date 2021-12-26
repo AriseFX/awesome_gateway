@@ -111,6 +111,15 @@ public final class ExtensionLoader<T> {
                 .map(e -> getJoin(e)).collect(Collectors.toList());
     }
 
+    /**
+     * Get all join.
+     *
+     * @return all join.
+     */
+    public Set<String> getAllJoinSpi() {
+        return this.getExtensionClasses().keySet();
+    }
+
     @SuppressWarnings("unchecked")
     private T createExtension(final String name) {
         Class<?> aClass = getExtensionClasses().get(name);

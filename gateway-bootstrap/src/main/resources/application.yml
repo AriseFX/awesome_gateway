@@ -7,9 +7,9 @@ pool:
   maxPendingAcquires: 0x7fffffff #最大pending数
 registry:
   naming: nacos
-  serverAddr: xxx:8848
-  namespace: xxx
-  serviceName: AsGateway
+  serverAddr: 127.0.0.1:8848
+  namespace: mrfox
+  serviceName: AsGatewayw
   networkInterface: eth0
 logging:
   excludePath: [ "/selectLogByCondition" ]
@@ -17,7 +17,7 @@ logging:
   reqHeader: { "Content-Type": [ "application/xml","application/json","application/json;charset=utf-8","text/xml" ,"text/xml; charset=utf-8" ] }
   respHeader: { "Content-Type": [ "text/html","application/json","application/json;charset=utf-8","text/xml","text/xml; charset=utf-8" ] }
 redis:
-  uri: redis://xxx@xxx:6379/0?timeout=10s
+  uri: redis://127.0.0.1:6379/0?timeout=10s
 #rabbitmq:
 #  uri: amqp://admin:admin@xxx:5672/dev
 endpoint:
