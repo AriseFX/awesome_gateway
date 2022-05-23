@@ -10,7 +10,6 @@ import com.ewell.common.exception.ServiceRegistryException;
 import com.ewell.common.util.ScheduledPool;
 import com.ewell.core.discovery.ServiceDiscoverySpi;
 import com.ewell.core.discovery.ServiceInfo;
-import com.ewell.spi.Join;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -29,7 +28,6 @@ import java.util.stream.Collectors;
  * @Modified: By：
  */
 @Slf4j
-@Join
 public class NacosDiscoveryImpl implements ServiceDiscoverySpi {
 
     private NamingService naming;
@@ -72,7 +70,7 @@ public class NacosDiscoveryImpl implements ServiceDiscoverySpi {
                         });
                     }
                 } catch (NacosException e) {
-                    e.printStackTrace();
+                    log.error("发生异常:",e);
                 }
             }, 0, 15, TimeUnit.SECONDS);
         } catch (NacosException e) {

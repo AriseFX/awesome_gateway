@@ -29,6 +29,7 @@ public interface GatewayFilter {
     enum FilterType {
         Route,
         PreRoute,
+        PostRoute,
     }
 }
 

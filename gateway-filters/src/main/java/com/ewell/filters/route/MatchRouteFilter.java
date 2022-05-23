@@ -1,12 +1,9 @@
 package com.ewell.filters.route;
 
 import com.ewell.common.RouteBean;
-import com.ewell.common.dto.AlarmDto;
 import com.ewell.core.filer.RouteFilter;
 import com.ewell.core.filer.context.FilterContext;
 import com.ewell.core.route.RouteCache;
-import com.ewell.filters.logging.AweLogService;
-import com.ewell.spi.Join;
 import com.google.inject.Inject;
 import io.netty.util.collection.IntObjectHashMap;
 
@@ -14,7 +11,8 @@ import java.net.URI;
 import java.util.List;
 
 import static com.ewell.common.GatewayMessages.ROUTE_NOT_FOUND;
-import static com.ewell.common.IntMapConstant.*;
+import static com.ewell.common.IntMapConstant._FinalRouteBean;
+import static com.ewell.common.IntMapConstant._RequestURI;
 
 /**
  * @Author: wy
@@ -22,7 +20,6 @@ import static com.ewell.common.IntMapConstant.*;
  * @Description: 简单匹配路由
  * @Modified: By：
  */
-@Join
 public class MatchRouteFilter extends RouteFilter {
 
     @Inject
@@ -34,18 +31,16 @@ public class MatchRouteFilter extends RouteFilter {
         URI requestURI = (URI) attr.get(_RequestURI);
         List<RouteBean> matched = routeCache.match(requestURI.getPath(), attr);
         if (matched.size() == 0) {
-            URI uri = (URI) attr.get(_RequestURI);
-            AlarmDto alarmDto = new AlarmDto(uri.getPath(), "路由未找到", "GATEWAY", (String) attr.get(_OriginCode), (String) attr.get(_Backend));
-            AweLogService.alarm(alarmDto);
             ctx.cancel(ROUTE_NOT_FOUND());
             return;
         }
-        attr.put(_RouteBeans, matched);
+        //匹配多个默认取第一个,也可以自己加filter筛选
+        attr.put(_FinalRouteBean, matched.get(0));
         ctx.doNext(data);
     }
 
     @Override
     public byte order() {
-        return 0;
+        return 1;
     }
 }

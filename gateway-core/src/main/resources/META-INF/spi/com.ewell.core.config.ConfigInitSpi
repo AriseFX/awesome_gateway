@@ -1,1 +1,2 @@
 default=com.ewell.core.config.DefaultConfigImpl
+nacos=com.ewell.config.NacosConfigImpl

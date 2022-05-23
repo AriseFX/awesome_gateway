@@ -34,12 +34,12 @@ public class ProxyOutboundHandler extends ChannelOutboundHandlerAdapter {
                 try {
                     ctx.write(e);
                 } catch (Exception exception) {
-                    exception.printStackTrace();
+                    log.error("发生消息发生异常:", exception);
                 }
             });
             ctx.flush();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("发生消息发生异常:", e);
         }
     }
 

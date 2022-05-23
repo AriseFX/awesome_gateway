@@ -50,8 +50,9 @@ public class GatewayDiskQueue {
                     .map(FileChannel.MapMode.READ_WRITE, 0, 4096);
             this.wfn = meta.getInt(0);
             this.rfn = meta.getInt(4);
+            log.info("初始化磁盘队列成功,name:{},当前写文件编号:{},当前读文件编号:{}", name, wfn, rfn);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("发生异常", e);
             throw new SimpleRuntimeException("meta data mmap error");
         }
     }
@@ -61,8 +62,7 @@ public class GatewayDiskQueue {
             ByteBuffer msgBody = data.marshaller();
             doWrite(msgBody);
         } catch (Exception e) {
-            log.error("GatewayDiskQueue.write:{}", e.getMessage());
-            e.printStackTrace();
+            log.error("发生异常", e);
         } finally {
             data.destructor();
         }
@@ -104,7 +104,7 @@ public class GatewayDiskQueue {
         try {
             return new QueueBuffer(dataPath, len);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("发生异常", e);
             throw new SimpleRuntimeException("queue data mmap error");
         }
     }

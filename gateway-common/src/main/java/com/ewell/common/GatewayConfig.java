@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -23,7 +22,7 @@ public class GatewayConfig {
     //地址
     private String address;
     //响应超时
-    private int respTimeout = 5000;
+    private int respTimeout = 10000;
     //连接池
     private Pool pool;
     //注册中心相关
@@ -46,19 +45,6 @@ public class GatewayConfig {
         private int diskQueueSize;
         //排除
         private Set<String> excludePath;
-        //只记录某些header的日志
-        private Map<String, Set<String>> reqHeader;
-        private Map<String, Set<String>> respHeader;
-
-        public void setReqHeader(Map<String, Set<String>> reqHeader) {
-            reqHeader.entrySet().forEach(e -> e.setValue(toTreeSet(e.getValue())));
-            this.reqHeader = reqHeader;
-        }
-
-        public void setRespHeader(Map<String, Set<String>> respHeader) {
-            respHeader.entrySet().forEach(e -> e.setValue(toTreeSet(e.getValue())));
-            this.respHeader = respHeader;
-        }
 
         private TreeSet<String> toTreeSet(Set<String> in) {
             return in.stream().collect(Collectors
@@ -89,6 +75,8 @@ public class GatewayConfig {
          * ex: redis-sentinel://mypassword@127.0.0.1:6379,127.0.0.1:6380/0?timeout=10s#mymaster
          */
         private String uri;
+
+        private String password;
     }
 
     @Data

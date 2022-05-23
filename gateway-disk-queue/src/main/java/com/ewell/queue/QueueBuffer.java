@@ -61,8 +61,8 @@ public class QueueBuffer {
         this.isFull = mapped.get(0) == 1;
         int widx = mapped.getInt(1);
         int ridx = mapped.getInt(5);
-        this.widx = widx == 0 ? 9 : widx;
-        this.ridx = ridx == 0 ? 9 : ridx;
+        this.widx = Math.max(widx, 9);
+        this.ridx = Math.max(ridx, 9);
         this.writeBuf.position(this.widx);
         this.readBuf.position(this.ridx);
         //预热
@@ -70,6 +70,7 @@ public class QueueBuffer {
         long address = ((DirectBuffer) mapped).address();
         Pointer pointer = new Pointer(address);
         int ret = LibC.INSTANCE.madvise(pointer, new NativeLong(size), LibC.MADV_WILLNEED);
+        log.info("当前QueueBuffer位置:{},writeOffset:{},readOffset:{}", dataPath, widx, ridx);
         log.info("madvise {} {} {} ret = {} time consuming = {}", address, dataPath, size, ret, System.currentTimeMillis() - beginTime);
     }
 
@@ -82,7 +83,7 @@ public class QueueBuffer {
                 file.delete();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("发生异常", e);
             throw new SimpleRuntimeException("clean queue data error");
         }
     }

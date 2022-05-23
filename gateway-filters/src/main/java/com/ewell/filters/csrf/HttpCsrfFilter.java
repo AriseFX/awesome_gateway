@@ -2,7 +2,6 @@ package com.ewell.filters.csrf;
 
 import com.ewell.core.filer.PreRouteFilter;
 import com.ewell.core.filer.context.FilterContext;
-import com.ewell.spi.Join;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 
@@ -17,7 +16,6 @@ import static com.ewell.common.GatewayMessages.REQUEST_ERROR;
  * @Description:
  * @Modified: By：
  */
-@Join
 public class HttpCsrfFilter extends PreRouteFilter {
     @Override
     public void doFilter(FilterContext ctx, Object data) {

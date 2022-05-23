@@ -22,9 +22,14 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  */
 public class GatewayMessages {
 
+    public static GatewayMessage UNAUTHORIZED(String message) {
+        return build(401, false,
+                message, UNAUTHORIZED);
+    }
+
     public static GatewayMessage ROUTE_NOT_FOUND() {
         return build(404, false,
-                "gateway:路由未找到", INTERNAL_SERVER_ERROR);
+                "gateway:路由未找到", NOT_FOUND);
     }
 
     public static GatewayMessage GATEWAY_ERROR(String message) {

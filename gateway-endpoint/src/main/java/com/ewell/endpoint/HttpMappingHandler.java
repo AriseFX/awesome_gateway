@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
-
 import static com.ewell.endpoint.service.ServiceFunctions.*;
 import static com.ewell.endpoint.service.dto.EndpointResponse.standJsonResp;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;

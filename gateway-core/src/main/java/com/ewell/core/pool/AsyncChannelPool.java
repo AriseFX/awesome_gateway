@@ -2,6 +2,8 @@ package com.ewell.core.pool;
 
 import com.ewell.common.GatewayConfig;
 import com.ewell.core.server.NettyBootstrapFactory;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.pool.AbstractChannelPoolHandler;
@@ -19,8 +21,6 @@ import io.netty.util.concurrent.Promise;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import javax.net.ssl.SSLException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;

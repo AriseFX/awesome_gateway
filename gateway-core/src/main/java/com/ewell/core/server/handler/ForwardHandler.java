@@ -99,7 +99,7 @@ public class ForwardHandler extends ChannelDuplexHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        cause.printStackTrace();
+        log.error("发生异常", cause);
         pool.releaseChannel((SocketChannel) ctx.channel());
         ctx.close();
         inbound.close().addListener(future -> {

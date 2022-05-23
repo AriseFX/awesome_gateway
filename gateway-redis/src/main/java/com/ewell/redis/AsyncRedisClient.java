@@ -1,20 +1,18 @@
 package com.ewell.redis;
 
 import com.ewell.common.GatewayConfig;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.async.RedisAsyncCommands;
-import io.lettuce.core.support.AsyncConnectionPoolSupport;
-import io.lettuce.core.support.BoundedAsyncPool;
-import io.lettuce.core.support.BoundedPoolConfig;
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.redis.client.Redis;
+import io.vertx.redis.client.RedisClientType;
+import io.vertx.redis.client.RedisConnection;
+import io.vertx.redis.client.RedisOptions;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import com.google.inject.Inject;
-
-import java.util.concurrent.CompletionStage;
-import java.util.function.BiFunction;
+import java.io.*;
 
 /**
  * @Author: wy
@@ -26,33 +24,42 @@ import java.util.function.BiFunction;
 @Singleton
 public class AsyncRedisClient {
 
-    private final BoundedAsyncPool<StatefulRedisConnection<String, Object>> pool;
+    private final Redis client;
 
     @Inject
     public AsyncRedisClient(GatewayConfig gatewayConfig) {
-        GatewayConfig.Redis config = gatewayConfig.getRedis();
-        RedisClient client = RedisClient.create();
-        RedisURI uri = RedisURI.create(config.getUri());
-        //创建异步连接池
-        this.pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
-                () -> client.connectAsync(new JdkSerializableRedisCodec(), uri),
-                // 使用默认的连接池配置
-                BoundedPoolConfig.builder().minIdle(3).maxTotal(4000).maxIdle(4000).build());
+        GatewayConfig.Redis redis = gatewayConfig.getRedis();
+        this.client = Redis.createClient(
+                Vertx.vertx(),
+                new RedisOptions()
+                        .setType(RedisClientType.STANDALONE)
+                        .addConnectionString(redis.getUri())
+                        .setPassword(redis.getPassword())
+                        .setMaxPoolSize(4)
+                        .setMaxPoolWaiting(16));
     }
 
-    /**
-     * 非阻塞执行redis命令
-     */
-    public void asyncExec(BiFunction<RedisAsyncCommands<String, Object>, ? super Throwable, CompletionStage<?>> func) {
-        pool.acquire().whenComplete((conn, ex) -> {
-            func.apply(conn.async(), ex)
-                    .whenComplete((e, ex1) -> {
-                                if (ex1 != null) {
-                                    ex1.printStackTrace();
-                                }
-                                pool.release(conn);
-                            }
-                    );
-        });
+    public Future<RedisConnection> getConnection() {
+        return client.connect();
+    }
+
+    //jdk反序列化
+    @SneakyThrows
+    public static Object decode(byte[] bytes) {
+        try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
+            return ois.readObject();
+        }
+    }
+
+    //jdk序列化
+    public static byte[] encode(Object value) {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+             ObjectOutputStream oos = new ObjectOutputStream(outputStream)) {
+            oos.writeObject(value);
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
+        }
     }
 }

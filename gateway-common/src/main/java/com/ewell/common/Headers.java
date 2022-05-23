@@ -11,5 +11,4 @@ public interface Headers {
     String Backend = "Backend";
     String OriginCode = "x-originCode";
     String LogId = "x-log-id";
-    String TraceId = "x-trace-id";
 }

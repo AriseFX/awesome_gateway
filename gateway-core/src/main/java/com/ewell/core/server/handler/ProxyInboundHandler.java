@@ -147,8 +147,7 @@ public class ProxyInboundHandler extends ChannelInboundHandlerAdapter {
         if (throwable instanceof IOException) {
             ctx.channel().close();
         } else {
-            throwable.printStackTrace();
-            log.error("ApiRouteHandler:{},channel:{},alive:{}", throwable, ctx.channel(), ctx.channel().isActive());
+            log.error("发生异常", throwable);
             Channel channel = ctx.channel();
             GATEWAY_ERROR(throwable.getMessage()).write2Channel(channel);
         }

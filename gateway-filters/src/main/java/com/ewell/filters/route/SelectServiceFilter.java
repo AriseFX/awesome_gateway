@@ -1,13 +1,10 @@
 package com.ewell.filters.route;
 
 import com.ewell.common.RouteBean;
-import com.ewell.common.dto.AlarmDto;
 import com.ewell.core.discovery.ServiceManager;
 import com.ewell.core.filer.RouteFilter;
 import com.ewell.core.filer.context.FilterContext;
 import com.ewell.core.route.MatchRes;
-import com.ewell.filters.logging.AweLogService;
-import com.ewell.spi.Join;
 import com.google.inject.Inject;
 import io.netty.util.collection.IntObjectHashMap;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +24,6 @@ import static com.ewell.common.IntMapConstant.*;
  * @Modified: By：
  */
 @Slf4j
-@Join
 public class SelectServiceFilter extends RouteFilter {
 
     @Inject
@@ -57,10 +53,6 @@ public class SelectServiceFilter extends RouteFilter {
             case "lb":
                 InetSocketAddress address = serviceManager.selectService(remoteUri.getHost());
                 if (address == null) {
-                    AlarmDto alarmDto = new AlarmDto(((URI) attr.get(_RequestURI)).getPath(),
-                            "服务未找到:" + remoteUri.getHost(), "GATEWAY",
-                            (String) attr.get(_OriginCode), (String) attr.get(_Backend));
-                    AweLogService.alarm(alarmDto);
                     ctx.cancel(SERVICE_NOT_FOUND(remoteUri.getHost()));
                     return;
                 }

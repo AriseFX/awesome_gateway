@@ -5,13 +5,18 @@ import com.ewell.common.exception.SimpleRuntimeException;
 import com.ewell.core.route.RoutePromise;
 import com.ewell.core.route.RouteStoreSpi;
 import com.ewell.redis.AsyncRedisClient;
-import com.ewell.spi.Join;
-
 import com.google.inject.Inject;
+import io.vertx.redis.client.Command;
+import io.vertx.redis.client.Request;
+import io.vertx.redis.client.impl.types.BulkType;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.ewell.redis.AsyncRedisClient.decode;
+import static com.ewell.redis.AsyncRedisClient.encode;
 
 /**
  * @Author: wy
@@ -19,7 +24,6 @@ import java.util.stream.Collectors;
  * @Description:
  * @Modified: By：
  */
-@Join
 public class RedisRouteStoreImpl implements RouteStoreSpi {
 
     @Inject
@@ -29,40 +33,52 @@ public class RedisRouteStoreImpl implements RouteStoreSpi {
     public void putRoutes(Collection<RouteBean> routes, RoutePromise<String> promise) {
         Map<String, Object> map = routes.stream()
                 .collect(Collectors.toMap(RouteBean::getId, v -> v, (v1, v2) -> v1));
-        asyncRedisClient.asyncExec((e, throwable) ->
-                e.hset("ROUTE", map).whenComplete((v, ex) -> {
-                            if (ex != null) {
-                                promise.tryFailure(new SimpleRuntimeException("路由添加失败,错误信息:[" + ex.getMessage() + "]"));
-                                return;
-                            }
-                            promise.trySuccess("route put successful");
-                        }
-                ));
+        //生成批量操作
+        List<Request> requests = map.entrySet().stream().map(e ->
+                        Request.cmd(Command.HSET).arg("ROUTE").arg(e.getKey()).arg(encode(e.getValue())))
+                .collect(Collectors.toList());
 
+        asyncRedisClient.getConnection().onSuccess(conn -> {
+            conn.batch(requests)
+                    .onSuccess(e -> {
+                        promise.trySuccess("route put successful");
+                    }).onFailure(e -> {
+                        promise.tryFailure(new SimpleRuntimeException("路由添加失败,错误信息:[" + e.getMessage() + "]"));
+                    }).onComplete(e -> conn.close());
+        });
     }
 
     @Override
     public void getRoutes(RoutePromise<Object> promise) {
-        asyncRedisClient.asyncExec((e, throwable) -> e.hgetall("ROUTE").whenComplete((v, ex) -> {
-            if (ex != null) {
-                promise.tryFailure(
-                        new SimpleRuntimeException("路由获取失败,错误信息:[" + ex.getMessage() + "]"));
-                return;
-            }
-            promise.trySuccess(v.values());
-        }));
+        Request request = Request.cmd(Command.HGETALL).arg("ROUTE");
+
+        asyncRedisClient.getConnection().onSuccess(conn -> {
+            conn.send(request)
+                    .onSuccess(e -> {
+                        List<Object> collect = e.getKeys().stream().map(k -> {
+                            BulkType response = (BulkType) e.get(k);
+                            return decode(response.toBytes());
+                        }).collect(Collectors.toList());
+                        promise.trySuccess(collect);
+                    }).onFailure(e -> {
+                        promise.tryFailure(
+                                new SimpleRuntimeException("路由获取失败,错误信息:[" + e.getMessage() + "]"));
+                    }).onComplete(e -> conn.close());
+        });
     }
 
     @Override
     public void deleteRoutes(RoutePromise<String> promise) {
-        asyncRedisClient.asyncExec((e, throwable) ->
-                e.del("ROUTE").whenComplete((v, ex) -> {
-                            if (ex != null) {
-                                promise.tryFailure(
-                                        new SimpleRuntimeException("路由删除失败,错误信息:[" + ex.getMessage() + "]"));
-                            }
-                            promise.trySuccess("route clear successful");
-                        }
-                ));
+        Request request = Request.cmd(Command.DEL).arg("ROUTE");
+
+        asyncRedisClient.getConnection().onSuccess(conn -> {
+            conn.send(request).onSuccess(e -> {
+                promise.trySuccess("route clear successful");
+            }).onFailure(e -> {
+                promise.tryFailure(
+                        new SimpleRuntimeException("路由删除失败,错误信息:[" + e.getMessage() + "]"));
+            }).onComplete(e -> conn.close());
+
+        });
     }
 }

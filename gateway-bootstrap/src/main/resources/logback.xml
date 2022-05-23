@@ -23,7 +23,6 @@
     <logger name="com.alibaba.nacos.client.naming" level="OFF"/>
 
     <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
-    <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener"/>
     <property name="LOG_HOME" value="logs"/>
     <property name="LOG_APP_NAME" value="${log.app-name:-gateway}"/>
     <property name="MAX_SINGLE_LOG_FILE_SIZE" value="${log.max-single-log-file-size:-100MB}"/>
@@ -46,7 +45,7 @@
         <appender-ref ref="STDOUT"/>
     </appender>
 
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+   <!-- <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_HOME}/${LOG_APP_NAME}.log</file>
         <append>true</append>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
@@ -58,16 +57,16 @@
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
-    </appender>
+    </appender>-->
 
-    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+    <!--<appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
         <discardingThreshold>${ASYNC_DISCARDING_THRESHOLD}</discardingThreshold>
         <queueSize>${ASYNC_LOG_QUEUE_SIZE}</queueSize>
         <includeCallerData>true</includeCallerData>
         <appender-ref ref="FILE"/>
-    </appender>
+    </appender>-->
 
-    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!--<appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>ERROR</level>
             <onMatch>ACCEPT</onMatch>
@@ -83,14 +82,14 @@
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
-    </appender>
+    </appender>-->
 
-    <appender name="ASYNC_ERROR_FILE" class="ch.qos.logback.classic.AsyncAppender">
+    <!--<appender name="ASYNC_ERROR_FILE" class="ch.qos.logback.classic.AsyncAppender">
         <discardingThreshold>${ASYNC_DISCARDING_THRESHOLD}</discardingThreshold>
         <queueSize>${ASYNC_LOG_QUEUE_SIZE}</queueSize>
         <includeCallerData>true</includeCallerData>
         <appender-ref ref="ERROR_FILE"/>
-    </appender>
+    </appender>-->
 
     <root level="INFO">
         <appender-ref ref="ASYNC_STDOUT"/>

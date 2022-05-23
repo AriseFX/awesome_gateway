@@ -4,7 +4,6 @@ import com.ewell.common.message.ForwardMessage;
 import com.ewell.core.filer.PreRouteFilter;
 import com.ewell.core.filer.context.FilterContext;
 import com.ewell.core.filer.context.Observer;
-import com.ewell.spi.Join;
 import com.google.inject.Singleton;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -22,7 +21,6 @@ import static com.ewell.filters.encryption.EncryptionUtils.encryptionBody;
  * @Description: 消息对称加密
  * @Modified: By：
  */
-@Join
 @Singleton
 public class BodyEncryptionFilter extends PreRouteFilter {
 
@@ -70,6 +68,6 @@ public class BodyEncryptionFilter extends PreRouteFilter {
 
     @Override
     public byte order() {
-        return 5;
+        return 6;
     }
 }

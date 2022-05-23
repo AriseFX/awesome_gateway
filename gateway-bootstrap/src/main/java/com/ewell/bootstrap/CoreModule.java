@@ -9,11 +9,11 @@ import com.ewell.core.server.handler.ProxyInboundHandler;
 import com.ewell.core.server.handler.ProxyReadTimeoutHandler;
 import com.ewell.core.server.os.OSHelper;
 import com.ewell.endpoint.service.RouteServicesConsumer;
+import com.ewell.filters.auth.AuthFilter;
 import com.ewell.filters.logging.AweLogService;
 import com.ewell.filters.logging.LoggingFilter;
 import com.ewell.filters.route.MatchRouteFilter;
 import com.ewell.filters.route.SelectServiceFilter;
-import com.ewell.filters.token.UserTokenFilter;
 import com.ewell.spi.ExtensionLoader;
 import com.google.inject.AbstractModule;
 
@@ -47,14 +47,13 @@ public class CoreModule extends AbstractModule {
         //route
         ExtensionLoader<RouteStoreSpi> extensionLoader = ExtensionLoader.getExtensionLoader(RouteStoreSpi.class);
         List<RouteStoreSpi> spis = extensionLoader.getAllJoin();
-        //TODO 「路由存储方式」需要插件化,不能本地加载
         if (spis != null && spis.size() > 0) {
             bind(RouteStoreSpi.class).toInstance(spis.get(0));
             binder().requestInjection(spis.get(0));
         }
         //静态注入
         binder().requestStaticInjection(MatchRouteFilter.class, SelectServiceFilter.class,
-                LoggingFilter.class, AweLogService.class, UserTokenFilter.class);
+                LoggingFilter.class, AweLogService.class, AuthFilter.class);
         binder().requestStaticInjection(OSHelper.class);
         binder().requestStaticInjection(ProxyInboundHandler.class, ProxyReadTimeoutHandler.class);
         binder().requestStaticInjection(ForwardHandler.class);

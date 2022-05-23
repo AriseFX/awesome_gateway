@@ -7,17 +7,15 @@ pool:
   maxPendingAcquires: 0x7fffffff #最大pending数
 registry:
   naming: nacos
-  serverAddr: xxx:8848
-  namespace: xxx
+  serverAddr: host:port
+  namespace: 06b72914-e3e0-452c-bac6-9b22af6213cd
   serviceName: AsGateway
   networkInterface: eth0
 logging:
-  excludePath: [ "/selectLogByCondition" ]
-  #"Content-Type":["application/json","text/html"]代表存储这两种消息体
-  reqHeader: { "Content-Type": [ "application/xml","application/json","application/json;charset=utf-8","text/xml" ,"text/xml; charset=utf-8" ] }
-  respHeader: { "Content-Type": [ "text/html","application/json","application/json;charset=utf-8","text/xml","text/xml; charset=utf-8" ] }
+  excludePath: [ "/xxxxxx" ]
 redis:
-  uri: redis://xxx@xxx:6379/0?timeout=10s
+  uri: redis://host:port/0?timeout=10s
+  password: xxxxx
 #rabbitmq:
 #  uri: amqp://admin:admin@xxx:5672/dev
 endpoint:

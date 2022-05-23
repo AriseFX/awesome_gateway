@@ -115,7 +115,7 @@ public final class ExtensionLoader<T> {
     private T createExtension(final String name) {
         Class<?> aClass = getExtensionClasses().get(name);
         if (aClass == null) {
-            throw new IllegalArgumentException("name is error");
+            throw new IllegalArgumentException("{"+name+"} name is error");
         }
         Object o = joinInstances.get(aClass);
         if (o == null) {
@@ -204,10 +204,6 @@ public final class ExtensionLoader<T> {
         Class<?> subClass = Class.forName(classPath);
         if (!clazz.isAssignableFrom(subClass)) {
             throw new IllegalStateException("load extension resources error," + subClass + " subtype is not of " + clazz);
-        }
-        Join annotation = subClass.getAnnotation(Join.class);
-        if (annotation == null) {
-            throw new IllegalStateException("load extension resources error," + subClass + " with Join annotation");
         }
         Class<?> oldClass = classes.get(name);
         if (oldClass == null) {

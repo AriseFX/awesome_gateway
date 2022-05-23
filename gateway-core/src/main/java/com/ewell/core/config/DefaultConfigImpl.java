@@ -1,7 +1,6 @@
 package com.ewell.core.config;
 
 import com.ewell.common.GatewayConfig;
-import com.ewell.spi.Join;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
 
@@ -16,7 +15,6 @@ import java.io.InputStream;
  * @Modified: By：
  */
 @Slf4j
-@Join
 public class DefaultConfigImpl implements ConfigInitSpi {
 
     @Override
@@ -31,7 +29,7 @@ public class DefaultConfigImpl implements ConfigInitSpi {
             try {
                 inputStream = new FileInputStream(path);
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                log.error("指定的配置文件未找到:", e);
                 return null;
             }
         }

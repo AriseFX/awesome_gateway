@@ -6,7 +6,6 @@ import com.alibaba.nacos.api.exception.NacosException;
 import com.ewell.common.GatewayConfig;
 import com.ewell.common.exception.SimpleRuntimeException;
 import com.ewell.core.config.ConfigInitSpi;
-import com.ewell.spi.Join;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.util.Asserts;
 import org.yaml.snakeyaml.Yaml;
@@ -18,19 +17,20 @@ import java.util.Properties;
  * @date 2021/12/14 11:11 AM
  */
 @Slf4j
-@Join
 public class NacosConfigImpl implements ConfigInitSpi {
 
     @Override
     public GatewayConfig init() {
         String namespace = System.getProperty("namespace");
-        String addr = System.getProperty("addr");
+        String addr = System.getProperty("server-addr");
         String dataId = System.getProperty("dataid");
         String group = System.getProperty("group");
         //校验
         Asserts.notNull(namespace, "namespace");
-        Asserts.notNull(addr, "addr");
-        Asserts.notNull(dataId, "dataid");
+        Asserts.notNull(addr, "server-addr");
+        if (dataId == null) {
+            dataId = "gateway.yaml";
+        }
         if (group == null) {
             group = "DEFAULT_GROUP";
         }
@@ -46,7 +46,7 @@ public class NacosConfigImpl implements ConfigInitSpi {
             Yaml yaml = new Yaml();
             return yaml.loadAs(content, GatewayConfig.class);
         } catch (NacosException e) {
-            e.printStackTrace();
+            log.error("从nacos加载配置发生异常", e);
             throw new SimpleRuntimeException("从nacos加载配置发生错误," + e.getErrMsg());
         }
     }

@@ -2,6 +2,8 @@ package com.ewell.endpoint;
 
 import com.ewell.common.GatewayConfig;
 import com.ewell.core.server.os.OSHelper;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -11,9 +13,6 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import lombok.extern.slf4j.Slf4j;
-
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 
 /**
@@ -61,7 +60,7 @@ public class EndpointRunner implements Runnable {
                     .addListener(e ->
                             log.info("Endpoint Stopped！"));
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error("发生异常", e);
         }
     }
 }

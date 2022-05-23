@@ -1,16 +1,14 @@
 package com.ewell.filters.logging;
 
 import com.ewell.common.GatewayConfig;
-import com.ewell.common.Headers;
 import com.ewell.common.dto.ApiLog;
 import com.ewell.common.message.ForwardMessage;
 import com.ewell.core.filer.PreRouteFilter;
 import com.ewell.core.filer.context.FilterContext;
 import com.ewell.core.filer.context.Observer;
-import com.ewell.spi.Join;
 import com.google.inject.Inject;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.handler.codec.http.*;
 import io.netty.util.collection.IntObjectHashMap;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +20,7 @@ import java.util.function.Function;
 import static com.ewell.common.Headers.Backend;
 import static com.ewell.common.IntMapConstant.*;
 import static com.ewell.common.util.HttpUtils.parseQueryString;
+import static com.ewell.common.util.MimeTypeUtils.parseMimeType;
 
 /**
  * @Author: wy
@@ -29,7 +28,6 @@ import static com.ewell.common.util.HttpUtils.parseQueryString;
  * @Description:
  * @Modified: By：
  */
-@Join
 @Slf4j
 public class LoggingFilter extends PreRouteFilter {
 
@@ -38,31 +36,10 @@ public class LoggingFilter extends PreRouteFilter {
 
     private final Function<String, Boolean> pathFilter;
 
-    private final Function<HttpHeaders, Boolean> reqFilter;
-
-    private final Function<HttpHeaders, Boolean> respFilter;
 
     public LoggingFilter() {
         GatewayConfig.Logging config = gatewayConfig.getLogging();
         pathFilter = x -> config.getExcludePath().contains(x);
-
-        reqFilter = x -> config.getReqHeader().entrySet()
-                .stream().anyMatch(f -> {
-                    String s = x.get(f.getKey());
-                    if (s == null) {
-                        return false;
-                    }
-                    return f.getValue().contains(s);
-                });
-
-        respFilter = x -> config.getRespHeader().entrySet()
-                .stream().anyMatch(f -> {
-                    String s = x.get(f.getKey());
-                    if (s == null) {
-                        return false;
-                    }
-                    return f.getValue().contains(s);
-                });
     }
 
     @Override
@@ -82,11 +59,12 @@ public class LoggingFilter extends PreRouteFilter {
         }
         ApiLog apiLog = new ApiLog();
         //分配内存
-        ByteBuf buf = ByteBufAllocator.DEFAULT.directBuffer(1024);
+        ByteBuf buf = PooledByteBufAllocator.DEFAULT.directBuffer(1024);
         buf.writeInt(0);
         buf.writeInt(0);
         apiLog.setBuffer(buf);
-        if (reqFilter.apply(request.headers())) {
+        String contentType = headers.get(HttpHeaderNames.CONTENT_TYPE);
+        if (checkMime(contentType)) {
             //请求体
             copy2Buf(fullReq, buf, 0);
         }
@@ -95,7 +73,7 @@ public class LoggingFilter extends PreRouteFilter {
             if (message instanceof ForwardMessage) {
                 List<HttpObject> fullResp = message.getResponse();
                 DefaultHttpResponse response = ((DefaultHttpResponse) fullResp.get(0));
-                if (respFilter.apply(response.headers())) {
+                if (checkMime(response.headers().get(HttpHeaderNames.CONTENT_TYPE))) {
                     //响应体
                     copy2Buf(fullResp, buf, 4);
                 }
@@ -104,7 +82,7 @@ public class LoggingFilter extends PreRouteFilter {
                 apiLog.setInfo(info);
                 Long timestamp = (Long) attr.get(_Timestamp);
                 Long writtenTimestamp = (Long) attr.get(_WrittenTimestamp);
-                info.setLogId((String) attr.get(_TraceId));
+                info.setLogId((String) attr.get(_LogId));
                 info.setPath(uri.getPath());
                 info.setTimestamp(timestamp);
                 info.setHandleTime(System.currentTimeMillis() - timestamp);
@@ -122,7 +100,7 @@ public class LoggingFilter extends PreRouteFilter {
 
     @Override
     public byte order() {
-        return 6;
+        return 7;
     }
 
     private static void copy2Buf(List<HttpObject> src, ByteBuf dist, int lenOffset) {
@@ -138,5 +116,11 @@ public class LoggingFilter extends PreRouteFilter {
                 dist.setInt(lenOffset, dist.getInt(lenOffset) + len);
             }
         }
+    }
+
+    private static boolean checkMime(String contentType) {
+        String subType = parseMimeType(contentType);
+        //只关注json和xml
+        return "json".equalsIgnoreCase(subType) || "xml".equalsIgnoreCase(subType);
     }
 }

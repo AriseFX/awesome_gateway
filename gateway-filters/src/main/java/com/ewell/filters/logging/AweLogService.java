@@ -1,9 +1,9 @@
 package com.ewell.filters.logging;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.ewell.common.GatewayConfig;
-import com.ewell.common.dto.AlarmDto;
 import com.ewell.common.dto.ApiLog;
 import com.ewell.queue.GatewayDiskQueue;
 import com.ewell.rabbitmq.PooledRabbitmqClient;
@@ -14,7 +14,6 @@ import io.netty.util.concurrent.FastThreadLocal;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +65,7 @@ public class AweLogService {
     public static class LogConsumer implements Runnable {
 
         //限制消费速率
-        private RateLimiter rateLimiter = RateLimiter.create(10000);
+        private RateLimiter rateLimiter = RateLimiter.create(5000);
 
         @Override
         public void run() {
@@ -76,7 +75,7 @@ public class AweLogService {
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        log.error("发生异常", e);
                     }
                 }
                 sleep = true;
@@ -97,7 +96,7 @@ public class AweLogService {
                         if (reqBodyLen > 0) {
                             //requestBody
                             String type = headers.get("Content-Type");
-                            if (type != null && type.contains("application/json")) {
+                            if (type != null && type.contains("json")) {
                                 info.setRequestBody(JSON.parse(new String(message, 8,
                                         reqBodyLen)));
                             } else {
@@ -121,20 +120,24 @@ public class AweLogService {
                             if (type != null && type.contains("application/json")) {
                                 info.setResponseBody(JSON.parse(bodyStr));
                             } else {
+                                //处理xml消息体,防止mongo报错
                                 JSONObject json = new JSONObject();
                                 json.put("data", bodyStr);
                                 info.setResponseBody(json);
                             }
                         }
                         rateLimiter.acquire();
-                        /*Channel channel = localChannel.get();
-                        channel.basicPublish("", "gateway-queue", null,
-                                JSON.toJSONString(info).getBytes(UTF_8));*/
+//                        Channel channel = localChannel.get();
+                        //推送log给日志中心
+//                        channel.basicPublish("", "gateway-queue", null, JSON.toJSONString(info).getBytes(UTF_8));
+                    } catch (JSONException e) {
+                        log.error("json解析异常:", e);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        log.error("其他异常:", e);
                     }
                 }
             }
+            log.error("LogConsumer意外退出!");
         }
     }
 
@@ -146,16 +149,5 @@ public class AweLogService {
     public static void pushLog(ApiLog log) {
         localQueue.get().write(log);
     }
-
-    public static void alarm(AlarmDto dto) {
-       /* try {
-            Channel channel = localChannel.get();
-            channel.basicPublish("", "gateway-alarm-queue", null,
-                    JSON.toJSONString(dto).getBytes(UTF_8));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-    }
-
 
 }

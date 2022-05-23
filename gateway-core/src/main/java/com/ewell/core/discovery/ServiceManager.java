@@ -4,10 +4,10 @@ import com.ewell.common.GatewayConfig;
 import com.ewell.common.exception.ServiceRegistryException;
 import com.ewell.common.util.NetUtils;
 import com.ewell.spi.ExtensionLoader;
-import lombok.extern.slf4j.Slf4j;
-
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;

@@ -7,10 +7,12 @@ import io.netty.channel.EventLoop;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.concurrent.Promise;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.ewell.common.GatewayMessages.GATEWAY_ERROR;
 import static com.ewell.common.IntMapConstant._RespObserver;
 import static com.ewell.core.filer.context.FilterFuture.SUCCESS;
 
@@ -19,6 +21,7 @@ import static com.ewell.core.filer.context.FilterFuture.SUCCESS;
  * @Date: Created in 10:06 上午 2021/11/26
  * @Description: 过滤器上下文(线程安全)
  */
+@Slf4j
 public class FilterContext {
 
     private Iterator<? extends GatewayFilter> iterator;
@@ -52,10 +55,15 @@ public class FilterContext {
     }
 
     public void start(Object data) {
-        if (iterator != null && iterator.hasNext()) {
-            iterator.next().doFilter(this, data);
-        } else {
-            callback.setSuccess(SUCCESS(null));
+        try {
+            if (iterator != null && iterator.hasNext()) {
+                iterator.next().doFilter(this, data);
+            } else {
+                callback.setSuccess(SUCCESS(null));
+            }
+        } catch (Exception e) {
+            log.error("过滤器异常:", e);
+            cancel(GATEWAY_ERROR(e.getMessage()));
         }
     }
 

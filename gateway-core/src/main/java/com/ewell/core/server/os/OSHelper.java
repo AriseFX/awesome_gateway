@@ -1,6 +1,7 @@
 package com.ewell.core.server.os;
 
 import com.ewell.common.GatewayConfig;
+import com.google.inject.Inject;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.ServerChannel;
@@ -16,7 +17,6 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import net.openhft.affinity.AffinityLock;
 import net.openhft.chronicle.core.OS;
 
-import com.google.inject.Inject;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 

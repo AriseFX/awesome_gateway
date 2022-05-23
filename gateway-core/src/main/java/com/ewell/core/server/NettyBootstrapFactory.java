@@ -2,14 +2,13 @@ package com.ewell.core.server;
 
 import com.ewell.common.GatewayConfig;
 import com.ewell.core.server.os.OSHelper;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.EpollMode;
 import net.openhft.chronicle.core.OS;
-
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 import static io.netty.channel.ChannelOption.SO_BACKLOG;
 import static io.netty.channel.ChannelOption.TCP_NODELAY;

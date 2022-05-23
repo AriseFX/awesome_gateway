@@ -30,7 +30,7 @@ public interface IntMapConstant {
 
     int _PathPram = 11;
 
-    int _TraceId = 12;
+    int _LogId = 12;
 
     int _Origin = 13;
 
