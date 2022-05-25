@@ -59,5 +59,6 @@ public class CoreModule extends AbstractModule {
         binder().requestStaticInjection(ForwardHandler.class);
         binder().requestStaticInjection(RouteServicesConsumer.class);
 
+
     }
 }
