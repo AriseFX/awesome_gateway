@@ -4,20 +4,25 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.ewell.common.GatewayConfig;
+import com.ewell.common.dto.AlarmDto;
 import com.ewell.common.dto.ApiLog;
-import com.ewell.queue.GatewayDiskQueue;
 import com.ewell.rabbitmq.PooledRabbitmqClient;
 import com.google.common.util.concurrent.RateLimiter;
 import com.google.inject.Inject;
 import com.rabbitmq.client.Channel;
 import io.netty.util.concurrent.FastThreadLocal;
 import lombok.extern.slf4j.Slf4j;
+import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.queue.ChronicleQueue;
+import net.openhft.chronicle.queue.ExcerptAppender;
+import net.openhft.chronicle.queue.ExcerptTailer;
+import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 
 import javax.inject.Singleton;
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.List;
+
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.ewell.common.util.HttpUtils.unCompressGzip;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -45,22 +50,12 @@ public class AweLogService {
                     .newConnection().createChannel();
         }
     };
-    private static final List<GatewayDiskQueue> queues = new CopyOnWriteArrayList<>();
 
-    private static final FastThreadLocal<GatewayDiskQueue> localQueue =
-            new FastThreadLocal<GatewayDiskQueue>() {
-                @Override
-                protected GatewayDiskQueue initialValue() {
-                    String name = Thread.currentThread().getName();
-                    int diskQueueSize = gatewayConfig.getLogging().getDiskQueueSize();
-                    if (diskQueueSize == 0) {
-                        diskQueueSize = 209715200;
-                    }
-                    GatewayDiskQueue queue = new GatewayDiskQueue("./data", name, diskQueueSize);
-                    queues.add(queue);
-                    return queue;
-                }
-            };
+    private static final ChronicleQueue queue;
+
+    static {
+        queue = SingleChronicleQueueBuilder.single("./queue").build();
+    }
 
     public static class LogConsumer implements Runnable {
 
@@ -78,13 +73,13 @@ public class AweLogService {
                         log.error("发生异常", e);
                     }
                 }
-                sleep = true;
-                for (GatewayDiskQueue queue : queues) {
-                    byte[] message = queue.read();
+
+                ExcerptTailer tailer = queue.createTailer("a");
+                sleep = !tailer.readBytes(bytes -> {
+                    byte[] message = bytes.toByteArray();
                     if (message == null) {
-                        continue;
+                        return;
                     }
-                    sleep = false;
                     ByteBuffer mapped = ByteBuffer.wrap(message);
                     int reqBodyLen = mapped.getInt();
                     int respBodyLen = mapped.getInt();
@@ -127,15 +122,17 @@ public class AweLogService {
                             }
                         }
                         rateLimiter.acquire();
-//                        Channel channel = localChannel.get();
-                        //推送log给日志中心
-//                        channel.basicPublish("", "gateway-queue", null, JSON.toJSONString(info).getBytes(UTF_8));
+                        Channel channel = localChannel.get();
+                        channel.basicPublish("", "gateway-queue", null,
+                                JSON.toJSONString(info).getBytes(UTF_8));
                     } catch (JSONException e) {
                         log.error("json解析异常:", e);
                     } catch (Exception e) {
                         log.error("其他异常:", e);
                     }
-                }
+                });
+
+
             }
             log.error("LogConsumer意外退出!");
         }
@@ -146,8 +143,27 @@ public class AweLogService {
     }
 
 
-    public static void pushLog(ApiLog log) {
-        localQueue.get().write(log);
+    public static void pushLog(ApiLog apiLog) {
+        try {
+            ByteBuffer msgBody = apiLog.marshaller();
+            ExcerptAppender appender = queue.acquireAppender();
+            appender.writeBytes(BytesStore.wrap(msgBody));
+        } catch (Exception e) {
+            log.error("发生异常", e);
+        } finally {
+            apiLog.destructor();
+        }
     }
+
+    public static void alarm(AlarmDto dto) {
+        try {
+            Channel channel = localChannel.get();
+            channel.basicPublish("", "gateway-alarm-queue", null,
+                    JSON.toJSONString(dto).getBytes(UTF_8));
+        } catch (IOException e) {
+            log.error("alarm发生异常:", e);
+        }
+    }
+
 
 }
